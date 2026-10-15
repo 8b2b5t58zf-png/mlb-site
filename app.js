@@ -547,6 +547,18 @@ function parseHash(h){
   if(h==="sec-pitching") return {lg:"mlb", tab:"leaders"};
   return null;
 }
+// GoatCounter：每切一區算一次（第一次載入由 count.js 自己算，不重複）
+let GC_LAST = null;
+function gcCount(){
+  const key = location.pathname + location.hash;
+  if(GC_LAST === null){ GC_LAST = key; return; }
+  if(key === GC_LAST) return;
+  GC_LAST = key;
+  try{
+    const name = (NAVS[LG_NOW][Math.max(0,TABS.indexOf(TAB_NOW))]||[])[1] || TAB_NOW;
+    if(window.goatcounter && window.goatcounter.count) window.goatcounter.count({path:key, title:`${LG_NOW.toUpperCase()} ${name}`, event:false});
+  }catch(e){}
+}
 function go(lg, tab, push){
   if(!TABS.includes(tab)) tab = "predict";
   TAB_NOW = tab;
@@ -554,6 +566,7 @@ function go(lg, tab, push){
   showTab();
   const h = `#${lg}-${tab}`;
   if(location.hash !== h){ if(push) history.pushState(null,"",location.pathname+h); else history.replaceState(null,"",location.pathname+h); }
+  gcCount();
   scrollTo(0,0);
 }
 function setupNav(){
