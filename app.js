@@ -535,7 +535,7 @@ function setupNav(){
     document.getElementById("tab-bat").hidden = b.dataset.tab!=="bat";
     document.getElementById("tab-pit").hidden = b.dataset.tab!=="pit";
   });
-  let saved = "mlb"; try{ saved = localStorage.getItem("aisl:league") || "mlb"; }catch(e){}
+  let saved = "mlb"; try{ saved = new URLSearchParams(location.search).get("lg") || localStorage.getItem("aisl:league") || "mlb"; }catch(e){}
   setLeague(saved === "nba" ? "nba" : "mlb");
 }
 setupNav();
