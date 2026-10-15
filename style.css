@@ -1,0 +1,52 @@
+/* 整體字型與背景 */
+body{font-family:"Noto Sans TC",system-ui,sans-serif;margin:0;background:#f4f6fa;color:#222}
+header{background:#002d72;color:#fff;padding:16px 24px}
+header h1{margin:0}
+main{max-width:1200px;margin:auto;padding:16px}
+section{background:#fff;border-radius:10px;padding:16px;margin-bottom:16px;box-shadow:0 1px 4px #0002}
+/* 表格樣式 */
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{padding:4px 8px;border-bottom:1px solid #eee;text-align:center}
+td:first-child,th:first-child{text-align:left}
+th{background:#eef2f8}
+/* 用格狀排版讓多個小表並排 */
+.grid,.divs{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:12px}
+h3{margin:8px 0;font-size:16px;color:#002d72}
+
+/* 預測卡片與分析文章 */
+.note{font-size:13px;color:#666;background:#fff8e1;padding:8px;border-radius:6px}
+.card{border:1px solid #dde3ee;border-radius:8px;padding:10px}
+.bar{display:flex;height:22px;border-radius:4px;overflow:hidden;color:#fff;font-size:12px;margin:6px 0}
+.bar div{display:flex;align-items:center;justify-content:center}
+article{border-left:4px solid #002d72;padding:4px 12px;margin:12px 0}
+article p{line-height:1.7;margin:6px 0}
+.ls td,.ls th{padding:2px 6px}
+
+/* ===== 手機優先的響應式設計 ===== */
+html{scroll-behavior:smooth;scroll-padding-top:56px}
+body{font-size:16px}
+header{padding:12px 16px} header h1{font-size:22px} header p{font-size:13px;margin:4px 0 0}
+main{padding:8px}
+section{padding:12px;scroll-margin-top:56px}
+h2{font-size:19px;margin:4px 0 10px}
+/* 上方固定導覽列：手機可左右滑 */
+#topnav{position:sticky;top:0;z-index:10;display:flex;gap:4px;overflow-x:auto;background:#002d72;padding:8px;white-space:nowrap;box-shadow:0 2px 4px #0003}
+#topnav a{color:#fff;text-decoration:none;padding:6px 12px;border-radius:16px;background:#ffffff22;font-size:14px;flex:none}
+/* 手機上卡片、表格一欄一欄往下排；表格太寬可左右滑動 */
+.grid,.divs{grid-template-columns:1fr}
+.divs>div,.grid>div,article{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table{font-size:14px;white-space:nowrap}
+.chartbox{position:relative;height:300px}
+/* 平板、電腦：多欄並排 */
+@media(min-width:768px){
+  .grid,.divs{grid-template-columns:repeat(auto-fit,minmax(320px,1fr))}
+  header h1{font-size:28px} .chartbox{height:380px} main{padding:16px} section{padding:16px}
+}
+/* 載入中的骨架動畫 */
+.sk{height:16px;margin:10px 0;border-radius:4px;background:linear-gradient(90deg,#eee 25%,#f6f6f6 50%,#eee 75%);background-size:200% 100%;animation:sk 1.2s infinite}
+@keyframes sk{to{background-position:-200% 0}}
+/* 錯誤訊息與舊資料提示 */
+.err{background:#fdecea;color:#b71c1c;padding:10px;border-radius:6px}
+.err button{margin-left:8px;padding:6px 14px;border:0;border-radius:4px;background:#b71c1c;color:#fff;font-size:14px}
+.stale{background:#fff3cd;color:#7a5b00;padding:6px 10px;border-radius:6px;font-size:13px;margin-bottom:8px}
+.status:empty{display:none}

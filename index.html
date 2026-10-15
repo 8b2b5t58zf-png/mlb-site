@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>美國職棒大聯盟賽事分析</title>
+<!-- 引入樣式檔，負責網頁外觀 -->
+<link rel="stylesheet" href="style.css">
+<!-- 從 CDN 載入 Chart.js，用來畫圖表 -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+</head>
+<body>
+<header>
+  <h1>⚾ 美國職棒大聯盟（MLB）賽事分析</h1>
+  <p>資料來源：大聯盟官方數據 API（statsapi.mlb.com）｜球季：<span id="season">載入中…</span><span id="cacheinfo"></span></p>
+</header>
+<!-- 固定在上方的導覽列，點了會跳到對應區塊 -->
+<nav id="topnav"><a href="#sec-predict">預測</a><a href="#sec-analysis">賽後分析</a><a href="#sec-standings">戰績</a><a href="#sec-chart">勝率圖</a><a href="#sec-batting">打擊</a><a href="#sec-pitching">投手</a></nav>
+<main>
+  <!-- 重點一：比賽勝負預測（簡單估算模型） -->
+  <section id="sec-predict"><h2>🔮 比賽勝負預測（簡易估算）</h2>
+    <p class="note">⚠️ 這只是用公開數據算出的「簡單估算」，不是保證結果，也不是投注建議。<br>
+    算法：① 每隊實力＝「實際勝率」與「畢氏期望勝率（用得分、失分推算）」各取一半；② 用 Log5 公式比較兩隊實力；③ 主場球隊加 4%。</p>
+    <div class="status" id="st-predict"></div><div id="predict" class="grid">載入中…</div></section>
+  <!-- 重點二：賽後分析文章（依真實比賽數據自動產生） -->
+  <section id="sec-analysis"><h2>📝 賽後分析</h2>
+    <p class="note">以下文字由程式根據官方比分、安打、失誤、先發投手與打者數據自動整理，不加入任何臆測。</p>
+    <div class="status" id="st-analysis"></div><div id="analysis">載入中…</div></section>
+  <!-- 第一區：聯盟戰績表 -->
+  <section id="sec-standings"><h2>聯盟戰績</h2><div class="status" id="st-standings"></div><div id="standings">載入中…</div></section>
+  <!-- 第二區：各隊勝率圖表 -->
+  <section id="sec-chart"><h2>各隊勝率</h2><div class="status" id="st-chart"></div><div class="chartbox" id="chart"><canvas id="winChart"></canvas></div></section>
+  <!-- 第三區：打擊與投手排行榜 -->
+  <section id="sec-batting"><h2>打擊排行榜</h2><div class="status" id="st-batting"></div><div id="batting" class="grid">載入中…</div></section>
+  <section id="sec-pitching"><h2>投手排行榜</h2><div class="status" id="st-pitching"></div><div id="pitching" class="grid">載入中…</div></section>
+</main>
+<script src="players.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
