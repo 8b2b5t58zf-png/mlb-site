@@ -67,7 +67,7 @@ function nbaCard(ev){
   const favHome = hp >= ap, fp = Math.max(hp, ap), fav = favHome ? H.team : A.team, oth = favHome ? A.team : H.team;
   const early = nEarly(new Date(ev.date)), [tc, tl] = nTier(fp, early), k = favHome ? 1 : -1, s1 = k*m.d1, s2 = k*m.d2;
   const small = th.g < NM.minG || ta.g < NM.minG;
-  const big = fp === 50 ? `五五波：<span class="nw">雙方各 50%</span>` : `${nWord(fp, early)}：${nts(fav)} <span class="nw">${fp}%</span>`;
+  const big = fp === 50 ? `五五波：雙方各 <span class="num">50%</span>` : `${nWord(fp, early)}：${nts(fav)} <span class="num">${fp}%</span>`;
   const head = fp === 50 ? "兩隊勢均力敵，接近五五波" : !th.g && !ta.g ? "還沒有本季戰績，目前只依主場判斷" : Math.abs(m.d1) >= Math.abs(m.d2) ? `${nts(m.d1>0?H.team:A.team)}本季表現較好，是看好主因` : "兩隊實力接近，主場可能是關鍵";
   const li = (v, txt) => `<li><span class="dl ${dCls(v)}">${dTxt(v)}</span><span>${txt}</span></li>`;
   const pyd = t => t.g ? (t.pf - t.pa) / t.g : null;
@@ -83,7 +83,7 @@ function nbaCard(ev){
     <div class="headline">${big}</div>
     ${early && fp >= 70 ? '<div class="early-note">開季數據少，保守看待</div>' : ""}
     <div class="tier-row"><span class="tier ${tc}">${tl}</span>${fp!==50?`<span class="upset">${nts(oth)}仍有 ${100-fp}% 勝率</span>`:""}</div>
-    <div class="pbar-lab"><span>客 ${nts(A.team)} ${ap}%</span><span>主 ${nts(H.team)} ${hp}%</span></div>
+    <div class="pbar-lab"><span>客 ${nts(A.team)} <span class="num">${ap}%</span></span><span>主 ${nts(H.team)} <span class="num">${hp}%</span></span></div>
     <div class="pbar" role="img" aria-label="${ntn(A.team)} ${ap}%，${ntn(H.team)} ${hp}%"><div class="${favHome?"oth":"fav"}" style="width:${ap}%"></div><div class="${favHome?"fav":"oth"}" style="width:${hp}%"></div></div>
     <div class="why"><div class="why-h">為什麼這樣預測？</div><div class="why-c">${head}</div>
       <ul class="why-l"><li><span class="dl ${dCls(s1)}">${dTxt(s1)}</span><span>${t1}${c1?`<span class="chips">${c1}</span>`:""}</span></li>${li(s2, `主場：${nts(H.team)}主場優勢`)}</ul></div>

@@ -301,7 +301,7 @@ header{background:var(--bg)}
 .pcard{background:var(--card);border:0;box-shadow:0 1px 0 rgba(255,255,255,.03) inset;padding:var(--sp-4);border-radius:var(--radius)}
 .pcard .headline{font-size:var(--fs-xl)}
 .pcard .headline,.pbar-lab,.pcard .meta,.chip,.dl,.why,.cmpt,.pcard td{font-variant-numeric:tabular-nums}
-.pbar-lab,.dl{font-family:var(--num)}
+.dl{font-family:var(--num)}
 .why{background:var(--card-2);border:0;border-radius:var(--radius-sm)}
 .why .why,.why .why-k,.pcard .why-k{background:none;border:0;border-top:1px solid var(--line);border-radius:0}
 .chip{background:none;border:0;padding:0;color:var(--text2);font-size:var(--fs-sm)} .chip b{color:var(--text);font-weight:700}
@@ -323,3 +323,10 @@ header{background:var(--bg)}
 .vpage .back{color:var(--link);text-decoration:none;font-size:var(--fs-sm)}
 .num{font-family:var(--num);font-variant-numeric:tabular-nums}
 .early-note{color:var(--text2);font-size:var(--fs-xs);margin:2px 0 4px}
+
+.tagline-link{margin:2px 0 0;font-size:var(--fs-xs)}
+.tagline-link a{color:var(--link);font-weight:400;text-decoration:none}
+.pbar-lab{font-family:inherit;font-weight:600}
+.pbar-lab .num{font-family:var(--num);font-variant-numeric:tabular-nums}
+.algo summary,.pcard details.algo summary,.pcard details>summary.algo,
+.pcard details.algo>summary{font-weight:400!important;color:var(--text2)!important}

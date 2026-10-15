@@ -360,10 +360,10 @@ function renderPredict(games, isPast){
     const w = g.weather && g.weather.condition ? `參考資訊：天氣 ${g.weather.condition}${g.weather.temp?`，氣溫 ${Math.round((g.weather.temp-32)*5/9)}°C`:""}（不列入勝率計算）` : "";
     html += `<div class="pcard">
       <div class="meta"><span class="nw">客 ${ts(A.team)}</span> @ <span class="nw">主 ${ts(H.team)}</span><br>${tw(g.gameDate)}（台灣時間）${g.seriesStatus ? `<br><span class="nw ser">${[sz(g.seriesStatus.description), seriesPre(g.seriesStatus).replace("系列賽目前","系列賽").replace(/（(.+)領先）/," $1領先")].filter(Boolean).join("・")}</span>` : ""}</div>
-      <div class="headline">${fp === 50 ? `五五波：<span class="nw">雙方各 50%</span>` : `${fp>=60?"明顯看好":fp>=53?"略占上風":"勢均力敵"}：${ts(fav)} <span class="nw">${fp}%</span>`}</div>
+      <div class="headline">${fp === 50 ? `五五波：雙方各 <span class="num">50%</span>` : `${fp>=60?"明顯看好":fp>=53?"略占上風":"勢均力敵"}：${ts(fav)} <span class="num">${fp}%</span>`}</div>
       ${(!aP||!hP)?`<span class="wait-tag">等先發</span>`:""}
       <div class="tier-row"><span class="tier ${tc}">${tl}</span><span class="upset">${upset(A.team, H.team, ap, hp, aP, hP, fav, fp)}</span></div>
-      <div class="pbar-lab"><span>客 ${ts(A.team)} ${apct}%</span><span>主 ${ts(H.team)} ${hpct}%</span></div>
+      <div class="pbar-lab"><span>客 ${ts(A.team)} <span class="num">${apct}%</span></span><span>主 ${ts(H.team)} <span class="num">${hpct}%</span></span></div>
       <div class="pbar" role="img" aria-label="${tn(A.team)} ${apct}%，${tn(H.team)} ${hpct}%">
         <div class="${favHome?"oth":"fav"}" style="width:${apct}%"></div><div class="${favHome?"fav":"oth"}" style="width:${hpct}%"></div></div>
       ${v1note}${whyBlock(A.team, H.team, m, st, ap, hp, aP, hP, fav, fp)}
