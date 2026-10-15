@@ -136,18 +136,39 @@ async function loadGames(){
 }
 
 // 畫出預測卡片
+// 30 隊代表色（球隊主色）
+const COLOR = {108:"#BA0021",109:"#A71930",110:"#DF4601",111:"#BD3039",112:"#0E3386",113:"#C6011F",114:"#00385D",115:"#33006F",
+116:"#0C2340",117:"#EB6E1F",118:"#004687",119:"#005A9C",120:"#AB0003",121:"#FF5910",133:"#003831",134:"#27251F",135:"#2F241D",
+136:"#005C5C",137:"#FD5A1E",138:"#C41E3A",139:"#092C5C",140:"#003278",141:"#134A8E",142:"#002B5C",143:"#E81828",144:"#CE1141",
+145:"#27251F",146:"#00A3E0",147:"#0C2340",158:"#12284B"};
+// 信心分級（看好方的機率）
+function tier(p){
+  if(p >= 0.60) return ["strong","💪 很有把握"];
+  if(p >= 0.55) return ["lean","👍 略佔優勢"];
+  return ["toss","⚖️ 五五波"];
+}
+// 畫出預測卡片：大標題＋信心標籤＋左右對比條
 function renderPredict(games, isPast){
   let html = isPast ? "<p>目前沒有即將開打的比賽，改顯示最近比賽的賽前估算：</p>" : "";
   for(const g of games){
     const H = g.teams.home, A = g.teams.away;
     if(!TEAM[H.team.id] || !TEAM[A.team.id]) continue;
-    const p = predictHome(H.team.id, A.team.id), hp = Math.round(p*100);
+    const p = predictHome(H.team.id, A.team.id), hp = Math.round(p*100), ap = 100-hp;
+    const favHome = hp >= ap, fp = Math.max(hp, ap), fav = favHome ? H.team : A.team;
+    const [tc, tl] = tier(fp/100);
     const pp = x => x.probablePitcher ? pn(x.probablePitcher) : "未公布";
-    html += `<div class="card"><b>${tn(A.team)} @ ${tn(H.team)}</b>（主場）<br>
-      <small>${tw(g.gameDate)}（台灣時間）${g.seriesStatus ? "｜"+sz(g.seriesStatus.description) : ""}</small>
-      <div class="bar"><div style="width:${100-hp}%;background:#c8102e">${ts(A.team)} ${100-hp}%</div><div style="width:${hp}%;background:#002d72">${ts(H.team)} ${hp}%</div></div>
-      <small>預定先發：${ts(A.team)} ${pp(A)}／${ts(H.team)} ${pp(H)}<br>
-      實力分數：${ts(A.team)} ${strength(A.team.id).toFixed(3)}、${ts(H.team)} ${strength(H.team.id).toFixed(3)}（例行賽數據，未考慮先發投手與傷兵）</small></div>`;
+    html += `<div class="pcard">
+      <div class="meta">${tw(g.gameDate)}（台灣時間）${g.seriesStatus ? "｜"+sz(g.seriesStatus.description) : ""}</div>
+      <div class="headline">看好：${tn(fav)} ${fp}%</div>
+      <div><span class="tier ${tc}">${tl}</span></div>
+      <div class="vs"><span>客 ${tn(A.team)}</span><span>主 ${tn(H.team)}</span></div>
+      <div class="cmp" role="img" aria-label="${tn(A.team)} ${ap}%，${tn(H.team)} ${hp}%">
+        <div class="away${favHome?"":" fav"}" style="width:${ap}%;background:${COLOR[A.team.id]||"#666"}">${ts(A.team)} ${ap}%</div>
+        <div class="home${favHome?" fav":""}" style="width:${hp}%;background:${COLOR[H.team.id]||"#666"}">${ts(H.team)} ${hp}%</div>
+      </div>
+      <div class="detail">預定先發：${ts(A.team)} ${pp(A)}／${ts(H.team)} ${pp(H)}<br>
+        實力分數：${ts(A.team)} ${strength(A.team.id).toFixed(3)}、${ts(H.team)} ${strength(H.team.id).toFixed(3)}</div>
+    </div>`;
   }
   document.getElementById("predict").innerHTML = html || "查無比賽";
 }
