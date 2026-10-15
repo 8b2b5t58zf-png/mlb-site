@@ -15,19 +15,20 @@
   <p>資料來源：大聯盟官方數據 API（statsapi.mlb.com）｜球季：<span id="season">載入中…</span><span id="cacheinfo"></span></p>
 </header>
 <!-- 固定在上方的導覽列，點了會跳到對應區塊 -->
-<nav id="topnav"><a href="#sec-predict">預測</a><a href="#sec-analysis">賽後分析</a><a href="#sec-hit">命中率</a><a href="#sec-standings">戰績</a><a href="#sec-chart">勝率圖</a><a href="#sec-batting">打擊</a><a href="#sec-pitching">投手</a></nav>
+<nav id="topnav" aria-label="主選單"><a href="#sec-predict" data-sec="sec-predict">預測</a><a href="#sec-analysis" data-sec="sec-analysis">賽後</a><a href="#sec-hit" data-sec="sec-hit">命中率</a><a href="#sec-standings" data-sec="sec-standings">戰績</a><a href="#sec-batting" data-sec="sec-batting">排行</a></nav>
 <main>
   <!-- 重點一：比賽勝負預測（簡單估算模型） -->
   <section id="sec-predict"><h2>🔮 比賽勝負預測（簡易估算）</h2>
     <p class="note">⚠️ 這只是用公開數據算出的「簡單估算」，不是保證結果，也不是投注建議。</p>
     <!-- 可展開的算法說明：一般人不用看，有興趣再點開 -->
-    <details class="algo"><summary>🔍 看算法</summary>
+    <details class="algo"><summary>🔍 看算法（模型 v2）▾</summary>
       <ol><li><b>畢氏期望勝率</b>：用球隊的總得分、總失分推算「應該」有的勝率（得分<sup>1.83</sup> ÷（得分<sup>1.83</sup>＋失分<sup>1.83</sup>））。</li>
-      <li>每隊<b>實力分數</b>＝實際勝率 50%＋畢氏期望勝率 50%。</li>
-      <li><b>Log5 公式</b>：比較兩隊實力分數，算出主隊贏球機率。</li>
-      <li><b>主場加成</b>：主場球隊再加 4%（最高 95%）。</li>
+      <li>每隊<b>實力分數</b>＝實際勝率 50%＋畢氏期望勝率 50%，用 <b>Log5 公式</b>比較兩隊，再依回測縮回 50% 附近，得到<b>基礎勝率</b>。</li>
+      <li><b>主場加成</b>：約 +2%（2026 例行賽主場勝率 52.8%）。</li>
+      <li><b>先發投手</b>：比較兩位先發的 ERA、WHIP（往聯盟平均 ERA 4.20、WHIP 1.30 拉回，等於先加 40 局平均表現）；未公布就不調整（顯示「資料不足，未調整」）。</li>
+      <li>權重由 2026 例行賽回測決定（7/1 後 1,148 場測試）；近況、休息天數、裁判回測無效，未採用。</li>
       <li>信心分級：看好方 ≥60% 為「很有把握」，55–59% 為「略佔優勢」，低於 55% 為「五五波」。</li></ol>
-      <p>只用例行賽數據，未考慮先發投手、傷兵與季後賽狀態。</p></details>
+      <p>2026/10/15 之前記錄的預測是舊版模型 v1（主場 +4%、未含先發投手），紀錄保留不修改。</p></details>
     <div class="status" id="st-predict"></div><div id="predict" class="grid">載入中…</div></section>
   <!-- 重點二：賽後分析文章（依真實比賽數據自動產生） -->
   <section id="sec-analysis"><h2>📝 賽後分析</h2>
@@ -38,13 +39,17 @@
     <p class="note">每天自動在比賽開打前記下預測，賽後再補上結果；預測一旦記錄就不再修改。</p>
     <div class="status" id="st-hit"></div><div id="hit">載入中…</div></section>
   <!-- 第一區：聯盟戰績表 -->
-  <section id="sec-standings"><h2>聯盟戰績</h2><div class="status" id="st-standings"></div><div id="standings">載入中…</div></section>
+  <section id="sec-standings"><h2>聯盟戰績</h2><div class="status" id="st-standings"></div><div id="standings">載入中…</div><h3 class="sub">各隊勝率</h3><div class="status" id="st-chart"></div><div class="chartbox" id="chart"><canvas id="winChart"></canvas></div></section>
   <!-- 第二區：各隊勝率圖表 -->
-  <section id="sec-chart"><h2>各隊勝率</h2><div class="status" id="st-chart"></div><div class="chartbox" id="chart"><canvas id="winChart"></canvas></div></section>
+  
   <!-- 第三區：打擊與投手排行榜 -->
-  <section id="sec-batting"><h2>打擊排行榜</h2><div class="status" id="st-batting"></div><div id="batting" class="grid">載入中…</div></section>
-  <section id="sec-pitching"><h2>投手排行榜</h2><div class="status" id="st-pitching"></div><div id="pitching" class="grid">載入中…</div></section>
+  <section id="sec-batting"><h2>📊 排行榜</h2>
+    <div class="tabs" role="tablist"><button role="tab" aria-selected="true" data-tab="bat">打擊</button><button role="tab" aria-selected="false" data-tab="pit">投手</button></div>
+    <div class="tabp" id="tab-bat"><div class="status" id="st-batting"></div><div id="batting" class="grid">載入中…</div></div>
+    <div class="tabp" id="tab-pit" hidden><div class="status" id="st-pitching"></div><div id="pitching" class="grid">載入中…</div></div></section>
 </main>
+<!-- 手機底部固定導覽列（寬度小於 768px 才顯示） -->
+<nav id="bottomnav" aria-label="主選單"><a href="#sec-predict" data-sec="sec-predict"><span class="ic" aria-hidden="true">🎯</span><span>預測</span></a><a href="#sec-analysis" data-sec="sec-analysis"><span class="ic" aria-hidden="true">📝</span><span>賽後</span></a><a href="#sec-hit" data-sec="sec-hit"><span class="ic" aria-hidden="true">✅</span><span>命中率</span></a><a href="#sec-standings" data-sec="sec-standings"><span class="ic" aria-hidden="true">🏆</span><span>戰績</span></a><a href="#sec-batting" data-sec="sec-batting"><span class="ic" aria-hidden="true">📊</span><span>排行</span></a></nav>
 <script src="players.js"></script>
 <script src="app.js"></script>
 </body>

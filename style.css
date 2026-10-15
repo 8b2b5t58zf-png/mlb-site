@@ -88,3 +88,68 @@ table{font-size:14px;white-space:nowrap}
 .hl li{margin:4px 0}
 .full summary{cursor:pointer;font-weight:700;color:var(--c-brand);font-size:var(--fs-sm);padding:8px 0}
 article h3{font-size:var(--fs-md)}
+
+/* ===== 視覺規範 v1 補充變數 ===== */
+:root{--c-bg:#f5f7fa;--c-surface:#fff;--c-text:#1a2330;--c-border:#dde3ea;--c-win:#1b7f3a;--c-loss:#c62828;--c-focus:#ffb300;
+  --sp-1:4px;--sp-2:8px;--sp-3:12px;--sp-4:16px;--sp-6:24px;--nav-h:56px}
+body{background:var(--c-bg);color:var(--c-text)}
+a:focus-visible,button:focus-visible,summary:focus-visible{outline:2px solid var(--c-focus);outline-offset:2px}
+/* 預測卡（v2） */
+.pcard{padding:var(--sp-4);gap:var(--sp-2);border-color:var(--c-border);background:var(--c-surface)}
+.pcard .meta{font-size:var(--fs-sm)}
+.pcard .headline{font-size:var(--fs-xl)}
+.why{font-size:var(--fs-sm);line-height:1.7;margin:0;background:var(--c-bg);padding:var(--sp-2) var(--sp-3);border-radius:6px}
+.pbar-lab{display:flex;justify-content:space-between;font-size:var(--fs-sm);font-weight:700}
+.pbar{display:flex;height:10px;border-radius:6px;overflow:hidden;gap:2px}
+.pbar .fav{background:var(--c-brand)} .pbar .oth{background:var(--c-border)}
+.kp{margin:0;padding-left:22px;font-size:var(--fs-md);line-height:1.6} .kp li{margin:2px 0}
+.kp-end{font-weight:800;font-size:var(--fs-md)}
+.ref{font-size:var(--fs-sm);color:var(--c-muted)}
+.desc{font-size:var(--fs-xs);color:var(--c-muted);font-weight:400}
+/* 修正過程圖 */
+.bridge{display:flex;flex-direction:column;gap:6px;margin:var(--sp-2) 0}
+.br-cap{font-size:var(--fs-xs);color:var(--c-muted)}
+.br-row{display:grid;grid-template-columns:5.5em 1fr 6.5em;align-items:center;gap:var(--sp-2);height:28px;font-size:var(--fs-sm)}
+.br-track{position:relative;height:100%;background:var(--c-bg);border-radius:4px}
+.br-seg{position:absolute;top:0;bottom:0;border-radius:4px}
+.br-seg.base{background:var(--c-brand)} .br-seg.final{background:var(--c-brand);outline:3px solid var(--c-text);outline-offset:-3px}
+.br-seg.up{background:var(--c-win)} .br-seg.down{background:var(--c-loss)} .br-seg.zero{background:var(--c-muted)}
+.br-v{text-align:right;font-weight:700;white-space:nowrap}
+.br-row.na{color:var(--c-muted)} .br-row.na .br-v{font-weight:400;font-size:var(--fs-xs);white-space:normal;line-height:1.2}
+/* 兩隊對比表 */
+.cmpt{width:100%;white-space:normal}
+.cmpt th{position:sticky;top:0;background:var(--c-surface)}
+.cmpt td{height:44px} .cmpt tr:nth-child(even) td{background:var(--c-bg)}
+.cmpt td:first-child,.cmpt th:first-child{text-align:left} .cmpt td:last-child,.cmpt th:last-child{text-align:right}
+.cmpt .mid{text-align:center}
+.sub{margin-top:var(--sp-6)}
+/* 排行榜切換 */
+.tabs{display:flex;gap:var(--sp-2);margin-bottom:var(--sp-3)}
+.tabs button{flex:1;min-height:44px;border:1px solid var(--c-border);background:var(--c-surface);border-radius:8px;font-size:var(--fs-md)}
+.tabs button[aria-selected="true"]{background:var(--c-brand);color:#fff;font-weight:700}
+/* ===== 導覽列 ===== */
+#topnav a[aria-current="page"]{background:#ffffff33;box-shadow:inset 0 -3px 0 #fff;font-weight:700}
+#bottomnav{display:none}
+@media(max-width:767px){
+  #topnav{display:none}
+  body{padding-bottom:calc(var(--nav-h) + env(safe-area-inset-bottom))}
+  html{scroll-padding-top:8px} section{scroll-margin-top:8px}
+  #bottomnav{display:flex;position:fixed;bottom:0;left:0;right:0;z-index:20;height:calc(var(--nav-h) + env(safe-area-inset-bottom));
+    padding-bottom:env(safe-area-inset-bottom);background:var(--c-surface);border-top:1px solid var(--c-border);box-shadow:0 -2px 6px #0000001a}
+  #bottomnav a{flex:1;min-width:48px;min-height:48px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+    color:var(--c-muted);text-decoration:none;font-size:var(--fs-xs);position:relative;transition:background .15s;white-space:nowrap}
+  #bottomnav .ic{font-size:24px;line-height:1}
+  #bottomnav a:active{background:#002d7214}
+  #bottomnav a[aria-current="page"]{color:var(--c-brand);font-weight:700}
+  #bottomnav a[aria-current="page"]::before{content:"";position:absolute;top:0;left:50%;width:24px;height:3px;margin-left:-12px;background:var(--c-brand);border-radius:0 0 3px 3px}
+}
+
+/* 為什麼這樣預測（v2 合併版）*/
+.why{background:var(--c-bg);border-radius:8px;padding:var(--sp-3);font-size:var(--fs-sm)}
+.why-h{font-size:var(--fs-xs);color:var(--c-muted)}
+.why-c{font-size:var(--fs-md);font-weight:800;margin:2px 0 var(--sp-2)}
+.why-l{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.why-l li{display:flex;gap:var(--sp-2);align-items:flex-start;line-height:1.5}
+.dl{flex:none;min-width:4.6em;text-align:center;font-weight:700;font-size:var(--fs-xs);padding:2px 6px;border-radius:10px;color:#fff}
+.dl.up{background:var(--c-win)} .dl.down{background:var(--c-loss)} .dl.zero{background:var(--c-muted)}
+.br-seg.start{background:var(--c-muted)} .br-row.muted{color:var(--c-muted)}

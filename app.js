@@ -110,13 +110,53 @@ const TEAM = {};
 function pyth(rs, ra){ return rs**1.83 / (rs**1.83 + ra**1.83); }
 // 每隊實力分數＝實際勝率與畢氏勝率各一半
 function strength(id){ const t = TEAM[id]; return 0.5*parseFloat(t.winningPercentage) + 0.5*pyth(t.runsScored, t.runsAllowed); }
-// Log5 公式：A 隊實力 a、B 隊實力 b 時，A 贏的機率；主場隊再加 4%
-function predictHome(hId, aId){
-  const h = strength(hId), a = strength(aId);
-  let p = (h - h*a) / (h + a - 2*h*a);
-  return Math.min(0.95, p + 0.04);
+// ===== 預測模型 v2（依數據分析師 2026 例行賽回測建議）=====
+// 步驟：① 兩隊戰績 Log5 → 縮回 50% 附近（基礎勝率）② 主場加成 ③ 先發投手 ERA、WHIP 差距
+const MODEL_V = "v2";
+const LG = {era:4.20, whip:1.30, reg:40};   // 聯盟平均 ERA、WHIP；投手數據先加 40 局平均表現（往平均拉回）
+const sig = x => 1/(1+Math.exp(-x)), logit = p => Math.log(p/(1-p));
+function log5(h, a){ return (h - h*a) / (h + a - 2*h*a); }
+// 局數 "112.1" 代表 112 又 1/3 局
+const ipNum = s => { const [a,b] = String(s).split("."); return +a + (+b||0)/3; };
+const regERA  = s => (9*s.er + LG.era*LG.reg) / (s.ip + LG.reg);
+const regWHIP = s => (s.h + s.bb + LG.whip*LG.reg) / (s.ip + LG.reg);
+let FIPC = null;   // FIP 常數（由全聯盟數據算出）
+const fip = s => s.ip>0 && FIPC!==null ? (13*s.hr + 3*(s.bb+s.hbp) - 2*s.so)/s.ip + FIPC : null;
+
+// 算出主隊勝率與逐步差值（依 report.md：起點 50% → 戰績 → 主場 → 先發；四捨五入到 0.1%，加總等於最終）
+function modelV2(hId, aId, hp, ap){
+  const xb = 0.250*logit(log5(strength(hId), strength(aId)));
+  const used = !!(hp && ap);
+  const xs = used ? 0.137*(regERA(ap)-regERA(hp)) + 0.606*(regWHIP(ap)-regWHIP(hp)) : 0;
+  const q1 = sig(xb), q2 = sig(xb+0.082), q3 = sig(xb+0.082+xs);
+  const R1 = Math.round(q1*1000), R2 = Math.round(q2*1000), F = Math.round(q3*1000);
+  return {final:q3, used, d1:(R1-500)/10, d2:(R2-R1)/10, d3:(F-R2)/10, F:F/10};
 }
-// 把 UTC 時間轉成台灣時間字串
+
+// 抓先發投手本季成績（若有轉隊，取全季合計）
+const PSTAT = {};
+async function loadPitchers(ids){
+  ids = ids.filter(id => id && !(id in PSTAT));
+  if(!ids.length) return;
+  const d = await getJSON(`${API}/people?personIds=${ids.join(",")}&hydrate=stats(group=[pitching],type=[season],season=${season})`);
+  for(const p of d.people||[]){
+    const sp = (p.stats&&p.stats[0]&&p.stats[0].splits)||[];
+    const tot = sp.find(x=>!x.team) ; const list = tot ? [tot] : sp;
+    const s = {gs:0,ip:0,er:0,h:0,bb:0,hbp:0,hr:0,so:0};
+    for(const x of list){ const t=x.stat; s.gs+=t.gamesStarted||0; s.ip+=ipNum(t.inningsPitched||0); s.er+=t.earnedRuns||0; s.h+=t.hits||0; s.bb+=t.baseOnBalls||0; s.hbp+=t.hitByPitch||0; s.hr+=t.homeRuns||0; s.so+=t.strikeOuts||0; }
+    s.era = list.length===1 ? list[0].stat.era : (s.ip? (9*s.er/s.ip).toFixed(2):"-");
+    s.whip = list.length===1 ? list[0].stat.whip : (s.ip? ((s.h+s.bb)/s.ip).toFixed(2):"-");
+    PSTAT[p.id] = s;
+  }
+}
+async function loadFIPC(){
+  if(FIPC!==null) return;
+  const d = await getJSON(`${API}/teams/stats?season=${season}&group=pitching&stats=season&sportId=1`);
+  let ip=0,er=0,hr=0,bb=0,hbp=0,so=0;
+  for(const x of d.stats[0].splits){ const t=x.stat; ip+=ipNum(t.inningsPitched); er+=t.earnedRuns; hr+=t.homeRuns; bb+=t.baseOnBalls; hbp+=t.hitByPitch; so+=t.strikeOuts; }
+  FIPC = 9*er/ip - (13*hr + 3*(bb+hbp) - 2*so)/ip;
+}
+
 // 季後賽系列名稱中文化
 const SERIES = {"World Series":"世界大賽","AL Championship Series":"美聯冠軍賽","NL Championship Series":"國聯冠軍賽","AL Division Series":"美聯分區系列賽","NL Division Series":"國聯分區系列賽","AL Wild Card Series":"美聯外卡賽","NL Wild Card Series":"國聯外卡賽"};
 const sz = s => SERIES[s] || s;
@@ -127,47 +167,119 @@ async function loadGames(){
   const fmt = d => d.toISOString().slice(0,10);
   const now = new Date();
   const s = fmt(new Date(now - 14*864e5)), e = fmt(new Date(+now + 7*864e5));
-  const d = await getJSON(`${API}/schedule?sportId=1&startDate=${s}&endDate=${e}&hydrate=linescore,probablePitcher,decisions,team,seriesStatus`);
+  const d = await getJSON(`${API}/schedule?sportId=1&startDate=${s}&endDate=${e}&hydrate=linescore,probablePitcher,decisions,team,seriesStatus,weather`);
   const games = (d.dates||[]).flatMap(x=>x.games);
   const done = games.filter(g=>g.status.abstractGameState==="Final").reverse().slice(0,5); // 最近 5 場已完賽
   const next = games.filter(g=>g.status.abstractGameState==="Preview").slice(0,4);         // 接下來 4 場
-  renderPredict(next.length ? next : done, !next.length);
+  const show = next.length ? next : done;
+  // 先抓先發投手成績與 FIP 常數，再畫預測卡
+  await Promise.all([loadFIPC(), loadPitchers(show.flatMap(g=>[g.teams.home.probablePitcher, g.teams.away.probablePitcher]).filter(Boolean).map(p=>p.id))]);
+  renderPredict(show, !next.length);
   await renderAnalysis(done);
 }
 
 // 畫出預測卡片
-// 30 隊代表色（球隊主色）
-const COLOR = {108:"#BA0021",109:"#A71930",110:"#DF4601",111:"#BD3039",112:"#0E3386",113:"#C6011F",114:"#00385D",115:"#33006F",
-116:"#0C2340",117:"#EB6E1F",118:"#004687",119:"#005A9C",120:"#AB0003",121:"#FF5910",133:"#003831",134:"#27251F",135:"#2F241D",
-136:"#005C5C",137:"#FD5A1E",138:"#C41E3A",139:"#092C5C",140:"#003278",141:"#134A8E",142:"#002B5C",143:"#E81828",144:"#CE1141",
-145:"#27251F",146:"#00A3E0",147:"#0C2340",158:"#12284B"};
 // 信心分級（看好方的機率）
 function tier(p){
   if(p >= 0.60) return ["strong","💪 很有把握"];
   if(p >= 0.55) return ["lean","👍 略佔優勢"];
   return ["toss","⚖️ 五五波"];
 }
-// 畫出預測卡片：大標題＋信心標籤＋左右對比條
+// 修正過程圖（從看好方的角度）：起點 50% → 戰績 → 主場 → 先發 → 最終
+function favSteps(m, favHome){
+  const k = favHome ? 1 : -1;
+  return {d1:k*m.d1, d2:k*m.d2, d3:k*m.d3, F: favHome ? m.F : Math.round((100-m.F)*10)/10};
+}
+const dCls = v => Math.abs(v) < 0.05 ? "zero" : v > 0 ? "up" : "down";
+const dTxt = v => Math.abs(v) < 0.05 ? "±0.0%" : (v>0?"▲+":"▼−") + Math.abs(v).toFixed(1) + "%";
+function bridge(m, s, fav){
+  const X = v => Math.max(0, Math.min(100, (v-35)/30*100));   // 顯示範圍 35%～65%
+  const seg = (from, to, cls) => `<span class="br-seg ${cls}" style="left:${X(Math.min(from,to))}%;width:${Math.max(X(Math.max(from,to))-X(Math.min(from,to)),0.8)}%"></span>`;
+  const row = (label, from, to, cls, val, extra="") => `<div class="br-row ${extra}"><span class="br-l">${label}</span><span class="br-track">${seg(from,to,cls)}</span><span class="br-v">${val}</span></div>`;
+  const p1 = 50+s.d1, p2 = p1+s.d2;
+  return `<div class="bridge"><div class="br-cap">${ts(fav)}（看好方）勝率的計算過程</div>
+    ${row("起點", 35, 50, "start", "50.0%", "muted")}
+    ${row("戰績", 50, p1, dCls(s.d1), dTxt(s.d1))}
+    ${row("主場", p1, p2, dCls(s.d2), dTxt(s.d2))}
+    ${m.used ? row("先發投手", p2, s.F, dCls(s.d3), dTxt(s.d3)) : `<div class="br-row na"><span class="br-l">先發投手</span><span class="br-track"></span><span class="br-v">資料不足，未調整</span></div>`}
+    ${row("最終勝率", 35, s.F, "final", s.F.toFixed(1)+"%")}</div>`;
+}
+
+// 「為什麼這樣預測」：結論句＋三條（戰績、主場、先發），數字與修正過程圖相同
+function whyBlock(A, H, m, s, ap, hp, aP, hP, fav, fp){
+  const favHome = fav.id === H.id, other = favHome ? A : H;
+  const items = [["戰績", s.d1], ["主場", s.d2], ["先發投手", m.used ? s.d3 : 0]];
+  const big = items.reduce((x,y) => Math.abs(y[1]) > Math.abs(x[1]) ? y : x);
+  const head = items.every(x => Math.abs(x[1]) < 2) ? `兩隊條件接近，${ts(fav)}僅以 ${fp}% 些微看好` : `看好${ts(fav)} ${fp}%，主要靠${big[0]}`;
+  const li = (v, txt, na) => `<li><span class="dl ${na?"zero":dCls(v)}">${na?"－":dTxt(v)}</span><span>${txt}</span></li>`;
+  // ① 戰績：m.d1 是主隊角度，正值代表主隊戰績較好
+  let t1;
+  if(Math.abs(s.d1) < 1) t1 = "戰績：兩隊戰績相近，影響不大";
+  else { const X = m.d1 > 0 ? H : A, Y = m.d1 > 0 ? A : H, t = TEAM[X.id]; t1 = `戰績：${ts(X)}本季 ${t.wins}勝${t.losses}敗，整體實力較${ts(Y)}佳`; }
+  // ② 主場
+  const t2 = `主場：${ts(H)}主場作戰`;
+  // ③ 先發
+  let t3;
+  if(!m.used) t3 = "先發：投手未公布，資料不足，未調整";
+  else {
+    const fa = `${pn(aP)}（ERA ${ap.era}、WHIP ${ap.whip}）`, fh = `${pn(hP)}（ERA ${hp.era}、WHIP ${hp.whip}）`;
+    t3 = Math.abs(m.d3) < 0.05 ? `先發：${fa}與${fh}數據相近` : m.d3 > 0 ? `先發：${fh}優於${fa}` : `先發：${fa}優於${fh}`;
+    if(ap.gs < 3 || hp.gs < 3) t3 += "（出賽少，數據已往聯盟平均修正）";
+  }
+  return `<div class="why"><div class="why-h">為什麼這樣預測？</div><div class="why-c">${head}</div>
+    <ul class="why-l">${li(s.d1, t1)}${li(s.d2, t2)}${li(s.d3, t3, !m.used)}</ul></div>`;
+}
+
+// 兩隊對比表：較佳一方加粗並標 ◀ ▶
+function compare(A, H, ap, hp){
+  const ta = TEAM[A.id], th = TEAM[H.id];
+  const r = (name, desc, av, hv, better) => {   // better: "a" / "h" / ""
+    const L = better==="a" ? `<b>◀ ${av}</b>` : av, R = better==="h" ? `<b>${hv} ▶</b>` : hv;
+    return `<tr><td>${L}</td><td class="mid">${name}<div class="desc">${desc}</div></td><td>${R}</td></tr>`;
+  };
+  const cmpv = (a,h,low) => a==null||h==null||a===h ? "" : ((low ? a<h : a>h) ? "a":"h");
+  let s = `<table class="cmpt"><thead><tr><th>客 ${ts(A)}</th><th class="mid">指標</th><th>主 ${ts(H)}</th></tr></thead><tbody>`;
+  s += r("戰績", "本季例行賽勝敗場數", `${ta.wins}勝${ta.losses}敗`, `${th.wins}勝${th.losses}敗`, cmpv(+ta.winningPercentage, +th.winningPercentage));
+  s += r("得分", "整季總得分，越多越好", ta.runsScored, th.runsScored, cmpv(ta.runsScored, th.runsScored));
+  s += r("失分", "整季總失分，越少越好", ta.runsAllowed, th.runsAllowed, cmpv(ta.runsAllowed, th.runsAllowed, true));
+  if(ap && hp){
+    const fa = fip(ap), fh = fip(hp);
+    s += r("先發 ERA", "每 9 局被打回的自責分，越低越好", ap.era, hp.era, cmpv(+ap.era, +hp.era, true));
+    s += r("先發 WHIP", "平均每局讓幾人上壘（安打＋保送），越低越好", ap.whip, hp.whip, cmpv(+ap.whip, +hp.whip, true));
+    s += r("先發 FIP", "只看三振、保送、全壘打的失分能力，越低越好", fa==null?"-":fa.toFixed(2), fh==null?"-":fh.toFixed(2), cmpv(fa, fh, true));
+    s += r("先發場數", "本季先發次數，場數少時數據會往聯盟平均修正", ap.gs, hp.gs, "");
+  }
+  return s + `</tbody></table>`;
+}
+
+
+
+// 畫出預測卡片
 function renderPredict(games, isPast){
   let html = isPast ? "<p>目前沒有即將開打的比賽，改顯示最近比賽的賽前估算：</p>" : "";
   for(const g of games){
     const H = g.teams.home, A = g.teams.away;
     if(!TEAM[H.team.id] || !TEAM[A.team.id]) continue;
-    const p = predictHome(H.team.id, A.team.id), hp = Math.round(p*100), ap = 100-hp;
-    const favHome = hp >= ap, fp = Math.max(hp, ap), fav = favHome ? H.team : A.team;
+    const aP = A.probablePitcher, hP = H.probablePitcher;
+    const ap = aP && PSTAT[aP.id], hp = hP && PSTAT[hP.id];
+    const m = modelV2(H.team.id, A.team.id, hp, ap);
+    const hpct = Math.round(m.F), apct = 100 - hpct;  // 長條用整數 %
+    const favHome = hpct >= apct, fp = Math.max(hpct, apct), fav = favHome ? H.team : A.team;
     const [tc, tl] = tier(fp/100);
-    const pp = x => x.probablePitcher ? pn(x.probablePitcher) : "未公布";
+    const st = favSteps(m, favHome);
+    const w = g.weather && g.weather.condition ? `ℹ️ 參考資訊：天氣 ${g.weather.condition}${g.weather.temp?`，氣溫 ${Math.round((g.weather.temp-32)*5/9)}°C`:""}（不列入勝率計算）` : "";
     html += `<div class="pcard">
-      <div class="meta">${tw(g.gameDate)}（台灣時間）${g.seriesStatus ? "｜"+sz(g.seriesStatus.description) : ""}</div>
+      <div class="meta">客 ${tn(A.team)} @ 主 ${tn(H.team)}<br>${tw(g.gameDate)}（台灣時間）${g.seriesStatus ? "｜"+sz(g.seriesStatus.description) : ""}</div>
       <div class="headline">看好：${tn(fav)} ${fp}%</div>
       <div><span class="tier ${tc}">${tl}</span></div>
-      <div class="vs"><span>客 ${tn(A.team)}</span><span>主 ${tn(H.team)}</span></div>
-      <div class="cmp" role="img" aria-label="${tn(A.team)} ${ap}%，${tn(H.team)} ${hp}%">
-        <div class="away${favHome?"":" fav"}" style="width:${ap}%;background:${COLOR[A.team.id]||"#666"}">${ts(A.team)} ${ap}%</div>
-        <div class="home${favHome?" fav":""}" style="width:${hp}%;background:${COLOR[H.team.id]||"#666"}">${ts(H.team)} ${hp}%</div>
-      </div>
-      <div class="detail">預定先發：${ts(A.team)} ${pp(A)}／${ts(H.team)} ${pp(H)}<br>
-        實力分數：${ts(A.team)} ${strength(A.team.id).toFixed(3)}、${ts(H.team)} ${strength(H.team.id).toFixed(3)}</div>
+      <div class="pbar-lab"><span>客 ${ts(A.team)} ${apct}%</span><span>主 ${ts(H.team)} ${hpct}%</span></div>
+      <div class="pbar" role="img" aria-label="${tn(A.team)} ${apct}%，${tn(H.team)} ${hpct}%">
+        <div class="${favHome?"oth":"fav"}" style="width:${apct}%"></div><div class="${favHome?"fav":"oth"}" style="width:${hpct}%"></div></div>
+      ${whyBlock(A.team, H.team, m, st, ap, hp, aP, hP, fav, fp)}
+      <details class="algo"><summary>🔍 看算法 ▾</summary>${bridge(m, st, fav)}
+        <p class="desc">戰績：兩隊實力分數（勝率與畢氏期望勝率各半）用 Log5 比較，再依回測縮回 50% 附近；主場與先發投手依 2026 例行賽回測校正。三格差值依序計算，加總等於最終勝率。模型 ${MODEL_V}。</p></details>
+      <details class="algo"><summary>📊 兩隊數據對比 ▾</summary>${compare(A.team, H.team, ap, hp)}</details>
+      ${w ? `<div class="ref">${w}</div>` : ""}
     </div>`;
   }
   document.getElementById("predict").innerHTML = html || "查無比賽";
@@ -204,31 +316,34 @@ async function renderAnalysis(games){
     reasons.push(`關鍵在第 ${big.num} 局，${wName} 單局攻下 ${big[W].runs} 分。`);
     if(L.teams[W].hits !== L.teams[Lo].hits) reasons.push(`安打數 ${L.teams[W].hits} 比 ${L.teams[Lo].hits}，${L.teams[W].hits>L.teams[Lo].hits?"勝方打線更有效率":"勝方雖安打較少，但把握住得分機會"}。`);
     if(L.teams[Lo].errors>0) reasons.push(`${lName} 出現 ${L.teams[Lo].errors} 次失誤。`);
-    // ===== 三行重點：全部由比賽數據依規則組成，不加任何臆測 =====
-    const ws = sp(W).stats.pitching, wsName = pn(sp(W).person);
+    // ===== 三行重點（依內容規範：①打擊 ②先發 ③牛棚/終結；沒資料就跳過）=====
+    const sW = g.teams[W].score, sL = g.teams[Lo].score, score = `${sW} 比 ${sL}`;
     const wb = t.batters.map(id=>t.players["ID"+id]).filter(p=>p.stats.batting && p.stats.batting.atBats>0);
-    const hr = wb.filter(p=>p.stats.batting.homeRuns>0).sort((x,y)=>y.stats.batting.rbi-x.stats.batting.rbi)[0];
-    const rbiMan = wb.filter(p=>p.stats.batting.rbi>=2).sort((x,y)=>y.stats.batting.rbi-x.stats.batting.rbi)[0];
-    const key = hr || rbiMan;
-    // 第一行：關鍵局＋關鍵一擊
-    let h1 = big[W].runs>1 ? `${wName}第 ${big.num} 局一口氣攻下 ${big[W].runs} 分；` : `${wName}第 ${big.num} 局攻下關鍵 1 分；`;
-    if(hr) h1 += `${pn(hr.person)}${hr.stats.batting.homeRuns>1?`雙響砲`:`開轟`}，全場貢獻 ${hr.stats.batting.rbi} 分打點！`;
-    else if(rbiMan) h1 += `${pn(rbiMan.person)}全場 ${rbiMan.stats.batting.hits} 安 ${rbiMan.stats.batting.rbi} 分打點，火力全開！`;
-    else h1 += `一舉拿下比賽主導權！`;
-    // 第二行：勝方先發投手
-    const ip = parseFloat(ws.inningsPitched);
-    let h2 = `先發 ${wsName} 主投 ${ws.inningsPitched} 局${ws.runs===0?"無失分":`只失 ${ws.earnedRuns} 分自責`}、送出 ${ws.strikeOuts} 次三振`;
-    h2 += ip>=6 && ws.earnedRuns<=3 ? "，穩穩守住場面。" : ip<5 ? "，之後交給牛棚接手。" : "，交出稱職內容。";
-    // 第三行：牛棚／救援，或敗方失誤
-    const bpRuns = t.pitchers.slice(1).reduce((s,id)=>s+(t.players["ID"+id].stats.pitching.runs||0),0);
-    const bpN = t.pitchers.length-1;
-    let h3;
-    if(g.decisions && g.decisions.save) h3 = `終局由 ${pn(g.decisions.save)} 關門拿下救援成功${bpRuns===0?`，牛棚 ${bpN} 位投手零失分`:""}，${wName}守住勝利！`;
-    else if(L.teams[Lo].errors>0) h3 = `${lName}全場出現 ${L.teams[Lo].errors} 次失誤，防守失誤讓對手有機可乘。`;
-    else if(bpN>0) h3 = `牛棚 ${bpN} 位投手接力${bpRuns===0?"零失分":`共失 ${bpRuns} 分`}，終場 ${g.teams[W].score} 比 ${g.teams[Lo].score} 拿下勝利。`;
-    else h3 = `${wsName} 一人投完全場，終場 ${g.teams[W].score} 比 ${g.teams[Lo].score} 收下勝利！`;
+    const byRbi = (x,y)=>y.stats.batting.rbi-x.stats.batting.rbi;
+    const hr2 = wb.filter(p=>p.stats.batting.homeRuns>=2).sort(byRbi)[0];
+    const hr1 = wb.filter(p=>p.stats.batting.homeRuns===1).sort(byRbi)[0];
+    const rbiMan = wb.slice().sort(byRbi)[0];
+    const HL = [];
+    // ① 勝負關鍵打擊
+    if(hr2) HL.push(`${pn(hr2.person)}雙響砲，貢獻 ${hr2.stats.batting.rbi} 分打點`);
+    else if(hr1) HL.push(`${pn(hr1.person)}開轟，全場 ${hr1.stats.batting.rbi} 分打點`);
+    else if(rbiMan && rbiMan.stats.batting.rbi>=2) HL.push(`${pn(rbiMan.person)}${rbiMan.stats.batting.hits} 安 ${rbiMan.stats.batting.rbi} 打點，打線核心`);
+    else if(sW-sL===1) HL.push(`${ts(g.teams[W].team)}以 ${score} 一分險勝`);
+    else if(sW-sL>=5) HL.push(`${ts(g.teams[W].team)}打線爆發，${score} 大勝`);
+    // ② 先發投手
+    const wsP = sp(W), ws = wsP.stats.pitching, dec = g.decisions || {};
+    const lp = dec.loser && box.teams[Lo].players["ID"+dec.loser.id];
+    if(dec.winner && dec.winner.id===wsP.person.id && ipNum(ws.inningsPitched)>=6 && ws.earnedRuns<=3) HL.push(`${pn(wsP.person)}投 ${ws.inningsPitched} 局失 ${ws.earnedRuns} 分，優質先發拿下勝投`);
+    else if(ws.strikeOuts>=8) HL.push(`${pn(wsP.person)}飆 ${ws.strikeOuts} 次三振`);
+    else if(lp && lp.stats.pitching.earnedRuns>=5) HL.push(`${pn(lp.person)}${lp.stats.pitching.inningsPitched} 局失 ${lp.stats.pitching.earnedRuns} 分，吞下敗投`);
+    // ③ 牛棚／終結
+    const bpRuns = t.pitchers.slice(1).reduce((s,id)=>s+(t.players["ID"+id].stats.pitching.runs||0),0), bpN = t.pitchers.length-1;
+    if(dec.save) HL.push(`${pn(dec.save)}關門，拿下救援成功`);
+    else if(bpN>0 && bpRuns===0) HL.push(`牛棚 ${bpN} 位投手零失分`);
+    // 驚嘆號一篇最多一個：只加在第一條
+    if(HL.length) HL[0] += "！";
     html += `<article><h3>${tw(g.gameDate)}｜${tn(A.team)} ${A.score} : ${H.score} ${tn(H.team)}</h3>
-      <div class="hl"><div class="hl-title">⚡ 三行重點</div><ol><li>${h1}</li><li>${h2}</li><li>${h3}</li></ol></div>
+      <div class="hl"><div class="hl-title">⚡ 三行重點</div><ol>${HL.map(x=>`<li>${x}</li>`).join("")}</ol></div>
       <details class="full"><summary>📖 看完整分析</summary>
       ${ls}
       <p><b>${wName} 為什麼贏？</b>${reasons.join("")}</p>
@@ -264,6 +379,22 @@ async function secStandings(){ await loadStandings(); }
 async function secGames(){ if(!Object.keys(TEAM).length) await loadStandings(); await loadGames(); }
 async function secBatting(){ await loadLeaders({homeRuns:"全壘打",battingAverage:"打擊率",runsBattedIn:"打點"},"hitting","batting"); }
 async function secPitching(){ await loadLeaders({earnedRunAverage:"防禦率",strikeouts:"三振",wins:"勝投"},"pitching","pitching"); }
+
+// ===== 導覽列：捲動時自動標示目前區塊 =====
+function setupNav(){
+  const links = document.querySelectorAll("#topnav a, #bottomnav a");
+  const mark = id => links.forEach(a => a.dataset.sec===id ? a.setAttribute("aria-current","page") : a.removeAttribute("aria-current"));
+  const io = new IntersectionObserver(es => { es.forEach(e => { if(e.isIntersecting) mark(e.target.id); }); }, {rootMargin:"-40% 0px -55% 0px"});
+  ["sec-predict","sec-analysis","sec-hit","sec-standings","sec-batting"].forEach(id => io.observe(document.getElementById(id)));
+  mark("sec-predict");
+  // 排行榜「打擊／投手」切換
+  document.querySelectorAll(".tabs button").forEach(b => b.onclick = () => {
+    document.querySelectorAll(".tabs button").forEach(x => x.setAttribute("aria-selected", x===b));
+    document.getElementById("tab-bat").hidden = b.dataset.tab!=="bat";
+    document.getElementById("tab-pit").hidden = b.dataset.tab!=="pit";
+  });
+}
+setupNav();
 
 // 主程式：先載戰績（預測要用），其餘區塊同時載入；任何一區失敗不影響其他區
 (async()=>{
