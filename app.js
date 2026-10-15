@@ -497,7 +497,7 @@ async function secPitching(){ await loadLeaders({earnedRunAverage:"防禦率",st
 // ===== 導覽列與聯盟切換 =====
 const NAVS = {
   mlb:[["sec-predict","預測"],["sec-analysis","賽後"],["sec-hit","命中率"],["sec-standings","戰績"],["sec-batting","排行"]],
-  nba:[["nsec-predict","預測"],["nsec-analysis","賽後"],["nsec-standings","戰績"]]};
+  nba:[["nsec-predict","預測"],["nsec-analysis","賽後"],["nsec-hit","命中率"],["nsec-standings","戰績"],["nsec-leaders","排行"]]};
 const ICON = {"預測":'<path d="M3 17l5-5 4 4 8-8"/><path d="M14 8h6v6"/>',"賽後":'<path d="M5 4h10l4 4v12H5z"/><path d="M8 12h8M8 16h6"/>',"命中率":'<circle cx="12" cy="12" r="8"/><path d="M8 12l3 3 5-6"/>',"戰績":'<path d="M8 4h8v5a4 4 0 01-8 0z"/><path d="M12 13v4M8 20h8"/>',"排行":'<path d="M5 20V12M12 20V5M19 20v-8"/>'};
 let LG_NOW = "mlb";
 function renderNav(){

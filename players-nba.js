@@ -61,6 +61,7 @@ const NBA_PN = {
 "Tobi Lawal":"拉瓦爾",
 "Trevon Brazile":"布拉吉爾",
 "Tristan Vukcevic":"武克切維奇",
-"Zach Collins":"柯林斯"
+"Zach Collins":"柯林斯",
+"Isaiah Collier":"柯里爾","Donovan Clingan":"克林根"
 };
 const npn = name => NBA_PN[name] || name;
