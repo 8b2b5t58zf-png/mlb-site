@@ -204,12 +204,38 @@ async function renderAnalysis(games){
     reasons.push(`關鍵在第 ${big.num} 局，${wName} 單局攻下 ${big[W].runs} 分。`);
     if(L.teams[W].hits !== L.teams[Lo].hits) reasons.push(`安打數 ${L.teams[W].hits} 比 ${L.teams[Lo].hits}，${L.teams[W].hits>L.teams[Lo].hits?"勝方打線更有效率":"勝方雖安打較少，但把握住得分機會"}。`);
     if(L.teams[Lo].errors>0) reasons.push(`${lName} 出現 ${L.teams[Lo].errors} 次失誤。`);
+    // ===== 三行重點：全部由比賽數據依規則組成，不加任何臆測 =====
+    const ws = sp(W).stats.pitching, wsName = pn(sp(W).person);
+    const wb = t.batters.map(id=>t.players["ID"+id]).filter(p=>p.stats.batting && p.stats.batting.atBats>0);
+    const hr = wb.filter(p=>p.stats.batting.homeRuns>0).sort((x,y)=>y.stats.batting.rbi-x.stats.batting.rbi)[0];
+    const rbiMan = wb.filter(p=>p.stats.batting.rbi>=2).sort((x,y)=>y.stats.batting.rbi-x.stats.batting.rbi)[0];
+    const key = hr || rbiMan;
+    // 第一行：關鍵局＋關鍵一擊
+    let h1 = big[W].runs>1 ? `${wName}第 ${big.num} 局一口氣攻下 ${big[W].runs} 分；` : `${wName}第 ${big.num} 局攻下關鍵 1 分；`;
+    if(hr) h1 += `${pn(hr.person)}${hr.stats.batting.homeRuns>1?`雙響砲`:`開轟`}，全場貢獻 ${hr.stats.batting.rbi} 分打點！`;
+    else if(rbiMan) h1 += `${pn(rbiMan.person)}全場 ${rbiMan.stats.batting.hits} 安 ${rbiMan.stats.batting.rbi} 分打點，火力全開！`;
+    else h1 += `一舉拿下比賽主導權！`;
+    // 第二行：勝方先發投手
+    const ip = parseFloat(ws.inningsPitched);
+    let h2 = `先發 ${wsName} 主投 ${ws.inningsPitched} 局${ws.runs===0?"無失分":`只失 ${ws.earnedRuns} 分自責`}、送出 ${ws.strikeOuts} 次三振`;
+    h2 += ip>=6 && ws.earnedRuns<=3 ? "，穩穩守住場面。" : ip<5 ? "，之後交給牛棚接手。" : "，交出稱職內容。";
+    // 第三行：牛棚／救援，或敗方失誤
+    const bpRuns = t.pitchers.slice(1).reduce((s,id)=>s+(t.players["ID"+id].stats.pitching.runs||0),0);
+    const bpN = t.pitchers.length-1;
+    let h3;
+    if(g.decisions && g.decisions.save) h3 = `終局由 ${pn(g.decisions.save)} 關門拿下救援成功${bpRuns===0?`，牛棚 ${bpN} 位投手零失分`:""}，${wName}守住勝利！`;
+    else if(L.teams[Lo].errors>0) h3 = `${lName}全場出現 ${L.teams[Lo].errors} 次失誤，防守失誤讓對手有機可乘。`;
+    else if(bpN>0) h3 = `牛棚 ${bpN} 位投手接力${bpRuns===0?"零失分":`共失 ${bpRuns} 分`}，終場 ${g.teams[W].score} 比 ${g.teams[Lo].score} 拿下勝利。`;
+    else h3 = `${wsName} 一人投完全場，終場 ${g.teams[W].score} 比 ${g.teams[Lo].score} 收下勝利！`;
     html += `<article><h3>${tw(g.gameDate)}｜${tn(A.team)} ${A.score} : ${H.score} ${tn(H.team)}</h3>
+      <div class="hl"><div class="hl-title">⚡ 三行重點</div><ol><li>${h1}</li><li>${h2}</li><li>${h3}</li></ol></div>
+      <details class="full"><summary>📖 看完整分析</summary>
       ${ls}
       <p><b>${wName} 為什麼贏？</b>${reasons.join("")}</p>
       <p><b>先發投手：</b>勝方 ${pLine(sp(W))}；敗方 ${pLine(sp(Lo))}。</p>
       ${hitters.length?`<p><b>勝方關鍵打者：</b>${hitters.join("、")}。</p>`:""}
       ${g.decisions?`<p><small>勝投：${(g.decisions.winner&&pn(g.decisions.winner))||"-"}｜敗投：${(g.decisions.loser&&pn(g.decisions.loser))||"-"}${g.decisions.save?"｜救援成功："+pn(g.decisions.save):""}</small></p>`:""}
+      </details>
     </article>`;
   }
   document.getElementById("analysis").innerHTML = html || "最近沒有已完賽的比賽";

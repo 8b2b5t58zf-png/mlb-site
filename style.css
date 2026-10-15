@@ -80,3 +80,11 @@ table{font-size:14px;white-space:nowrap}
 .algo ol{padding-left:20px;line-height:1.7}
 @media(min-width:768px){ .pcard .headline{font-size:26px} }
 .cmp .home{border-left:3px solid #fff} /* 兩隊顏色相近時也分得清 */
+
+/* ===== 賽後分析：三行重點 ===== */
+.hl{background:var(--c-lean-bg);border-radius:var(--radius);padding:10px 12px;margin:8px 0}
+.hl-title{font-size:var(--fs-sm);font-weight:800;color:var(--c-brand);margin-bottom:4px}
+.hl ol{margin:0;padding-left:22px;font-size:var(--fs-md);line-height:1.6}
+.hl li{margin:4px 0}
+.full summary{cursor:pointer;font-weight:700;color:var(--c-brand);font-size:var(--fs-sm);padding:8px 0}
+article h3{font-size:var(--fs-md)}
