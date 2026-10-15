@@ -149,11 +149,32 @@ async function loadPitchers(ids){
     PSTAT[p.id] = s;
   }
 }
+// 對戰看點用：球隊打擊（場均得分）、投手群 ERA、本季交手戰績（參考，不計入勝率）
+const TSTAT = {}, H2H = {};
+async function loadTeamHit(){
+  try{
+    const d = await getJSON(`${API}/teams/stats?season=${season}&group=hitting&stats=season&sportId=1`);
+    for(const x of d.stats[0].splits){ const t=x.stat; if(t.gamesPlayed) TSTAT[x.team.id] = Object.assign(TSTAT[x.team.id]||{}, {rpg:(t.runs/t.gamesPlayed).toFixed(2)}); }
+  }catch(e){}
+}
+async function loadH2H(aId, hId){
+  const k = aId+"-"+hId; if(k in H2H) return;
+  try{
+    const d = await getJSON(`${API}/schedule?sportId=1&season=${season}&gameType=R&teamId=${hId}&opponentId=${aId}`);
+    let hw=0, aw=0;
+    for(const g of (d.dates||[]).flatMap(x=>x.games)){
+      if(g.status.abstractGameState!=="Final") continue;
+      const hs = g.teams.home.team.id===hId ? g.teams.home : g.teams.away, as = hs===g.teams.home ? g.teams.away : g.teams.home;
+      if(hs.isWinner) hw++; else if(as.isWinner) aw++;
+    }
+    H2H[k] = hw+aw ? {hw, aw} : null;
+  }catch(e){ H2H[k] = null; }
+}
 async function loadFIPC(){
   if(FIPC!==null) return;
   const d = await getJSON(`${API}/teams/stats?season=${season}&group=pitching&stats=season&sportId=1`);
   let ip=0,er=0,hr=0,bb=0,hbp=0,so=0;
-  for(const x of d.stats[0].splits){ const t=x.stat; ip+=ipNum(t.inningsPitched); er+=t.earnedRuns; hr+=t.homeRuns; bb+=t.baseOnBalls; hbp+=t.hitByPitch; so+=t.strikeOuts; }
+  for(const x of d.stats[0].splits){ const t=x.stat; TSTAT[x.team.id] = Object.assign(TSTAT[x.team.id]||{}, {era:t.era}); ip+=ipNum(t.inningsPitched); er+=t.earnedRuns; hr+=t.homeRuns; bb+=t.baseOnBalls; hbp+=t.hitByPitch; so+=t.strikeOuts; }
   FIPC = 9*er/ip - (13*hr + 3*(bb+hbp) - 2*so)/ip;
 }
 
@@ -174,7 +195,7 @@ async function loadGames(){
   const show = next.length ? next : done;
   if(location.protocol !== "file:"){ try{ const r = await fetch("data/predictions.json?t="+Date.now()); if(r.ok) for(const x of (await r.json()).records) if(x.official) OFFICIAL[x.gamePk] = x.official; }catch(e){} }
   // 先抓先發投手成績與 FIP 常數，再畫預測卡
-  await Promise.all([loadFIPC(), loadPitchers(show.flatMap(g=>[g.teams.home.probablePitcher, g.teams.away.probablePitcher]).filter(Boolean).map(p=>p.id))]);
+  await Promise.all([loadFIPC(), loadTeamHit(), ...show.map(g=>loadH2H(g.teams.away.team.id, g.teams.home.team.id)), loadPitchers(show.flatMap(g=>[g.teams.home.probablePitcher, g.teams.away.probablePitcher]).filter(Boolean).map(p=>p.id))]);
   renderPredict(show, !next.length);
   await renderAnalysis(done);
 }
@@ -182,9 +203,9 @@ async function loadGames(){
 // 畫出預測卡片
 // 信心分級（看好方的機率）
 function tier(p){
-  if(p >= 0.60) return ["strong","💪 很有把握"];
-  if(p >= 0.55) return ["lean","👍 略佔優勢"];
-  return ["toss","⚖️ 五五波"];
+  if(p >= 0.60) return ["strong","💪 明顯看好"];
+  if(p >= 0.53) return ["lean","👍 略占上風"];
+  return ["toss","⚖️ 接近五五波"];
 }
 // 系列賽狀態（只用 API 的 seriesStatus）
 const NEXT = {"AL Wild Card Series":"美聯分區系列賽","NL Wild Card Series":"國聯分區系列賽","AL Division Series":"美聯冠軍賽","NL Division Series":"國聯冠軍賽","AL Championship Series":"世界大賽","NL Championship Series":"世界大賽"};
@@ -225,32 +246,58 @@ function bridge(m, s, fav){
 // 「為什麼這樣預測」：結論句＋三條（戰績、主場、先發），數字與修正過程圖相同
 let SS_NOW = null;
 const OFFICIAL = {};   // gamePk → 正式預測紀錄（判斷是否為舊版模型）
+// 數字小標籤：較佳一方加粗（客隊數字在前）
+function chip(label, av, hv, better){   // better: "a" / "h" / ""
+  if(av==null || hv==null || av==="-" || hv==="-") return "";
+  return `<span class="chip">${label} ${better==="a"?`<b>${av}</b>`:av} 對 ${better==="h"?`<b>${hv}</b>`:hv}</span>`;
+}
+const bt = (a,h,low) => a==null||h==null||isNaN(a)||isNaN(h)||a===h ? "" : ((low ? a<h : a>h) ? "a":"h");
+const sgn = v => (v>0?"+":"") + v;
+const homeRec = t => { const r = t && t.records && (t.records.splitRecords||[]).find(x=>x.type==="home"); return r ? r : null; };
 function whyBlock(A, H, m, s, ap, hp, aP, hP, fav, fp){
   const favHome = fav.id === H.id, other = favHome ? A : H;
+  const ta = TEAM[A.id], th = TEAM[H.id];
   const items = [["戰績", s.d1], ["主場", s.d2], ["先發投手", m.used ? s.d3 : 0]];
   const big = items.reduce((x,y) => Math.abs(y[1]) > Math.abs(x[1]) ? y : x);
   const head = fp === 50 ? "兩隊五五波，勝負難料" : items.every(x => Math.abs(x[1]) < 2) ? `兩隊條件接近，${ts(fav)}僅以 ${fp}% 些微看好` : `看好${ts(fav)} ${fp}%，主要靠${big[0]}`;
-  const li = (v, txt, na) => `<li><span class="dl ${na?"zero":dCls(v)}">${na?"未調整":dTxt(v)}</span><span>${txt}</span></li>`;
-  // ① 戰績：m.d1 是主隊角度，正值代表主隊戰績較好
+  const li = (v, txt, na, chips="") => `<li><span class="dl ${na?"zero":dCls(v)}">${na?"未調整":dTxt(v)}</span><span>${txt}${chips?`<span class="chips">${chips}</span>`:""}</span></li>`;
+  // ① 戰績
   let t1;
-  if(Math.abs(s.d1) < 1) t1 = "戰績：兩隊戰績相近，影響不大";
-  else { const X = m.d1 > 0 ? H : A, Y = m.d1 > 0 ? A : H, t = TEAM[X.id]; t1 = `戰績：${ts(X)}本季 ${t.wins}勝${t.losses}敗，整體實力較${ts(Y)}佳`; }
-  // ② 主場
-  const t2 = `主場：${ts(H)}主場作戰`;
+  const rdA = ta.runsScored-ta.runsAllowed, rdH = th.runsScored-th.runsAllowed;
+  if(Math.abs(s.d1) < 1) t1 = "戰績：兩隊整季實力相近，影響不大";
+  else { const X = m.d1 > 0 ? H : A, Y = m.d1 > 0 ? A : H; t1 = `戰績：${ts(X)}整季實力較${ts(Y)}佳`; }
+  const c1 = chip("戰績", `${ta.wins}-${ta.losses}`, `${th.wins}-${th.losses}`, bt(+ta.winningPercentage, +th.winningPercentage))
+           + chip("得失分差", sgn(rdA), sgn(rdH), bt(rdA, rdH));
+  // ② 主場：寫出主隊本季主場戰績
+  const hr = homeRec(th);
+  const t2 = hr ? `主場：${ts(H)}本季主場 ${hr.wins}勝${hr.losses}敗，回到主場作戰` : `主場：${ts(H)}主場作戰`;
   // ③ 先發
   let t3;
   if(!m.used) t3 = "先發：投手未公布，未調整";
   else if(Math.abs(m.d3) < 0.05) t3 = `先發：${pn(aP)}與${pn(hP)}數據相近`;
   else {
-    // ERA、WHIP 指向同一人 → 數據優於；指向不同人 → 互有優劣（▲▼ 照模型那一步標）
     const eraH = +hp.era < +ap.era, eraA = +ap.era < +hp.era, whH = +hp.whip < +ap.whip, whA = +ap.whip < +hp.whip;
-    const split = (eraH && whA) || (eraA && whH);
-    if(split) t3 = "先發對決互有優劣";
+    if((eraH && whA) || (eraA && whH)) t3 = `先發：${pn(aP)}與${pn(hP)}互有優劣`;
     else { const homeAdv = m.d3 > 0; t3 = `先發：${pn(homeAdv?hP:aP)}數據優於${pn(homeAdv?aP:hP)}`; }
   }
+  const c3 = m.used ? chip("防禦率", ap.era, hp.era, bt(+ap.era, +hp.era, true)) + chip("WHIP", ap.whip, hp.whip, bt(+ap.whip, +hp.whip, true)) : "";
+  // 爆冷提醒：只用劣勢方勝率與先發 ERA／WHIP（不使用近況）
+  let up = "";
+  if(fp !== 50){
+    const uS = favHome ? ap : hp, fS = favHome ? hp : ap, uP = favHome ? aP : hP;
+    const better = [];
+    if(uS && fS){ if(+uS.era < +fS.era) better.push("防禦率"); if(+uS.whip < +fS.whip) better.push("WHIP"); }
+    up = `⚠️ ${ts(other)}仍有 ${100-fp}% 勝率${better.length ? `，而且先發${pn(uP)}的${better.join("、")}較好` : ""}；看好的一方約每 10 場會輸 4 場，爆冷並不少見`;
+  }
+  // 對戰看點（參考，不計入勝率）
+  const sa = TSTAT[A.id]||{}, sh = TSTAT[H.id]||{}, h2 = H2H[A.id+"-"+H.id];
+  const look = chip("場均得分", sa.rpg, sh.rpg, bt(+sa.rpg, +sh.rpg)) + chip("投手群防禦率", sa.era, sh.era, bt(+sa.era, +sh.era, true))
+             + (h2 ? chip("本季交手", `${ts(A)}${h2.aw}勝`, `${ts(H)}${h2.hw}勝`, bt(h2.aw, h2.hw)) : "");
   const sp = seriesPre(SS_NOW);
   return `<div class="why"><div class="why-h">為什麼這樣預測？</div><div class="why-c">${head}</div>${sp?`<div class="why-s">${sp}</div>`:""}
-    <ul class="why-l">${li(s.d1, t1)}${li(s.d2, t2)}${li(s.d3, t3, !m.used)}</ul></div>`;
+    <ul class="why-l">${li(s.d1, t1, false, c1)}${li(s.d2, t2)}${li(s.d3, t3, !m.used, c3)}</ul>
+    ${up?`<div class="why-u">${up}</div>`:""}
+    ${look?`<div class="why-k"><div class="why-kh">對戰看點（參考，不計入勝率）</div><span class="chips">${look}</span></div>`:""}</div>`;
 }
 
 // 兩隊對比表：較佳一方加粗並標 ◀ ▶
@@ -369,7 +416,7 @@ async function renderAnalysis(games){
     // 驚嘆號一篇最多一個：只加在第一條
     if(HL.length) HL[0] += "！";
     const spost = seriesPost(g.seriesStatus);
-    html += `<article><h3>${tw(g.gameDate)}｜${tn(A.team)} ${A.score} : ${H.score} ${tn(H.team)}</h3>
+    html += `<article><h3><span class="ah-d">${tw(g.gameDate)}</span><span class="ah-s">${tn(A.team)} ${A.score} : ${H.score} ${tn(H.team)}</span></h3>
       <div class="hl"><div class="hl-title">⚡ 三行重點</div>${spost?`<div class="hl-s">🏆 ${spost}</div>`:""}<ol>${HL.map(x=>`<li>${x}</li>`).join("")}</ol></div>
       <details class="full"><summary>📖 看完整分析</summary>
       ${ls}
@@ -383,6 +430,10 @@ async function renderAnalysis(games){
   document.getElementById("analysis").innerHTML = html || "最近沒有已完賽的比賽";
 }
 
+// "2026-10-18 08:00 (UTC+8)" → "10/18 上午08:00"（與全站時間格式一致）
+const fmtT = s => { const m = String(s).match(/(\d+)-(\d+)-(\d+) (\d+):(\d+)/); if(!m) return s; const h=+m[4]; return `${+m[2]}/${+m[3]} ${h<12?"上午":"下午"}${String(h%12||12).padStart(2,"0")}:${m[5]}`; };
+const FULL2SHORT = Object.fromEntries(Object.values(ZH));
+const short = n => FULL2SHORT[n] || n;
 // 預測命中率：讀取網站上的 data/predictions.json
 async function secHit(){
   const el = document.getElementById("hit");
@@ -398,20 +449,22 @@ async function secHit(){
   const vers = [...new Set([...off.map(ver), MODEL_V])].sort();
   const vline = v => { const dv = done.filter(x=>ver(x)===v), k = dv.length;
     return k >= GOAL ? `${v}：命中率 ${Math.round(dv.filter(x=>x.correct).length/k*100)}%（共 ${k} 場）` : `${v}：累積中（目前 ${k} 場，滿 ${GOAL} 場後顯示）`; };
-  let html = n >= GOAL
-    ? `<div class="hr-big">${Math.round(ok/n*100)}%</div><div class="hr-sub">命中率 ${Math.round(ok/n*100)}%（共 ${n} 場，模型 ${[...new Set(done.map(ver))].join("、")}）</div>`
-    : `<div class="hr-big muted">累積中</div><div class="hr-prog"><div class="hr-bar"><div style="width:${n/GOAL*100}%"></div></div><span>${n} / ${GOAL} 場</span></div>
-       <div class="hr-sub">累積中（目前 ${n} 場，滿 ${GOAL} 場後顯示）</div>`;
+  // 正式命中率以目前模型（v2）為準；舊版只留一行小字
+  const dv = done.filter(x=>ver(x)===MODEL_V), nv = dv.length, okv = dv.filter(x=>x.correct).length;
+  let html = nv >= GOAL
+    ? `<div class="hr-big">${Math.round(okv/nv*100)}%</div><div class="hr-sub">${MODEL_V} 命中率（共 ${nv} 場）</div>`
+    : `<div class="hr-big muted">累積中</div><div class="hr-prog"><div class="hr-bar"><div style="width:${nv/GOAL*100}%"></div></div><span>${MODEL_V}：${nv} / ${GOAL} 場</span></div>`;
   html += `<div class="hr-ref">2026 例行賽回測約 57.8%<br>季後賽場數少，正式命中率預計於 2027 例行賽累積後顯示</div>`;
-  html += `<div class="hr-vers">${vers.map(v=>`<span class="vp ${v}">${v}</span> ${vline(v).slice(3)}`).join("<br>")}</div>`;
-  html += `<p class="hr-upd">正式預測 ${off.length} 筆，等待結果 ${off.length - n} 筆｜最後更新：${d.updated.replace("(UTC+8)","（台灣時間）")}｜每小時記錄一次，開打前最後一筆為正式預測</p>`;
-  html += '<div style="overflow-x:auto"><table><tr><th>比賽時間</th><th>對戰（客 @ 主）</th><th>模型</th><th>預測勝方</th><th>預測勝率</th><th>實際比分</th><th>結果</th></tr>';
+  const old = vers.filter(v=>v!==MODEL_V).map(v=>`舊版 ${v}：${off.filter(x=>ver(x)===v).length} 場，不列入正式命中率`);
+  if(old.length) html += `<div class="hr-vers">${old.join("<br>")}</div>`;
+  html += `<p class="hr-upd">最後更新：${fmtT(d.updated)}（台灣時間）</p>`;
+  html += '<div class="tblwrap" style="overflow-x:auto"><table class="hrt"><tr><th>比賽時間</th><th>對戰（客 @ 主）</th><th>模型</th><th>預測勝方</th><th>預測勝率</th><th>實際比分</th><th>結果</th></tr>';
   for(const x of d.records.slice().reverse().slice(0,15)){
     const snap = x.official || x.snapshots[x.snapshots.length-1], hp = snap.homeWinProb;
     const pw = hp >= 0.5 ? x.home : x.away, p = Math.max(hp, 1-hp);
     const tag = x.official ? "" : "（暫定）";
     const v = (snap.model||"").slice(0,2);
-    html += `<tr><td>${x.gameTime.replace(" (UTC+8)","")}</td><td>${x.away} @ ${x.home}</td><td><span class="vp ${v}">${v}</span></td><td>${pw}${tag}</td><td>${Math.round(p*100)}%</td><td>${x.final || "尚未開打／進行中"}</td><td>${x.correct === null ? "⏳" : x.correct ? "✅ 猜對" : "❌ 猜錯"}</td></tr>`;
+    html += `<tr><td class="nw">${fmtT(x.gameTime)}</td><td class="nw">${short(x.away)} @ ${short(x.home)}</td><td><span class="vp ${v}">${v}</span></td><td>${short(pw)}${tag}</td><td>${Math.round(p*100)}%</td><td>${x.final || "尚未開打／進行中"}</td><td>${x.correct === null ? "⏳" : x.correct ? "✅ 猜對" : "❌ 猜錯"}</td></tr>`;
   }
   el.innerHTML = html + "</table></div>";
 }
