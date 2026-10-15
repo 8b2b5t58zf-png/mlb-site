@@ -24,9 +24,13 @@ header h1{margin:0;color:var(--text);font-size:22px;font-weight:700;letter-spaci
 .brand{display:flex;align-items:center;gap:8px;white-space:nowrap;font-size:clamp(20px,6vw,28px)}
 .brand .logo{width:30px;height:30px;flex:none;background:#fff;border-radius:50%;padding:2px}
 .brand .sport{color:var(--gold);font-weight:600}
-.lgsw{display:inline-flex;margin-bottom:8px;border:1px solid var(--line);border-radius:var(--radius-pill);overflow:hidden}
-.lgsw button{background:none;border:0;color:var(--text2);font-size:13px;font-weight:600;padding:4px 10px;min-height:28px;cursor:pointer}
-.lgsw button[aria-selected="true"]{background:var(--gold);color:var(--bg)}
+#lgbar{position:sticky;top:0;z-index:15;background:rgba(13,17,23,.96);backdrop-filter:blur(8px);padding:8px 16px}
+.lgsw{display:flex;gap:8px;width:100%}
+.lgsw button{flex:1;height:44px;border-radius:var(--radius-pill);background:#1c232d;border:1px solid var(--line);color:#8b949e;font-size:16px;font-weight:600;cursor:pointer}
+.lgsw button[aria-selected="true"]{background:#d4af37;border-color:#d4af37;color:#0d1117;font-weight:700}
+main section.tab-off{display:none}
+main section.tab-on{animation:tabfade .15s ease}
+@keyframes tabfade{from{opacity:0}to{opacity:1}}
 .tagline{margin:6px 0 0;color:var(--text);font-size:var(--fs-sm);font-weight:600}
 .tagline a{color:var(--link);font-weight:400;white-space:nowrap;text-decoration:none}
 .tagline-sub{margin:2px 0 0;color:var(--text2);font-size:var(--fs-xs)}
@@ -34,7 +38,7 @@ header h1{margin:0;color:var(--text);font-size:22px;font-weight:700;letter-spaci
 .tagline-link a{color:var(--link);font-weight:400;text-decoration:none}
 
 /* 導覽 */
-#topnav{position:sticky;top:0;z-index:10;display:flex;gap:4px;overflow-x:auto;white-space:nowrap;background:rgba(13,17,23,.94);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);padding:8px 16px}
+#topnav{position:sticky;top:60px;z-index:10;display:flex;gap:4px;overflow-x:auto;white-space:nowrap;background:rgba(13,17,23,.94);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);padding:8px 16px}
 #topnav a{flex:none;color:var(--text2);text-decoration:none;font-size:13px;padding:4px 8px}
 #topnav a[aria-current="page"]{color:var(--gold);font-weight:700;box-shadow:inset 0 -2px 0 var(--gold)}
 #bottomnav{display:none}
