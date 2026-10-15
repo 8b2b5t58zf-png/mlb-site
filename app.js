@@ -254,23 +254,42 @@ function chip(label, av, hv, better){   // better: "a" / "h" / ""
 const bt = (a,h,low) => a==null||h==null||isNaN(a)||isNaN(h)||a===h ? "" : ((low ? a<h : a>h) ? "a":"h");
 const sgn = v => (v>0?"+":"") + v;
 const homeRec = t => { const r = t && t.records && (t.records.splitRecords||[]).find(x=>x.type==="home"); return r ? r : null; };
+const sd = arr => { const v = arr.filter(x=>!isNaN(x)); if(v.length<2) return null; const m = v.reduce((a,b)=>a+b,0)/v.length; return Math.sqrt(v.reduce((a,b)=>a+(b-m)**2,0)/v.length); };
+// 對戰看點：回傳 [{txt, z}]，z＝差距÷聯盟標準差（用來挑焦點；交手、主場戰績不參與挑選）
+function matchup(A, H){
+  const sa = TSTAT[A.id]||{}, sh = TSTAT[H.id]||{}, all = Object.values(TSTAT), out = [];
+  if(sa.rpg && sh.rpg && sa.rpg!==sh.rpg){ const X = +sa.rpg > +sh.rpg ? [A,sa,sh] : [H,sh,sa], s0 = sd(all.map(t=>+t.rpg));
+    out.push({z: s0 ? Math.abs(sa.rpg-sh.rpg)/s0 : 0, txt:`${ts(X[0])}打線每場平均多得 ${(X[1].rpg-X[2].rpg).toFixed(2)} 分（<b>${X[1].rpg}</b> 對 ${X[2].rpg}）`}); }
+  if(sa.era && sh.era && sa.era!==sh.era){ const [X,Y,a,b] = +sa.era < +sh.era ? [A,H,sa.era,sh.era] : [H,A,sh.era,sa.era], s0 = sd(all.map(t=>+t.era));
+    out.push({z: s0 ? Math.abs(sa.era-sh.era)/s0 : 0, txt:`${ts(X)}投手群防禦率 <b>${a}</b>，優於${ts(Y)}的 ${b}`}); }
+  out.sort((x,y)=>y.z-x.z);
+  const hr = homeRec(TEAM[H.id]); if(hr) out.push({z:-1, txt:`${ts(H)}本季主場 ${hr.wins}勝${hr.losses}敗`});
+  const h2 = H2H[A.id+"-"+H.id];
+  if(h2){ const n = h2.hw+h2.aw, [X,w,l] = h2.aw > h2.hw ? [A,h2.aw,h2.hw] : [H,h2.hw,h2.aw];
+    out.push({z:-1, txt:`本季交手${ts(X)} ${w}勝${l}敗（共 ${n} 場）${n<4?"（場數少，僅供參考）":""}`}); }
+  return out;
+}
 function whyBlock(A, H, m, s, ap, hp, aP, hP, fav, fp){
   const favHome = fav.id === H.id, other = favHome ? A : H;
   const ta = TEAM[A.id], th = TEAM[H.id];
+  const look = matchup(A, H);
   const items = [["戰績", s.d1], ["主場", s.d2], ["先發投手", m.used ? s.d3 : 0]];
   const big = items.reduce((x,y) => Math.abs(y[1]) > Math.abs(x[1]) ? y : x);
-  const head = fp === 50 ? "兩隊五五波，勝負難料" : items.every(x => Math.abs(x[1]) < 2) ? `兩隊條件接近，${ts(fav)}僅以 ${fp}% 些微看好` : `看好${ts(fav)} ${fp}%，主要靠${big[0]}`;
   const li = (v, txt, na, chips="") => `<li><span class="dl ${na?"zero":dCls(v)}">${na?"未調整":dTxt(v)}</span><span>${txt}${chips?`<span class="chips">${chips}</span>`:""}</span></li>`;
+  // 結論句（依影響最大的一步輪替）
+  let head;
+  if(fp === 50) head = "兩隊勢均力敵，接近五五波";
+  else if(!m.used) head = "先發未公布，目前主要依主場判斷，公布後會更新";
+  else if(big[0]==="先發投手") head = `先發對決是勝負關鍵，${pn(m.d3>0?hP:aP)}這邊占優`;
+  else if(big[0]==="戰績") head = `${ts(m.d1>0?H:A)}整季實力較穩，是看好主因`;
+  else head = `兩隊實力接近，主場可能是關鍵${look[0]&&look[0].z>=0?"；"+look[0].txt.replace(/<[^>]+>/g,""):""}`;
   // ① 戰績
-  let t1;
   const rdA = ta.runsScored-ta.runsAllowed, rdH = th.runsScored-th.runsAllowed;
-  if(Math.abs(s.d1) < 1) t1 = "戰績：兩隊整季實力相近，影響不大";
-  else { const X = m.d1 > 0 ? H : A, Y = m.d1 > 0 ? A : H; t1 = `戰績：${ts(X)}整季實力較${ts(Y)}佳`; }
+  const t1 = Math.abs(s.d1) < 1 ? "戰績：兩隊整季實力相近，影響不大" : `戰績：${ts(m.d1>0?H:A)}整季實力較${ts(m.d1>0?A:H)}佳`;
   const c1 = chip("戰績", `${ta.wins}-${ta.losses}`, `${th.wins}-${th.losses}`, bt(+ta.winningPercentage, +th.winningPercentage))
            + chip("得失分差", sgn(rdA), sgn(rdH), bt(rdA, rdH));
-  // ② 主場：寫出主隊本季主場戰績
-  const hr = homeRec(th);
-  const t2 = hr ? `主場：${ts(H)}本季主場 ${hr.wins}勝${hr.losses}敗，回到主場作戰` : `主場：${ts(H)}主場作戰`;
+  // ② 主場（固定加成，不寫主場戰績）
+  const t2 = `主場：${ts(H)}主場優勢`;
   // ③ 先發
   let t3;
   if(!m.used) t3 = "先發：投手未公布，未調整";
@@ -281,23 +300,19 @@ function whyBlock(A, H, m, s, ap, hp, aP, hP, fav, fp){
     else { const homeAdv = m.d3 > 0; t3 = `先發：${pn(homeAdv?hP:aP)}數據優於${pn(homeAdv?aP:hP)}`; }
   }
   const c3 = m.used ? chip("防禦率", ap.era, hp.era, bt(+ap.era, +hp.era, true)) + chip("WHIP", ap.whip, hp.whip, bt(+ap.whip, +hp.whip, true)) : "";
-  // 爆冷提醒：只用劣勢方勝率與先發 ERA／WHIP（不使用近況）
-  let up = "";
-  if(fp !== 50){
-    const uS = favHome ? ap : hp, fS = favHome ? hp : ap, uP = favHome ? aP : hP;
-    const better = [];
-    if(uS && fS){ if(+uS.era < +fS.era) better.push("防禦率"); if(+uS.whip < +fS.whip) better.push("WHIP"); }
-    up = `⚠️ ${ts(other)}仍有 ${100-fp}% 勝率${better.length ? `，而且先發${pn(uP)}的${better.join("、")}較好` : ""}；看好的一方約每 10 場會輸 4 場，爆冷並不少見`;
-  }
-  // 對戰看點（參考，不計入勝率）
-  const sa = TSTAT[A.id]||{}, sh = TSTAT[H.id]||{}, h2 = H2H[A.id+"-"+H.id];
-  const look = chip("場均得分", sa.rpg, sh.rpg, bt(+sa.rpg, +sh.rpg)) + chip("投手群防禦率", sa.era, sh.era, bt(+sa.era, +sh.era, true))
-             + (h2 ? chip("本季交手", `${ts(A)}${h2.aw}勝`, `${ts(H)}${h2.hw}勝`, bt(h2.aw, h2.hw)) : "");
   const sp = seriesPre(SS_NOW);
+  const L = look.length ? `<div class="why-k"><div class="why-kh">對戰看點 <span class="ref-tag">參考，不計入勝率</span></div><div class="mk-focus">${look[0].txt}</div>
+    ${look.length>1?`<details class="mk-more"><summary>看更多對戰看點 ▾</summary><ul>${look.slice(1).map(x=>`<li>${x.txt}</li>`).join("")}</ul></details>`:""}</div>` : "";
   return `<div class="why"><div class="why-h">為什麼這樣預測？</div><div class="why-c">${head}</div>${sp?`<div class="why-s">${sp}</div>`:""}
-    <ul class="why-l">${li(s.d1, t1, false, c1)}${li(s.d2, t2)}${li(s.d3, t3, !m.used, c3)}</ul>
-    ${up?`<div class="why-u">${up}</div>`:""}
-    ${look?`<div class="why-k"><div class="why-kh">對戰看點（參考，不計入勝率）</div><span class="chips">${look}</span></div>`:""}</div>`;
+    <ul class="why-l">${li(s.d1, t1, false, c1)}${li(s.d2, t2)}${li(s.d3, t3, !m.used, c3)}</ul></div>${L}`;
+}
+// 爆冷提醒（標籤旁小字；只用劣勢方勝率與先發 ERA／WHIP）
+function upset(A, H, ap, hp, aP, hP, fav, fp){
+  if(fp === 50) return "";
+  const favHome = fav.id === H.id, U = favHome ? A : H, uS = favHome ? ap : hp, fS = favHome ? hp : ap, uP = favHome ? aP : hP;
+  if(uS && fS && +uS.whip < +fS.whip) return `${ts(U)}先發${pn(uP)}被上壘率較低，是翻盤的本錢`;
+  if(uS && fS && +uS.era < +fS.era) return `${ts(U)}先發${pn(uP)}防禦率較低，是翻盤的本錢`;
+  return `${ts(U)}仍有 ${100-fp}% 勝率，爆冷並不少見`;
 }
 
 // 兩隊對比表：較佳一方加粗並標 ◀ ▶
@@ -344,7 +359,8 @@ function renderPredict(games, isPast){
     html += `<div class="pcard">
       <div class="meta">客 ${tn(A.team)} @ 主 ${tn(H.team)}<br>${tw(g.gameDate)}（台灣時間）${g.seriesStatus ? "｜"+sz(g.seriesStatus.description) : ""}</div>
       <div class="headline">${fp === 50 ? `五五波：<span class="nw">雙方各 50%</span>` : `看好：${tn(fav)} <span class="nw">${fp}%</span>`}</div>
-      <div><span class="tier ${tc}">${tl}</span></div>
+      ${(!aP||!hP)?`<span class="wait-tag">⏳ 等先發公布</span>`:""}
+      <div class="tier-row"><span class="tier ${tc}">${tl}</span><span class="upset">${upset(A.team, H.team, ap, hp, aP, hP, fav, fp)}</span></div>
       <div class="pbar-lab"><span>客 ${ts(A.team)} ${apct}%</span><span>主 ${ts(H.team)} ${hpct}%</span></div>
       <div class="pbar" role="img" aria-label="${tn(A.team)} ${apct}%，${tn(H.team)} ${hpct}%">
         <div class="${favHome?"oth":"fav"}" style="width:${apct}%"></div><div class="${favHome?"fav":"oth"}" style="width:${hpct}%"></div></div>
@@ -353,6 +369,7 @@ function renderPredict(games, isPast){
         <p class="desc">戰績：兩隊實力分數（勝率與畢氏期望勝率各半）用 Log5 比較，再依回測縮回 50% 附近；主場與先發投手依 2026 例行賽回測校正。三格差值依序計算，加總等於最終勝率。模型 ${MODEL_V}。</p></details>
       <details class="algo"><summary>📊 兩隊數據對比</summary>${compare(A.team, H.team, ap, hp)}</details>
       ${w ? `<div class="ref">${w}</div>` : ""}
+      <div class="upd">最後更新：${tw(Date.now())}（台灣時間）</div>
     </div>`;
   }
   document.getElementById("predict").innerHTML = html || "查無比賽";
