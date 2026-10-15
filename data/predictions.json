@@ -1,5 +1,5 @@
 {
- "updated": "2026-10-15 16:22 (UTC+8)",
+ "updated": "2026-10-16 06:18 (UTC+8)",
  "records": [
   {
    "gamePk": 849818,
@@ -11,9 +11,9 @@
    "predictedWinner": "坦帕灣光芒",
    "model": "v1：勝率50%+畢氏勝率50%、Log5、主場+4%",
    "predictedAt": "2026-10-15 15:56 (UTC+8)",
-   "final": null,
-   "actualWinner": null,
-   "correct": null,
+   "final": "坦帕灣光芒 2 : 3 克里夫蘭守護者",
+   "actualWinner": "克里夫蘭守護者",
+   "correct": false,
    "snapshots": [
     {
      "homeWinProb": 0.4751,
@@ -28,7 +28,9 @@
     "model": "v1：勝率50%+畢氏勝率50%、Log5、主場+4%",
     "at": "2026-10-15 15:56 (UTC+8)",
     "note": "v1 舊紀錄，視為正式預測"
-   }
+   },
+   "homeScore": 3,
+   "awayScore": 2
   },
   {
    "gamePk": 849810,
