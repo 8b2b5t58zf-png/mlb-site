@@ -5,9 +5,8 @@ const ESPN_ST = "https://site.api.espn.com/apis/v2/sports/basketball/nba/standin
 const NFRESH = 2*3600e3, NFILE = {};
 let NST_AT = null;   // 目前戰績資料的抓取時間
 async function nbaFile(name){
-  if(name in NFILE) return NFILE[name];
-  let d = null; try{ const r = await fetch(`data/nba/${name}.json?t=${Math.floor(Date.now()/3e5)}`); if(r.ok) d = await r.json(); }catch(e){}
-  return NFILE[name] = d;
+  if(!(name in NFILE)) NFILE[name] = fetch(`data/nba/${name}.json?t=${Math.floor(Date.now()/3e5)}`).then(r => r.ok ? r.json() : null).catch(() => null);
+  return NFILE[name];
 }
 const nAge = f => f && f.fetched_at ? Date.now() - Date.parse(f.fetched_at) : Infinity;
 async function nbaGet(name, pick, url){
@@ -177,7 +176,9 @@ async function nbaLeaders(){
   const yr = new Date().getMonth() >= 8 ? new Date().getFullYear()+1 : new Date().getFullYear();
   let d = null, cur = true;
   const has = x => x && x.leaders && (x.leaders.categories||[]).length;
-  try{ d = (await nbaGet("leaders", f => has(f.seasons && f.seasons[yr]) ? f.seasons[yr] : null, NLB + yr)).data; }catch(e){}
+  const lf = await nbaFile("leaders");
+  if(lf && nAge(lf) < NFRESH && !has((lf.seasons||{})[yr])) d = null;   // 排程剛確認本季還沒有排行，不必再連 ESPN
+  else try{ d = (await nbaGet("leaders", f => has(f.seasons && f.seasons[yr]) ? f.seasons[yr] : null, NLB + yr)).data; }catch(e){}
   if(!has(d)){ cur = false; d = (await nbaGet("leaders", f => f.seasons && f.seasons[yr-1], NLB + (yr-1))).data; }
   const sname = (d.requestedSeason||{}).displayName || "";
   const cats = {pointsPerGame:"場均得分", reboundsPerGame:"場均籃板", assistsPerGame:"場均助攻"};
