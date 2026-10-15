@@ -3,7 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>美國職棒大聯盟賽事分析</title>
+<title>AI Sports Lab｜MLB 勝負預測與賽後分析</title>
+<meta name="description" content="AI Sports Lab（AI 運動實驗室）：MLB 美國職棒大聯盟中文勝負預測與賽後分析，資料來自大聯盟官方數據。">
+<meta property="og:title" content="AI Sports Lab｜MLB 勝負預測與賽後分析">
+<meta property="og:description" content="AI 運動實驗室：MLB 中文勝負預測與賽後分析">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://8b2b5t58zf-png.github.io/mlb-site/">
 <!-- 引入樣式檔，負責網頁外觀 -->
 <link rel="stylesheet" href="style.css">
 <!-- 從 CDN 載入 Chart.js，用來畫圖表 -->
@@ -11,7 +16,8 @@
 </head>
 <body>
 <header>
-  <h1>⚾ 美國職棒大聯盟（MLB）賽事分析</h1>
+  <h1 class="brand"><span class="nw">AI Sports Lab</span><span class="sport">｜MLB</span></h1>
+  <div class="brand-sub">AI 運動實驗室・美國職棒大聯盟勝負預測與賽後分析</div>
   <p>資料來源：大聯盟官方數據 API（statsapi.mlb.com）｜球季：<span id="season">載入中…</span><span id="cacheinfo"></span></p>
 </header>
 <!-- 固定在上方的導覽列，點了會跳到對應區塊 -->
@@ -52,5 +58,6 @@
 <nav id="bottomnav" aria-label="主選單"><a href="#sec-predict" data-sec="sec-predict"><span class="ic" aria-hidden="true">🎯</span><span>預測</span></a><a href="#sec-analysis" data-sec="sec-analysis"><span class="ic" aria-hidden="true">📝</span><span>賽後</span></a><a href="#sec-hit" data-sec="sec-hit"><span class="ic" aria-hidden="true">✅</span><span>命中率</span></a><a href="#sec-standings" data-sec="sec-standings"><span class="ic" aria-hidden="true">🏆</span><span>戰績</span></a><a href="#sec-batting" data-sec="sec-batting"><span class="ic" aria-hidden="true">📊</span><span>排行</span></a></nav>
 <script src="players.js"></script>
 <script src="app.js"></script>
+<footer class="site-foot">AI Sports Lab｜AI 運動實驗室・資料來源：MLB 官方 Stats API・預測僅供參考，非投注建議</footer>
 </body>
 </html>

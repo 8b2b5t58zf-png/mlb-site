@@ -198,3 +198,7 @@ article h3 .ah-s{display:block;white-space:nowrap}
 .pcard .meta{padding-right:96px}
 .tier-row{margin:4px 0}
 .meta .ser{font-size:var(--fs-xs)}
+.brand{white-space:nowrap;font-size:clamp(20px,6vw,28px)}
+.brand .sport{opacity:.85}
+.brand-sub{font-size:var(--fs-sm);opacity:.9;margin-top:2px}
+.site-foot{text-align:center;font-size:var(--fs-xs);color:var(--c-muted);padding:16px 12px 90px}

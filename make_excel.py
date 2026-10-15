@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# 產生「MLB 賽事分析」Excel 檔：python3 make_excel.py
+# 產生「AI Sports Lab｜MLB 勝負預測與賽後分析」Excel 檔：python3 make_excel.py
 # 資料全部即時取自 MLB 官方免費 API；中文對照表直接讀 app.js / players.js
 import json, re, os, urllib.request
 from datetime import datetime, timedelta, timezone
@@ -161,6 +161,7 @@ sheet("投手排行", H5, leaders({"earnedRunAverage": "防禦率", "strikeouts"
 
 # 工作表 6：說明
 sheet("說明", ["項目", "內容"], [
+    ["名稱", "AI Sports Lab｜MLB 勝負預測與賽後分析（AI 運動實驗室）"],
     ["資料來源", "MLB 官方 Stats API（statsapi.mlb.com），所有數字皆為官方資料，未自行編造"],
     ["更新時間", datetime.now(TZ).strftime("%Y-%m-%d %H:%M") + "（台灣時間 UTC+8）"],
     ["球季", f"{season}（戰績、排行榜為例行賽數據）"],
@@ -170,4 +171,5 @@ sheet("說明", ["項目", "內容"], [
     ["譯名", "球隊與球員中文名取自網頁 app.js / players.js 對照表" + ("；未對照（保留英文）：" + "、".join(sorted(UNMAPPED)) if UNMAPPED else "；本次全部皆有對照")],
     ["重新產生", "執行：python3 make_excel.py"]], [12, 90], wrap=(1,))
 
+wb.properties.title = "AI Sports Lab｜MLB 勝負預測與賽後分析"
 wb.save(OUT); print("已儲存", OUT, "| 未對照球員：", sorted(UNMAPPED) or "無")
