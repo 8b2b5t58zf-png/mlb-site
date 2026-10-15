@@ -50,6 +50,7 @@ async function runSection(ids, fn){
   try{
     await fn();
     if(usedCache) for(const id of ids) document.getElementById("st-"+id).innerHTML = `<div class="stale">⚠️ 目前無法連線，顯示的是先前存下的資料（更新於 ${twFull(usedCache)}）</div>`;
+    setTimeout(trackNav, 0);
     return true;
   }catch(e){
     for(const id of ids) document.getElementById("st-"+id).innerHTML = `<div class="err">😢 資料載入失敗（${e.message||e}）<button onclick='runSection(${JSON.stringify(ids)}, ${fn.name})'>重試</button></div>`;
@@ -493,19 +494,49 @@ async function secGames(){ if(!Object.keys(TEAM).length) await loadStandings(); 
 async function secBatting(){ await loadLeaders({homeRuns:"全壘打",battingAverage:"打擊率",runsBattedIn:"打點"},"hitting","batting"); }
 async function secPitching(){ await loadLeaders({earnedRunAverage:"防禦率",strikeouts:"三振",wins:"勝投"},"pitching","pitching"); }
 
-// ===== 導覽列：捲動時自動標示目前區塊 =====
+// ===== 導覽列與聯盟切換 =====
+const NAVS = {
+  mlb:[["sec-predict","預測"],["sec-analysis","賽後"],["sec-hit","命中率"],["sec-standings","戰績"],["sec-batting","排行"]],
+  nba:[["nsec-predict","預測"],["nsec-analysis","賽後"],["nsec-standings","戰績"]]};
+const ICON = {"預測":'<path d="M3 17l5-5 4 4 8-8"/><path d="M14 8h6v6"/>',"賽後":'<path d="M5 4h10l4 4v12H5z"/><path d="M8 12h8M8 16h6"/>',"命中率":'<circle cx="12" cy="12" r="8"/><path d="M8 12l3 3 5-6"/>',"戰績":'<path d="M8 4h8v5a4 4 0 01-8 0z"/><path d="M12 13v4M8 20h8"/>',"排行":'<path d="M5 20V12M12 20V5M19 20v-8"/>'};
+let LG_NOW = "mlb";
+function renderNav(){
+  const L = NAVS[LG_NOW];
+  document.getElementById("topnav").innerHTML = L.map(([id,t])=>`<a href="#${id}" data-sec="${id}">${t}</a>`).join("");
+  document.getElementById("bottomnav").innerHTML = L.map(([id,t])=>`<a href="#${id}" data-sec="${id}"><span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${ICON[t]}</svg></span><span>${t}</span></a>`).join("");
+  trackNav();
+}
+// 依捲動位置標示目前區塊：取「頂端已經過畫面 35% 的最後一個區塊」；在頁首時一律標第一個（修正載入時誤標「賽後」）
+function trackNav(){
+  const L = NAVS[LG_NOW], y = innerHeight*0.35;
+  let cur = L[0][0];
+  for(const [id] of L){ const el = document.getElementById(id); if(el && el.getBoundingClientRect().top <= y) cur = id; }
+  if(innerHeight + scrollY >= document.documentElement.scrollHeight - 2) cur = L[L.length-1][0];
+  document.querySelectorAll("#topnav a, #bottomnav a").forEach(a => a.dataset.sec===cur ? a.setAttribute("aria-current","page") : a.removeAttribute("aria-current"));
+}
+addEventListener("scroll", () => requestAnimationFrame(trackNav), {passive:true});
+addEventListener("resize", trackNav);
+function setLeague(lg){
+  LG_NOW = lg; try{ localStorage.setItem("aisl:league", lg); }catch(e){}
+  document.body.classList.toggle("lg-nba", lg==="nba");
+  document.querySelectorAll(".lgsw button").forEach(b => b.setAttribute("aria-selected", b.dataset.lg===lg));
+  document.getElementById("lg-tag").textContent = "｜" + lg.toUpperCase();
+  document.getElementById("lg-sub").textContent = lg==="nba" ? "AI 運動實驗室・NBA 美國職籃勝負預測與賽後分析" : "AI 運動實驗室・美國職棒大聯盟勝負預測與賽後分析";
+  document.getElementById("foot").textContent = `AI Sports Lab｜AI 運動實驗室・資料來源：${lg==="nba"?"ESPN 公開數據":"MLB 官方 Stats API"}・預測僅供參考，非投注建議`;
+  document.title = `AI Sports Lab｜${lg.toUpperCase()} 勝負預測與賽後分析`;
+  renderNav(); scrollTo(0,0);
+  if(lg==="nba") loadNBA();
+}
 function setupNav(){
-  const links = document.querySelectorAll("#topnav a, #bottomnav a");
-  const mark = id => links.forEach(a => a.dataset.sec===id ? a.setAttribute("aria-current","page") : a.removeAttribute("aria-current"));
-  const io = new IntersectionObserver(es => { es.forEach(e => { if(e.isIntersecting) mark(e.target.id); }); }, {rootMargin:"-40% 0px -55% 0px"});
-  ["sec-predict","sec-analysis","sec-hit","sec-standings","sec-batting"].forEach(id => io.observe(document.getElementById(id)));
-  mark("sec-predict");
+  document.querySelectorAll(".lgsw button").forEach(b => b.onclick = () => setLeague(b.dataset.lg));
   // 排行榜「打擊／投手」切換
   document.querySelectorAll(".tabs button").forEach(b => b.onclick = () => {
     document.querySelectorAll(".tabs button").forEach(x => x.setAttribute("aria-selected", x===b));
     document.getElementById("tab-bat").hidden = b.dataset.tab!=="bat";
     document.getElementById("tab-pit").hidden = b.dataset.tab!=="pit";
   });
+  let saved = "mlb"; try{ saved = localStorage.getItem("aisl:league") || "mlb"; }catch(e){}
+  setLeague(saved === "nba" ? "nba" : "mlb");
 }
 setupNav();
 

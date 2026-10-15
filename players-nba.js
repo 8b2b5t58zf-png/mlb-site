@@ -1,0 +1,25 @@
+// NBA 球員中文譯名（台灣常用）；鍵為 ESPN displayName。沒有對照的球員顯示英文原名。
+const NBA_PN = {
+"LeBron James":"詹姆斯","Stephen Curry":"柯瑞","Kevin Durant":"杜蘭特","Giannis Antetokounmpo":"字母哥","Nikola Jokic":"約基奇","Luka Doncic":"唐西奇",
+"Joel Embiid":"恩比德","Jayson Tatum":"塔圖姆","Jaylen Brown":"布朗","Shai Gilgeous-Alexander":"亞歷山大","Anthony Edwards":"愛德華茲","Victor Wembanyama":"溫班亞瑪",
+"Anthony Davis":"戴維斯","Kawhi Leonard":"雷納德","James Harden":"哈登","Paul George":"喬治","Damian Lillard":"里拉德","Kyrie Irving":"厄文",
+"Devin Booker":"布克","Donovan Mitchell":"米契爾","Jimmy Butler":"巴特勒","Jimmy Butler III":"巴特勒","Ja Morant":"莫蘭特","Trae Young":"楊恩",
+"Zion Williamson":"威廉森","De'Aaron Fox":"福克斯","Tyrese Haliburton":"哈利伯頓","Jalen Brunson":"布倫森","Karl-Anthony Towns":"唐斯","Bam Adebayo":"阿德巴約",
+"Domantas Sabonis":"沙波尼斯","Pascal Siakam":"席亞康","Jamal Murray":"穆雷","Chet Holmgren":"霍姆格倫","Paolo Banchero":"班切羅","Cade Cunningham":"康寧漢",
+"LaMelo Ball":"拉梅洛・鮑爾","Lonzo Ball":"朗佐・鮑爾","Zach LaVine":"拉文","DeMar DeRozan":"德羅展","Rudy Gobert":"戈貝爾","Draymond Green":"格林",
+"Klay Thompson":"湯普森","Kristaps Porzingis":"波辛吉斯","Jrue Holiday":"哈勒戴","Derrick White":"懷特","Julius Randle":"蘭朵","Mikal Bridges":"布里吉斯",
+"OG Anunoby":"阿奴諾比","Josh Hart":"哈特","Tyrese Maxey":"馬克西","Lauri Markkanen":"馬卡寧","Scottie Barnes":"巴恩斯","Franz Wagner":"法蘭茲・華格納",
+"Jalen Williams":"傑倫・威廉斯","Alperen Sengun":"申京","Jalen Green":"傑倫・格林","Evan Mobley":"莫布里","Darius Garland":"加蘭","Desmond Bane":"貝恩",
+"Jaren Jackson Jr.":"小傑克森","Brandon Ingram":"英格蘭","CJ McCollum":"麥科倫","Kyle Kuzma":"庫茲馬","Austin Reaves":"里夫斯","Rui Hachimura":"八村壘",
+"Yuki Kawamura":"河村勇輝","Russell Westbrook":"威斯布魯克","Chris Paul":"保羅","Dejounte Murray":"墨瑞","Fred VanVleet":"范弗利特","Amen Thompson":"阿門・湯普森",
+"Cooper Flagg":"弗拉格","Dylan Harper":"哈波","Jaylen Wells":"威爾斯","Stephon Castle":"卡索","Zaccharie Risacher":"里薩榭","Alex Sarr":"沙爾",
+"Jalen Johnson":"傑倫・強森","Myles Turner":"透納","Aaron Gordon":"戈登","Michael Porter Jr.":"小波特","Deni Avdija":"阿夫迪亞","Anfernee Simons":"西蒙斯",
+"Jordan Poole":"普爾","Brandon Miller":"布蘭登・米勒","Miles Bridges":"邁爾斯・布里吉斯","Tyler Herro":"希羅","Norman Powell":"鮑威爾","Ivica Zubac":"祖巴茨",
+"Kevin Porter Jr.":"小波特","Coby White":"柯比・懷特","Josh Giddey":"吉迪","Nikola Vucevic":"武切維奇","Trey Murphy III":"墨菲三世","Herbert Jones":"賀伯・瓊斯",
+"Dyson Daniels":"丹尼爾斯","Kon Knueppel":"努佩爾","Ace Bailey":"貝利","VJ Edgecombe":"艾吉康姆","Jabari Smith Jr.":"小史密斯","Keegan Murray":"基根・墨瑞",
+"Zach Edey":"艾迪","Walker Kessler":"凱斯勒","Jarrett Allen":"艾倫","Mark Williams":"馬克・威廉斯","Immanuel Quickley":"奎克利","RJ Barrett":"巴瑞特",
+"Bradley Beal":"比爾","Khris Middleton":"米德頓","Brook Lopez":"羅培茲","Bobby Portis":"波提斯","Andrew Wiggins":"威金斯","Jonathan Kuminga":"庫明加",
+"Brandin Podziemski":"波吉姆斯基","Isaiah Hartenstein":"哈騰斯坦","Lu Dort":"多爾特","Jaden McDaniels":"麥克丹尼爾斯","Naz Reid":"納茲・里德","Mike Conley":"康利",
+"Jusuf Nurkic":"努爾基奇","Collin Sexton":"塞克斯頓","Kel'el Ware":"威爾","Nikola Jovic":"約維奇","Cam Thomas":"卡姆・湯瑪斯","Michael Porter Jr":"小波特"
+};
+const npn = name => NBA_PN[name] || name;

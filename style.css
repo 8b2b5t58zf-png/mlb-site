@@ -267,3 +267,12 @@ article{border-left:2px solid var(--gold)}
 #bottomnav a[aria-current="page"]::before{background:var(--gold)}
 #bottomnav .ic{display:block;line-height:0;margin-bottom:2px}
 .site-foot{color:#6b6b72;border-top:1px solid var(--line)}
+/* 聯盟切換 */
+.nba-only{display:none} body.lg-nba .nba-only{display:block} body.lg-nba .mlb-only{display:none}
+header{position:relative}
+.lgsw{position:absolute;top:14px;right:12px;display:flex;border:1px solid var(--line);border-radius:999px;overflow:hidden}
+.lgsw button{background:none;border:0;color:var(--text2);font-size:13px;font-weight:600;padding:4px 10px;min-height:28px;cursor:pointer}
+.lgsw button[aria-selected="true"]{background:var(--gold);color:#0e0e10}
+header h1.brand{padding-right:104px}
+.lgsw{position:static;display:inline-flex;margin-bottom:8px}
+header h1.brand{padding-right:0}
