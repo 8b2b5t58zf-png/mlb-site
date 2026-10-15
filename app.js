@@ -521,8 +521,10 @@ function setLeague(lg){
   document.body.classList.toggle("lg-nba", lg==="nba");
   document.querySelectorAll(".lgsw button").forEach(b => b.setAttribute("aria-selected", b.dataset.lg===lg));
   document.getElementById("lg-tag").textContent = "｜" + lg.toUpperCase();
+  document.getElementById("tg-scope").textContent = lg==="nba" ? "用 2025-26 季比賽驗證過" : "用 2026 整季比賽驗證過";
+  document.getElementById("tg-link").href = lg==="nba" ? "validation-nba.html" : "validation.html";
   document.getElementById("lg-sub").textContent = lg==="nba" ? "AI 運動實驗室・NBA 美國職籃勝負預測與賽後分析" : "AI 運動實驗室・美國職棒大聯盟勝負預測與賽後分析";
-  document.getElementById("foot").innerHTML = lg==="nba" ? '<p>本站為 NBA 數據分析，非投注建議。</p><p>資料來源：ESPN 公開數據。</p>' : '<p>本站為 MLB 數據分析，非投注建議。</p><p>資料來源：MLB 官方 Stats API（statsapi.mlb.com）。</p><p><a href="validation.html">回測說明</a></p>';
+  document.getElementById("foot").innerHTML = lg==="nba" ? '<p>NBA 資料來源：ESPN｜數據分析，非投注建議</p><p><a href="validation-nba.html">NBA 回測說明</a></p>' : '<p>本站為 MLB 數據分析，非投注建議。</p><p>資料來源：MLB 官方 Stats API（statsapi.mlb.com）。</p><p><a href="validation.html">回測說明</a></p>';
   document.title = `AI Sports Lab｜${lg.toUpperCase()} 勝負預測與賽後分析`;
   renderNav(); scrollTo(0,0);
   if(lg==="nba") loadNBA();

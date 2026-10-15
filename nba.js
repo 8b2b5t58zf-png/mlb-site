@@ -55,15 +55,19 @@ async function nbaInjuries(){
   try{ const d = await getJSON(`${ESPN}/injuries`); for(const t of d.injuries||[]) NINJ[t.id] = t.injuries||[]; }catch(e){}
 }
 
-const nTier = p => p >= 60 ? ["strong","明顯看好"] : p >= 53 ? ["lean","略占上風"] : ["toss","接近五五波"];
+// 信心門檻（2025-26 回測）：未滿 60% 勢均力敵、60–70% 略占上風、70% 以上明顯看好；開季到 1/14 最高只寫「看好」
+const nEarly = (dt=new Date()) => { const m = dt.getMonth(), d = dt.getDate(); return m >= 8 || (m === 0 && d <= 14); };
+const nTier = (p, early) => p >= 70 ? (early ? ["lean","看好"] : ["strong","明顯看好"]) : p >= 60 ? ["lean","略占上風"] : ["toss","接近五五波"];
+const nWord = (p, early) => p >= 70 ? (early ? "看好" : "明顯看好") : p >= 60 ? "略占上風" : "勢均力敵";
+let NALL = [];   // 近期所有賽程（判斷背靠背：前 36 小時內同隊有比賽）
 function nbaCard(ev){
   const c = ev.competitions[0], H = c.competitors.find(x=>x.homeAway==="home"), A = c.competitors.find(x=>x.homeAway==="away");
   const th = NT[H.team.id] || {g:0,w:0,l:0}, ta = NT[A.team.id] || {g:0,w:0,l:0};
   const m = nModel(H.team.id, A.team.id), hp = Math.round(m.F), ap = 100-hp;
   const favHome = hp >= ap, fp = Math.max(hp, ap), fav = favHome ? H.team : A.team, oth = favHome ? A.team : H.team;
-  const [tc, tl] = nTier(fp), k = favHome ? 1 : -1, s1 = k*m.d1, s2 = k*m.d2;
+  const early = nEarly(new Date(ev.date)), [tc, tl] = nTier(fp, early), k = favHome ? 1 : -1, s1 = k*m.d1, s2 = k*m.d2;
   const small = th.g < NM.minG || ta.g < NM.minG;
-  const big = fp === 50 ? `五五波：<span class="nw">雙方各 50%</span>` : `${fp>=60?"明顯看好":fp>=53?"略占上風":"勢均力敵"}：${nts(fav)} <span class="nw">${fp}%</span>`;
+  const big = fp === 50 ? `五五波：<span class="nw">雙方各 50%</span>` : `${nWord(fp, early)}：${nts(fav)} <span class="nw">${fp}%</span>`;
   const head = fp === 50 ? "兩隊勢均力敵，接近五五波" : !th.g && !ta.g ? "還沒有本季戰績，目前只依主場判斷" : Math.abs(m.d1) >= Math.abs(m.d2) ? `${nts(m.d1>0?H.team:A.team)}本季表現較好，是看好主因` : "兩隊實力接近，主場可能是關鍵";
   const li = (v, txt) => `<li><span class="dl ${dCls(v)}">${dTxt(v)}</span><span>${txt}</span></li>`;
   const pyd = t => t.g ? (t.pf - t.pa) / t.g : null;
@@ -72,15 +76,18 @@ function nbaCard(ev){
   const inj = side => (NINJ[side.team.id]||[]).filter(x=>x.status!=="Active").slice(0,4).map(x=>`${npn(x.athlete.displayName)}（${INJ_ZH[x.status]||x.status}）`).join("、");
   const ia = NINJ ? inj(A) : "", ih = NINJ ? inj(H) : "";
   const injBox = (ia || ih) ? `<div class="why-k"><div class="why-kh">傷兵名單 <span class="ref-tag">參考，不計入勝率</span></div><div class="mk-focus">${ia?`${nts(A.team)}：${ia}`:""}${ia&&ih?"<br>":""}${ih?`${nts(H.team)}：${ih}`:""}</div></div>` : "";
+  const b2b = [A, H].filter(x => { const t0 = new Date(ev.date); return NALL.some(e => e.id !== ev.id && e.competitions[0].competitors.some(c => c.team.id === x.team.id) && t0 - new Date(e.date) > 0 && t0 - new Date(e.date) < 36*3600e3); }).map(x => `${nts(x.team)}昨天剛出賽（背靠背）`).join("<br>");
+  const b2bBox = b2b ? `<div class="why-k"><div class="why-kh">賽程 <span class="ref-tag">參考，不計入勝率</span></div><div class="mk-focus">${b2b}</div></div>` : "";
   return `<div class="pcard">${small?`<span class="wait-tag">樣本不足</span>`:""}
     <div class="meta"><span class="nw">客 ${nts(A.team)}</span> @ <span class="nw">主 ${nts(H.team)}</span><br>${twT(ev.date)}（台灣時間）</div>
     <div class="headline">${big}</div>
-    <div class="tier-row"><span class="tier ${tc}">${tl}</span>${fp!==50?`<span class="upset">${nts(oth)}仍有 ${100-fp}% 勝率，爆冷並不少見</span>`:""}</div>
+    ${early && fp >= 70 ? '<div class="early-note">開季數據少，保守看待</div>' : ""}
+    <div class="tier-row"><span class="tier ${tc}">${tl}</span>${fp!==50?`<span class="upset">${nts(oth)}仍有 ${100-fp}% 勝率</span>`:""}</div>
     <div class="pbar-lab"><span>客 ${nts(A.team)} ${ap}%</span><span>主 ${nts(H.team)} ${hp}%</span></div>
     <div class="pbar" role="img" aria-label="${ntn(A.team)} ${ap}%，${ntn(H.team)} ${hp}%"><div class="${favHome?"oth":"fav"}" style="width:${ap}%"></div><div class="${favHome?"fav":"oth"}" style="width:${hp}%"></div></div>
     <div class="why"><div class="why-h">為什麼這樣預測？</div><div class="why-c">${head}</div>
       <ul class="why-l"><li><span class="dl ${dCls(s1)}">${dTxt(s1)}</span><span>${t1}${c1?`<span class="chips">${c1}</span>`:""}</span></li>${li(s2, `主場：${nts(H.team)}主場優勢`)}</ul></div>
-    ${injBox}
+    ${b2bBox}${injBox}
     <div class="upd">最後更新：${twT(Date.now())}（台灣時間）</div></div>`;
 }
 
@@ -97,6 +104,7 @@ async function nbaGames(){
     up = o.flatMap(r=>r.events||[]).filter(e => e.season.type===2 && e.status.type.state==="pre");
     note = '<p class="note">例行賽 10/21（台灣時間）開打。以下為開幕賽程，兩隊都還沒有本季戰績，預測目前只依主場優勢，開打後會隨戰績更新。</p>';
   }
+  NALL = all.concat(up);
   await nbaInjuries();
   document.getElementById("nba-predict").innerHTML = note + (up.slice(0,8).map(nbaCard).join("") || "<p>近期沒有例行賽</p>");
   const done = all.filter(e => e.status.type.completed).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,5);
@@ -148,12 +156,17 @@ async function nbaLeaders(){
   const sname = (d.requestedSeason||{}).displayName || "";
   const cats = {pointsPerGame:"場均得分", reboundsPerGame:"場均籃板", assistsPerGame:"場均助攻"};
   let html = cur ? `<p class="note">${sname} 例行賽。開季初期出賽場數少，排名變動會比較大。</p>` : `<p class="note">${yr-1}-${String(yr).slice(2)} 例行賽尚未開打，以下為上季（${sname}）例行賽排行，開打後自動換成本季。</p>`;
-  for(const c of d.leaders.categories.filter(c => cats[c.name])){
-    html += `<div><h3>${cats[c.name]}</h3><table><tr><th>球員</th><th>球隊</th><th>數據</th></tr>`;
+  const cs = Object.keys(cats).map(k => d.leaders.categories.find(c => c.name === k)).filter(Boolean);
+  html += `<div class="tabs" role="tablist">${cs.map((c,i)=>`<button role="tab" aria-selected="${i===0}" data-ntab="${c.name}">${cats[c.name].slice(2)}</button>`).join("")}</div>`;
+  for(const [ci, c] of cs.entries()){
+    html += `<div class="ntabp" data-ntab="${c.name}" ${ci?"hidden":""}><h3>${cats[c.name]}</h3><table><tr><th>球員</th><th>球隊</th><th>數據</th></tr>`;
     c.leaders.slice(0,10).forEach((l,i) => { html += `<tr><td>${i+1}. ${npn(l.athlete.displayName)}</td><td>${l.team ? nts(l.team) : "-"}</td><td class="num">${l.displayValue}</td></tr>`; });
     html += "</table></div>";
   }
-  document.getElementById("nba-leaders").innerHTML = html;
+  const box = document.getElementById("nba-leaders"); box.innerHTML = html;
+  box.querySelectorAll("button[data-ntab]").forEach(b => b.onclick = () => {
+    box.querySelectorAll("button[data-ntab]").forEach(x => x.setAttribute("aria-selected", x === b));
+    box.querySelectorAll(".ntabp").forEach(p => p.hidden = p.dataset.ntab !== b.dataset.ntab); });
 }
 // ===== NBA 預測命中率：讀 data/nba-predictions.json（由每小時排程寫入）=====
 async function nbaHit(){
