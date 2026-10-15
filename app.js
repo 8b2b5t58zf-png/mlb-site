@@ -85,9 +85,9 @@ function drawChart(teams){
     type:"bar",
     data:{labels:teams.map(t=>ts(t.team)||tn(t.team)),
       datasets:[{label:"勝率",data:teams.map(t=>parseFloat(t.winningPercentage)),
-        backgroundColor:teams.map(t=>t.team.league.id===103?"#d4af37":"#6b6b72")}]},
-    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},title:{display:true,text:"金色＝美國聯盟，灰色＝國家聯盟",color:"#9a9aa0"}},
-      scales:{y:{min:0.3,max:0.7,ticks:{color:"#9a9aa0"},grid:{color:"#2a2a2e"}},x:{ticks:{color:"#9a9aa0"},grid:{display:false}}}}
+        backgroundColor:teams.map(t=>t.team.league.id===103?"#d4af37":"#4a5563")}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},title:{display:true,text:"金色＝美國聯盟，灰色＝國家聯盟",color:"#8b949e"}},
+      scales:{y:{min:0.3,max:0.7,ticks:{color:"#8b949e"},grid:{color:"#262e39"}},x:{ticks:{color:"#8b949e"},grid:{display:false}}}}
   });
 }
 
@@ -551,4 +551,12 @@ setupNav();
     runSection(["pitching"], secPitching),
     runSection(["hit"], secHit),
   ]);
+})();
+
+// 樣式：只有純數字的表格格子用等寬字（隊名、球員名維持一般字體）
+(function(){
+  const NUM=/^[\s\d.,:%+\-–\/()]+$/;
+  const mark=root=>root.querySelectorAll&&root.querySelectorAll("td:not(.n)").forEach(td=>{const t=td.textContent.trim(); if(t&&/\d/.test(t)&&NUM.test(t)) td.classList.add("n");});
+  mark(document);
+  new MutationObserver(ms=>ms.forEach(m=>m.addedNodes.forEach(n=>n.nodeType===1&&mark(n)))).observe(document.body,{childList:true,subtree:true});
 })();
