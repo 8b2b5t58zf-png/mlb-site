@@ -41,9 +41,35 @@ for rec in st["records"]:
 # ---- 預測模型（與網頁相同）----
 def pyth(rs, ra): return rs**1.83 / (rs**1.83 + ra**1.83)
 def strength(i): t = TEAM[i]; return 0.5*float(t["winningPercentage"]) + 0.5*pyth(t["runsScored"], t["runsAllowed"])
-def predict_home(h, a):
-    h, a = strength(h), strength(a)
-    return min(0.95, (h - h*a) / (h + a - 2*h*a) + 0.04)
+# 模型 v2（與 app.js modelV2、scripts/log_predictions.py 相同）
+import math
+LG_ERA, LG_WHIP, REG = 4.20, 1.30, 40
+sig = lambda x: 1/(1+math.exp(-x))
+def ip_num(s): a, _, b = str(s).partition("."); return int(a) + (int(b) if b else 0)/3
+PST = {}
+def pitcher(pid):
+    if pid in PST: return PST[pid]
+    d = get(f"/people/{pid}/stats?stats=season&group=pitching&season={season}")
+    sp = d["stats"][0]["splits"] if d.get("stats") else []
+    tot = [x for x in sp if "team" not in x] or sp
+    s = dict(gs=0, ip=0.0, er=0, h=0, bb=0)
+    for x in tot:
+        t = x["stat"]; s["gs"] += t.get("gamesStarted", 0); s["ip"] += ip_num(t.get("inningsPitched", 0))
+        s["er"] += t.get("earnedRuns", 0); s["h"] += t.get("hits", 0); s["bb"] += t.get("baseOnBalls", 0)
+    s["era"] = tot[0]["stat"]["era"] if len(tot) == 1 else (f'{9*s["er"]/s["ip"]:.2f}' if s["ip"] else "-")
+    s["whip"] = tot[0]["stat"]["whip"] if len(tot) == 1 else (f'{(s["h"]+s["bb"])/s["ip"]:.2f}' if s["ip"] else "-")
+    PST[pid] = s; return s
+def model_v2(h, a, hp, ap):
+    """回傳主隊勝率與逐步差值（起點 50% → 戰績 → 主場 → 先發，一位小數加總等於最終）"""
+    sh, sa = strength(h), strength(a)
+    p = (sh - sh*sa) / (sh + sa - 2*sh*sa)
+    xb = 0.250*math.log(p/(1-p))
+    used = bool(hp and ap)
+    rera = lambda s: (9*s["er"] + LG_ERA*REG)/(s["ip"] + REG)
+    rwhip = lambda s: (s["h"] + s["bb"] + LG_WHIP*REG)/(s["ip"] + REG)
+    xs = 0.137*(rera(ap)-rera(hp)) + 0.606*(rwhip(ap)-rwhip(hp)) if used else 0
+    R1, R2, F = (round(sig(v)*1000) for v in (xb, xb+0.082, xb+0.082+xs))
+    return F/1000, dict(standings=(R1-500)/10, home=(R2-R1)/10, starter=(F-R2)/10, final=F/10, used=used)
 
 # ---- 賽程 ----
 now = datetime.now(timezone.utc)
@@ -65,19 +91,27 @@ def sheet(name, headers, rows, widths, wrap=()):
         for c in row: c.alignment = Alignment(vertical="top", wrap_text=(c.column-1) in wrap)
     ws.freeze_panes = "A2"; return ws
 
-# 工作表 1：勝負預測
+# 工作表 1：勝負預測（模型 v2，差值為主隊角度）
 rows, past = [], not nxt
 for g in (nxt or done):
     H, A = g["teams"]["home"], g["teams"]["away"]
     if H["team"]["id"] not in TEAM or A["team"]["id"] not in TEAM: continue
-    p = predict_home(H["team"]["id"], A["team"]["id"])
-    sp = lambda x: pn(x["probablePitcher"]) if x.get("probablePitcher") else "未公布"
+    hp = pitcher(H["probablePitcher"]["id"]) if H.get("probablePitcher") else None
+    ap = pitcher(A["probablePitcher"]["id"]) if A.get("probablePitcher") else None
+    p, st = model_v2(H["team"]["id"], A["team"]["id"], hp, ap)
+    hpct = round(st["final"]); fp = max(hpct, 100-hpct)
+    fav = "五五波：雙方各 50%" if hpct == 50 else f'看好：{tn(H["team"]) if hpct > 50 else tn(A["team"])} {fp}%'
+    tier = "很有把握" if fp >= 60 else "略佔優勢" if fp >= 55 else "五五波"
+    sp = lambda x, s: f'{pn(x["probablePitcher"])}（ERA {s["era"]}、WHIP {s["whip"]}）' if x.get("probablePitcher") else "未公布"
+    sg = lambda v: "±0.0%" if abs(v) < 0.05 else f"{v:+.1f}%"
     rows.append([tw(g["gameDate"]), SERIES.get(g.get("seriesStatus", {}).get("description", ""), g.get("seriesStatus", {}).get("description", "")),
-                 tn(A["team"]), tn(H["team"]), f"{1-p:.0%}", f"{p:.0%}", sp(A), sp(H),
-                 round(strength(A["team"]["id"]), 3), round(strength(H["team"]["id"]), 3)])
-ws = sheet("勝負預測", ["比賽時間(UTC+8)", "系列賽", "客隊", "主隊", "客隊勝率估算", "主隊勝率估算", "客隊預定先發", "主隊預定先發", "客隊實力分數", "主隊實力分數"],
-           rows, [16, 14, 18, 18, 12, 12, 16, 16, 12, 12])
-ws.append([]); ws.append(["⚠️ 簡易估算，非保證結果、非投注建議；只用例行賽數據，未考慮先發投手與傷兵。" + ("（目前無即將開打比賽，改列最近比賽）" if past else "")])
+                 tn(A["team"]), tn(H["team"]), fav, tier, f'{100-st["final"]:.1f}%', f'{st["final"]:.1f}%',
+                 "50.0%", sg(st["standings"]), sg(st["home"]), sg(st["starter"]) if st["used"] else "資料不足，未調整",
+                 sp(A, ap), sp(H, hp)])
+ws = sheet("勝負預測", ["比賽時間(UTC+8)", "系列賽", "客隊", "主隊", "結論", "信心", "客隊勝率", "主隊勝率",
+                    "起點", "戰績(主隊)", "主場(主隊)", "先發(主隊)", "客隊預定先發", "主隊預定先發"],
+           rows, [16, 12, 16, 16, 26, 10, 10, 10, 8, 11, 11, 16, 30, 30], wrap=(12, 13))
+ws.append([]); ws.append(["⚠️ 簡易估算，非保證結果、非投注建議。主隊勝率＝起點 50%＋戰績＋主場＋先發（模型 v2，依 2026 例行賽回測）。" + ("（目前無即將開打比賽，改列最近比賽）" if past else "")])
 
 # 工作表 2：賽後分析
 def pline(p):
@@ -130,7 +164,7 @@ sheet("說明", ["項目", "內容"], [
     ["資料來源", "MLB 官方 Stats API（statsapi.mlb.com），所有數字皆為官方資料，未自行編造"],
     ["更新時間", datetime.now(TZ).strftime("%Y-%m-%d %H:%M") + "（台灣時間 UTC+8）"],
     ["球季", f"{season}（戰績、排行榜為例行賽數據）"],
-    ["預測模型", "① 每隊實力＝實際勝率×50%＋畢氏期望勝率×50%（畢氏勝率＝得分^1.83 ÷（得分^1.83＋失分^1.83））\n② 用 Log5 公式比較兩隊實力，算出主隊勝率\n③ 主場球隊加 4%（上限 95%）"],
+    ["預測模型 v2", "依 2026 例行賽回測（7/1 後 1,148 場測試）。σ(x)=1/(1+e^-x)，L＝兩隊實力分數 Log5 的 ln(p/(1-p))\n① 戰績：σ(0.250·L) − 50%（實力分數＝實際勝率×50%＋畢氏期望勝率×50%）\n② 主場：σ(0.082＋0.250·L) − ①\n③ 先發：再加 0.137×(客ERA−主ERA)＋0.606×(客WHIP−主WHIP)，投手數據先加 40 局聯盟平均（ERA 4.20、WHIP 1.30）；先發未公布則不調整\n三格依序計算、四捨五入到 0.1%，加總等於最終勝率"],
     ["注意", "預測只是簡易估算，未考慮先發投手、傷兵、季後賽狀態，不是保證結果，也不是投注建議"],
     ["賽後分析", "依官方逐局比分、安打、失誤、先發投手成績、勝方打者（打點×2＋安打排序取前 2）自動整理"],
     ["譯名", "球隊與球員中文名取自網頁 app.js / players.js 對照表" + ("；未對照（保留英文）：" + "、".join(sorted(UNMAPPED)) if UNMAPPED else "；本次全部皆有對照")],

@@ -210,7 +210,7 @@ function whyBlock(A, H, m, s, ap, hp, aP, hP, fav, fp){
   const favHome = fav.id === H.id, other = favHome ? A : H;
   const items = [["戰績", s.d1], ["主場", s.d2], ["先發投手", m.used ? s.d3 : 0]];
   const big = items.reduce((x,y) => Math.abs(y[1]) > Math.abs(x[1]) ? y : x);
-  const head = items.every(x => Math.abs(x[1]) < 2) ? `兩隊條件接近，${ts(fav)}僅以 ${fp}% 些微看好` : `看好${ts(fav)} ${fp}%，主要靠${big[0]}`;
+  const head = fp === 50 ? "雙方各 50%，條件接近" : items.every(x => Math.abs(x[1]) < 2) ? `兩隊條件接近，${ts(fav)}僅以 ${fp}% 些微看好` : `看好${ts(fav)} ${fp}%，主要靠${big[0]}`;
   const li = (v, txt, na) => `<li><span class="dl ${na?"zero":dCls(v)}">${na?"－":dTxt(v)}</span><span>${txt}</span></li>`;
   // ① 戰績：m.d1 是主隊角度，正值代表主隊戰績較好
   let t1;
@@ -223,7 +223,18 @@ function whyBlock(A, H, m, s, ap, hp, aP, hP, fav, fp){
   if(!m.used) t3 = "先發：投手未公布，資料不足，未調整";
   else {
     const fa = `${pn(aP)}（ERA ${ap.era}、WHIP ${ap.whip}）`, fh = `${pn(hP)}（ERA ${hp.era}、WHIP ${hp.whip}）`;
-    t3 = Math.abs(m.d3) < 0.05 ? `先發：${fa}與${fh}數據相近` : m.d3 > 0 ? `先發：${fh}優於${fa}` : `先發：${fa}優於${fh}`;
+    if(Math.abs(m.d3) < 0.05) t3 = `先發：${fa}與${fh}數據相近`;
+    else {
+      // 以模型淨差值決定誰佔優；ERA、WHIP 方向不同時分開說明
+      const homeAdv = m.d3 > 0, P = homeAdv ? hp : ap, Q = homeAdv ? ap : hp;
+      const fP = homeAdv ? fh : fa, fQ = homeAdv ? fa : fh, nP = pn(homeAdv ? hP : aP);
+      const eraB = +P.era < +Q.era, eraW = +P.era > +Q.era, whB = +P.whip < +Q.whip, whW = +P.whip > +Q.whip;
+      if((eraB || !eraW) && (whB || !whW)) t3 = `先發：${fP}優於${fQ}`;
+      else {
+        const good = whB ? "WHIP" : "ERA", bad = whB ? "ERA" : "WHIP";
+        t3 = `先發：${fP}對上${fQ}，${nP} ${good} 較佳、${bad} 稍高，整體略佔優勢`;
+      }
+    }
     if(ap.gs < 3 || hp.gs < 3) t3 += "（出賽少，數據已往聯盟平均修正）";
   }
   return `<div class="why"><div class="why-h">為什麼這樣預測？</div><div class="why-c">${head}</div>
@@ -270,7 +281,7 @@ function renderPredict(games, isPast){
     const w = g.weather && g.weather.condition ? `ℹ️ 參考資訊：天氣 ${g.weather.condition}${g.weather.temp?`，氣溫 ${Math.round((g.weather.temp-32)*5/9)}°C`:""}（不列入勝率計算）` : "";
     html += `<div class="pcard">
       <div class="meta">客 ${tn(A.team)} @ 主 ${tn(H.team)}<br>${tw(g.gameDate)}（台灣時間）${g.seriesStatus ? "｜"+sz(g.seriesStatus.description) : ""}</div>
-      <div class="headline">看好：${tn(fav)} ${fp}%</div>
+      <div class="headline">${fp === 50 ? "五五波：雙方各 50%" : `看好：${tn(fav)} ${fp}%`}</div>
       <div><span class="tier ${tc}">${tl}</span></div>
       <div class="pbar-lab"><span>客 ${ts(A.team)} ${apct}%</span><span>主 ${ts(H.team)} ${hpct}%</span></div>
       <div class="pbar" role="img" aria-label="${tn(A.team)} ${apct}%，${tn(H.team)} ${hpct}%">
