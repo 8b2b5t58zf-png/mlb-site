@@ -522,6 +522,8 @@ function showTab(){
   for(const lg of ["mlb","nba"]) NAVS[lg].forEach(([id],k)=>{ const el=document.getElementById(id); if(!el) return; const on = lg===LG_NOW && k===i; el.classList.toggle("tab-off", !on); el.classList.toggle("tab-on", on); });
   try{ localStorage.setItem("aisl:tab", TAB_NOW); }catch(e){}
   markNav();
+  // 圖表在隱藏時畫出來會是 0 大小，顯示後重新量尺寸
+  if(TAB_NOW==="standings" && LG_NOW==="mlb") requestAnimationFrame(()=>{ try{ const c = window.Chart && Chart.getChart("winChart"); if(c){ c.resize(); c.update("none"); } }catch(e){} });
 }
 function setLeague(lg){
   LG_NOW = lg; try{ localStorage.setItem("aisl:league", lg); }catch(e){}
