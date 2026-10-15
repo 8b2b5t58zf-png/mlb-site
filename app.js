@@ -43,17 +43,21 @@ const twFull = t => new Date(t).toLocaleString("zh-TW",{timeZone:"Asia/Taipei",h
 // 骨架畫面：資料載入前先顯示灰色閃動條
 const skeleton = n => Array.from({length:n},(_, i)=>`<div class="sk" style="width:${90-i*7}%"></div>`).join("");
 
+const RETRY = {};
+const twShort = t => new Date(t).toLocaleString("zh-TW",{timeZone:"Asia/Taipei",hour12:false,month:"numeric",day:"numeric",hour:"2-digit",minute:"2-digit"});
 // 執行一個區塊：先顯示骨架，成功顯示資料；失敗顯示錯誤＋重試按鈕
 async function runSection(ids, fn){
   for(const id of ids){ document.getElementById("st-"+id).innerHTML = ""; document.getElementById(id).innerHTML = id==="chart" ? '<canvas id="winChart"></canvas>' : skeleton(5); }
   usedCache = null;
   try{
     await fn();
-    if(usedCache) for(const id of ids) document.getElementById("st-"+id).innerHTML = `<div class="stale">目前無法連線，顯示的是先前存下的資料（更新於 ${twFull(usedCache)}）</div>`;
+    if(usedCache) for(const id of ids) document.getElementById("st-"+id).innerHTML = `<div class="stale">目前顯示 ${twShort(usedCache)}（台灣時間）的資料，連線恢復後會更新</div>`;
     setTimeout(trackNav, 0);
     return true;
   }catch(e){
-    for(const id of ids) document.getElementById("st-"+id).innerHTML = `<div class="err">資料載入失敗（${e.message||e}）<button onclick='runSection(${JSON.stringify(ids)}, ${fn.name})'>重試</button></div>`;
+    // 不顯示技術錯誤字串；一分鐘後自動重試
+    for(const id of ids) document.getElementById("st-"+id).innerHTML = `<div class="err"><span>暫時抓不到資料，稍後會自動重試</span><button onclick='runSection(${JSON.stringify(ids)}, ${fn.name})'>重新整理</button></div>`;
+    clearTimeout(RETRY[ids[0]]); RETRY[ids[0]] = setTimeout(() => runSection(ids, fn), 60000);
     for(const id of ids) if(id!=="chart") document.getElementById(id).innerHTML = "";
     return false;
   }
@@ -374,7 +378,7 @@ function renderPredict(games, isPast){
       <div class="upd">最後更新：${tw(Date.now())}（台灣時間）</div>
     </div>`;
   }
-  document.getElementById("predict").innerHTML = html || "查無比賽";
+  document.getElementById("predict").innerHTML = html || '<p class="note">MLB 目前休賽中</p>';
 }
 
 // 投手成績轉成中文一句話
@@ -450,6 +454,8 @@ async function renderAnalysis(games){
 }
 
 // "2026-10-18 08:00 (UTC+8)" → "10/18 上午08:00"（與全站時間格式一致）
+const fmtD = s => { const m = String(s).match(/(\d+)-(\d+)-(\d+) (\d+:\d+)/); return m ? `${+m[2]}/${+m[3]} ${m[4]}` : s; };
+const resMark = c => c === null || c === undefined ? '<span class="rm wait">待賽</span>' : c ? '<span class="rm ok" aria-label="猜對">✓</span>' : '<span class="rm bad" aria-label="猜錯">✗</span>';
 const fmtT = s => { const m = String(s).match(/(\d+)-(\d+)-(\d+) (\d+):(\d+)/); if(!m) return s; const h=+m[4]; return `${+m[2]}/${+m[3]} ${h<12?"上午":"下午"}${String(h%12||12).padStart(2,"0")}:${m[5]}`; };
 const FULL2SHORT = Object.fromEntries(Object.values(ZH));
 const short = n => FULL2SHORT[n] || n;
@@ -458,7 +464,7 @@ async function secHit(){
   const el = document.getElementById("hit");
   if(location.protocol === "file:"){ el.innerHTML = '<p class="note">直接開啟本機檔案時無法讀取預測紀錄，請到線上網站查看：<a href="https://8b2b5t58zf-png.github.io/mlb-site/#sec-hit">點這裡</a></p>'; return; }
   const r = await fetch("data/predictions.json?t=" + Date.now());
-  if(!r.ok) throw new Error("HTTP " + r.status);
+  if(!r.ok) throw new Error("predictions");
   const d = await r.json();
   // 只計算「正式預測」（開打前最後一筆快照；舊 v1 紀錄即為正式預測）
   const off = d.records.filter(x => x.official);
@@ -477,13 +483,13 @@ async function secHit(){
   const old = vers.filter(v=>v!==MODEL_V).map(v=>`舊版 ${v}：${off.filter(x=>ver(x)===v).length} 場，不列入正式命中率`);
   if(old.length) html += `<div class="hr-vers">${old.join("<br>")}</div>`;
   html += `<p class="hr-upd">最後更新：${fmtT(d.updated)}（台灣時間）</p>`;
-  html += '<div class="tblwrap" style="overflow-x:auto"><table class="hrt"><tr><th>比賽時間</th><th>對戰（客 @ 主）</th><th>模型</th><th>預測勝方</th><th>預測勝率</th><th>實際比分</th><th>結果</th></tr>';
+  html += '<div class="tblwrap" style="overflow-x:auto"><table class="hrt"><tr><th>比賽時間</th><th>對戰（客 @ 主）</th><th>模型</th><th>預測</th><th class="dk">預測勝率</th><th class="dk">實際比分</th><th class="dk">結果</th></tr>';
   for(const x of d.records.slice().reverse().slice(0,15)){
     const snap = x.official || x.snapshots[x.snapshots.length-1], hp = snap.homeWinProb;
     const pw = hp >= 0.5 ? x.home : x.away, p = Math.max(hp, 1-hp);
     const tag = x.official ? "" : "（暫定）";
     const v = (snap.model||"").slice(0,2);
-    html += `<tr><td class="nw">${fmtT(x.gameTime)}</td><td class="nw">${short(x.away)} @ ${short(x.home)}</td><td><span class="vp ${v}">${v}</span></td><td>${short(pw)}${tag}</td><td>${Math.round(p*100)}%</td><td>${x.final || "尚未開打／進行中"}</td><td>${x.correct === null ? "待賽" : x.correct ? "猜對" : "猜錯"}</td></tr>`;
+    html += `<tr><td class="nw">${fmtD(x.gameTime)}</td><td class="nw">${short(x.away)} @ ${short(x.home)}</td><td><span class="vp ${v}">${v}</span></td><td class="nw">${short(pw)}${tag} ${resMark(x.correct)}</td><td class="dk">${Math.round(p*100)}%</td><td class="dk">${x.final || "尚未開打／進行中"}</td><td class="dk">${x.correct === null ? "待賽" : x.correct ? "猜對" : "猜錯"}</td></tr>`;
   }
   el.innerHTML = html + "</table></div>";
 }

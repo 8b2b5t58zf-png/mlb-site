@@ -1,6 +1,22 @@
 // ===== NBA v1：資料來自 ESPN 公開 JSON（瀏覽器端抓取）=====
 const ESPN = "https://site.api.espn.com/apis/site/v2/sports/basketball/nba";
 const ESPN_ST = "https://site.api.espn.com/apis/v2/sports/basketball/nba/standings?seasontype=2";
+// 先讀排程存好的 data/nba/*.json（快、穩）；超過 2 小時才直接連 ESPN；ESPN 也抓不到就用舊檔並註明時間
+const NFRESH = 2*3600e3, NFILE = {};
+let NST_AT = null;   // 目前戰績資料的抓取時間
+async function nbaFile(name){
+  if(name in NFILE) return NFILE[name];
+  let d = null; try{ const r = await fetch(`data/nba/${name}.json?t=${Math.floor(Date.now()/3e5)}`); if(r.ok) d = await r.json(); }catch(e){}
+  return NFILE[name] = d;
+}
+const nAge = f => f && f.fetched_at ? Date.now() - Date.parse(f.fetched_at) : Infinity;
+async function nbaGet(name, pick, url){
+  const f = await nbaFile(name), v = f ? pick(f) : null;
+  if(v && nAge(f) < NFRESH) return {data:v, at:Date.parse(f.fetched_at)};
+  const before = usedCache;
+  try{ const d = await getJSON(url); return {data:d, at: usedCache !== before ? usedCache : Date.now()}; }
+  catch(e){ if(v){ const t = Date.parse(f.fetched_at); if(!usedCache || t < usedCache) usedCache = t; return {data:v, at:t}; } throw e; }
+}
 // 30 隊台灣常用隊名（ESPN 縮寫 → [全名, 簡稱]），來源 /workspace/nba/teams.md
 const NZH = {ATL:["亞特蘭大老鷹","老鷹"],BOS:["波士頓塞爾提克","塞爾提克"],BKN:["布魯克林籃網","籃網"],CHA:["夏洛特黃蜂","黃蜂"],CHI:["芝加哥公牛","公牛"],
 CLE:["克里夫蘭騎士","騎士"],DAL:["達拉斯獨行俠","獨行俠"],DEN:["丹佛金塊","金塊"],DET:["底特律活塞","活塞"],GS:["金州勇士","勇士"],HOU:["休士頓火箭","火箭"],
@@ -30,7 +46,7 @@ const twT = s => new Date(s).toLocaleString("zh-TW",{timeZone:"Asia/Taipei",mont
 const stv = (e, n) => { const s = e.stats.find(x=>x.name===n); return s ? s : {}; };
 
 async function nbaStandings(){
-  const d = await getJSON(ESPN_ST);
+  const g = await nbaGet("standings", f => f.data, ESPN_ST), d = g.data; NST_AT = g.at;
   let html = '<div class="divs">';
   for(const conf of d.children){
     const rows = conf.standings.entries.map(e => {
@@ -39,8 +55,8 @@ async function nbaStandings(){
         gb:stv(e,"gamesBehind").displayValue, pct:stv(e,"winPercent").displayValue, diff:stv(e,"differential").displayValue};
       t.g = t.w + t.l; NT[t.id] = t; return t;
     }).sort((x,y)=> (y.g? y.w/y.g:0) - (x.g? x.w/x.g:0) || x.team.displayName.localeCompare(y.team.displayName));
-    html += `<div><h3>${conf.name.startsWith("East")?"東區":"西區"}</h3><table><tr><th>球隊</th><th>勝-敗</th><th>勝率</th><th>勝差</th><th>場均得分</th><th>場均失分</th><th>得失分差</th></tr>`;
-    for(const t of rows) html += `<tr><td>${ntn(t.team)}</td><td>${t.w}-${t.l}</td><td>${t.pct||"-"}</td><td>${t.gb||"-"}</td><td>${t.g?t.apf:"-"}</td><td>${t.g?t.apa:"-"}</td><td>${t.g?t.diff:"-"}</td></tr>`;
+    html += `<div><h3>${conf.name.startsWith("East")?"東區":"西區"}</h3><table class="nst"><tr><th>球隊</th><th>勝</th><th>敗</th><th>勝率</th><th>勝差</th><th class="dk">場均得分</th><th class="dk">場均失分</th><th class="dk">得失分差</th></tr>`;
+    for(const t of rows) html += `<tr><td class="nw">${nts(t.team)}</td><td>${t.w}</td><td>${t.l}</td><td>${t.pct||"-"}</td><td>${t.gb||"-"}</td><td class="dk">${t.g?t.apf:"-"}</td><td class="dk">${t.g?t.apa:"-"}</td><td class="dk">${t.g?t.diff:"-"}</td></tr>`;
     html += "</table></div>";
   }
   const none = Object.values(NT).every(t=>!t.g);
@@ -52,7 +68,7 @@ let NINJ = null;
 async function nbaInjuries(){
   if(NINJ) return;
   NINJ = {};
-  try{ const d = await getJSON(`${ESPN}/injuries`); for(const t of d.injuries||[]) NINJ[t.id] = t.injuries||[]; }catch(e){}
+  try{ const d = (await nbaGet("injuries", f => f.data, `${ESPN}/injuries`)).data; for(const t of d.injuries||[]) NINJ[t.id] = t.injuries||[]; }catch(e){}
 }
 
 // 信心門檻（2025-26 回測）：未滿 60% 勢均力敵、60–70% 略占上風、70% 以上明顯看好；開季到 1/14 最高只寫「看好」
@@ -88,35 +104,44 @@ function nbaCard(ev){
     <div class="why"><div class="why-h">為什麼這樣預測？</div><div class="why-c">${head}</div>
       <ul class="why-l"><li><span class="dl ${dCls(s1)}">${dTxt(s1)}</span><span>${t1}${c1?`<span class="chips">${c1}</span>`:""}</span></li>${li(s2, `主場：${nts(H.team)}主場優勢`)}</ul></div>
     ${b2bBox}${injBox}
-    <div class="upd">最後更新：${twT(Date.now())}（台灣時間）</div></div>`;
+    ${NST_AT && Date.now() - NST_AT > NFRESH ? `<div class="upd">依據 ${twT(NST_AT)}（台灣時間）時的戰績</div>` : `<div class="upd">戰績更新：${twT(NST_AT || Date.now())}（台灣時間）</div>`}</div>`;
 }
 
 async function nbaGames(){
   const days = [-2,-1,0,1,2,3].map(usDay);
-  const res = await Promise.all(days.map(d => getJSON(`${ESPN}/scoreboard?dates=${d}`).catch(()=>({events:[]}))));
+  const sbd = d => nbaGet("scoreboard", f => f.days && f.days[d], `${ESPN}/scoreboard?dates=${d}`).then(x => x.data).catch(()=>null);
+  const res0 = await Promise.all(days.map(sbd));
+  if(res0.every(x => x === null)) throw new Error("scoreboard");
+  const res = res0.map(x => x || {events:[]});
   const evs = res.flatMap(r=>r.events||[]);
   const seen = new Set(), all = evs.filter(e => !seen.has(e.id) && seen.add(e.id));
   let up = all.filter(e => e.status.type.state==="pre" && e.season.type===2);
   let note = "";
   if(!up.length){
     // 例行賽還沒開打：顯示開幕賽程
-    const o = await Promise.all(["20261020","20261021","20261022"].map(d => getJSON(`${ESPN}/scoreboard?dates=${d}`).catch(()=>({events:[]}))));
+    const o = (await Promise.all(["20261020","20261021","20261022"].map(sbd))).map(x => x || {events:[]});
     up = o.flatMap(r=>r.events||[]).filter(e => e.season.type===2 && e.status.type.state==="pre");
     note = '<p class="note">例行賽 10/21（台灣時間）開打。以下為開幕賽程，兩隊都還沒有本季戰績，預測目前只依主場優勢，開打後會隨戰績更新。</p>';
   }
   NALL = all.concat(up);
   await nbaInjuries();
-  document.getElementById("nba-predict").innerHTML = note + (up.slice(0,8).map(nbaCard).join("") || "<p>近期沒有例行賽</p>");
+  document.getElementById("nba-predict").innerHTML = note + (up.slice(0,8).map(nbaCard).join("") || nbaNoGames(all));
   const done = all.filter(e => e.status.type.completed).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,5);
   await nbaRecaps(done);
 }
 
+// 當天無比賽／休賽季的固定說法（style-guide 第十五節）
+function nbaNoGames(all){
+  const nx = all.filter(e => e.status.type.state === "pre").sort((a,b) => a.date.localeCompare(b.date))[0];
+  if(nx){ const d = new Date(nx.date).toLocaleDateString("zh-TW",{timeZone:"Asia/Taipei",month:"numeric",day:"numeric"}); return `<p class="note">今天沒有比賽，下一場是 ${d}</p>`; }
+  return '<p class="note">NBA 目前休賽中</p>';
+}
 const npS = n => { const z = npn(n); return /[A-Za-z]/.test(z) ? ` ${z} ` : z; };
 const STYPE = {1:"熱身賽",2:"例行賽",3:"季後賽",5:"季中錦標賽"};
 async function nbaRecaps(games){
   let html = "";
   for(const ev of games){
-    let d; try{ d = await getJSON(`${ESPN}/summary?event=${ev.id}`); }catch(e){ continue; }
+    let d; try{ d = (await nbaGet("summaries", f => f.games && f.games[ev.id], `${ESPN}/summary?event=${ev.id}`)).data; }catch(e){ continue; }
     const comp = d.header.competitions[0], H = comp.competitors.find(x=>x.homeAway==="home"), A = comp.competitors.find(x=>x.homeAway==="away");
     const hs = +H.score, as = +A.score, W = hs > as ? H : A, L = W === H ? A : H;
     const q = side => (side.linescores||[]).map(x=>+x.displayValue);
@@ -151,8 +176,9 @@ const NLB = "https://site.web.api.espn.com/apis/site/v3/sports/basketball/nba/le
 async function nbaLeaders(){
   const yr = new Date().getMonth() >= 8 ? new Date().getFullYear()+1 : new Date().getFullYear();
   let d = null, cur = true;
-  try{ d = await getJSON(NLB + yr); }catch(e){}
-  if(!d || !(d.leaders && (d.leaders.categories||[]).length)){ cur = false; d = await getJSON(NLB + (yr-1)); }
+  const has = x => x && x.leaders && (x.leaders.categories||[]).length;
+  try{ d = (await nbaGet("leaders", f => has(f.seasons && f.seasons[yr]) ? f.seasons[yr] : null, NLB + yr)).data; }catch(e){}
+  if(!has(d)){ cur = false; d = (await nbaGet("leaders", f => f.seasons && f.seasons[yr-1], NLB + (yr-1))).data; }
   const sname = (d.requestedSeason||{}).displayName || "";
   const cats = {pointsPerGame:"場均得分", reboundsPerGame:"場均籃板", assistsPerGame:"場均助攻"};
   let html = cur ? `<p class="note">${sname} 例行賽。開季初期出賽場數少，排名變動會比較大。</p>` : `<p class="note">${yr-1}-${String(yr).slice(2)} 例行賽尚未開打，以下為上季（${sname}）例行賽排行，開打後自動換成本季。</p>`;
@@ -171,17 +197,17 @@ async function nbaLeaders(){
 // ===== NBA 預測命中率：讀 data/nba-predictions.json（由每小時排程寫入）=====
 async function nbaHit(){
   const el = document.getElementById("nba-hit");
-  const r = await fetch("data/nba-predictions.json?t=" + Date.now()); if(!r.ok) throw new Error("HTTP " + r.status);
+  const r = await fetch("data/nba-predictions.json?t=" + Date.now()); if(!r.ok) throw new Error("nba-predictions");
   const d = await r.json(), GOAL = 50;
   const done = d.records.filter(x => x.official && x.correct !== null), n = done.length, ok = done.filter(x => x.correct).length;
   let html = n >= GOAL ? `<div class="hr-big">${Math.round(ok/n*100)}%</div><div class="hr-sub">NBA 模型命中率（共 ${n} 場）</div>`
-    : `<div class="hr-big muted">累積中</div><div class="hr-prog"><div class="hr-bar"><div style="width:${n/GOAL*100}%"></div></div><span>已完賽 ${n} / ${GOAL} 場，滿 ${GOAL} 場後顯示命中率</span></div>`;
-  html += `<p class="hr-upd">最後更新：${d.updated}</p>`;
+    : `<div class="hr-big muted">累積中</div><div class="hr-prog"><div class="hr-bar"><div style="width:${n/GOAL*100}%"></div></div><span>v1：${n} / ${GOAL} 場</span></div><div class="hr-ref">滿 ${GOAL} 場正式預測後顯示命中率</div>`;
+  html += `<p class="hr-upd">最後更新：${fmtT(d.updated)}（台灣時間）</p>`;
   if(!d.records.length){ el.innerHTML = html + '<p class="note">2026-27 例行賽 10/21（台灣時間）開打，開打前會開始記錄。</p>'; return; }
-  html += '<div style="overflow-x:auto"><table class="hrt"><tr><th>比賽時間</th><th>對戰（客 @ 主）</th><th>預測勝方</th><th>預測勝率</th><th>實際比分</th><th>結果</th></tr>';
+  html += '<div class="tblwrap" style="overflow-x:auto"><table class="hrt"><tr><th>比賽時間</th><th>對戰（客 @ 主）</th><th>預測</th><th>勝率</th><th class="dk">實際比分</th><th class="dk">結果</th></tr>';
   for(const x of d.records.slice().reverse().slice(0,15)){
     const sn = x.official || x.snapshots[x.snapshots.length-1], hp = sn.homeWinProb, pw = hp >= .5 ? x.home : x.away;
-    html += `<tr><td class="nw">${x.gameTime.replace(" (UTC+8)","")}</td><td class="nw">${x.away} @ ${x.home}</td><td>${pw}${x.official?"":"（暫定）"}</td><td class="num">${Math.round(Math.max(hp,1-hp)*100)}%</td><td>${x.final||"尚未開打／進行中"}</td><td>${x.correct===null?"待賽":x.correct?"猜對":"猜錯"}</td></tr>`;
+    html += `<tr><td class="nw">${fmtD(x.gameTime)}</td><td class="nw">${x.away} @ ${x.home}</td><td class="nw">${pw}${x.official?"":"（暫定）"} ${resMark(x.correct)}</td><td class="num">${Math.round(Math.max(hp,1-hp)*100)}%</td><td class="dk">${x.final||"尚未開打／進行中"}</td><td class="dk">${x.correct===null?"待賽":x.correct?"猜對":"猜錯"}</td></tr>`;
   }
   el.innerHTML = html + "</table></div>";
 }

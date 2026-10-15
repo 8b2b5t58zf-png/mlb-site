@@ -16,9 +16,19 @@ js = open(os.path.join(ROOT, "nba.js"), encoding="utf-8").read()
 ZH = dict(re.findall(r'(\w+):\["[^"]+","([^"]+)"\]', js))   # 縮寫 → 簡稱
 tn = lambda t: ZH.get(t["abbreviation"], t.get("shortDisplayName") or t["displayName"])
 
+# 優先用排程剛存的 data/nba/*.json（fetch_nba.py），沒有才直接抓 ESPN；記下所用戰績的抓取時間
+NBA_DIR = os.path.join(ROOT, "data", "nba")
+def saved(name):
+    try: return json.load(open(os.path.join(NBA_DIR, name), encoding="utf-8"))
+    except Exception: return None
+_st = saved("standings.json")
+if _st: ST_DATA, ST_AT = _st["data"], _st["fetched_at"]
+else: ST_DATA, ST_AT = get(ST), datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+_sb = saved("scoreboard.json")
+
 # 與 nba.js 相同的模型
 T = {}
-for conf in get(ST)["children"]:
+for conf in ST_DATA["children"]:
     for e in conf["standings"]["entries"]:
         s = {x["name"]: x.get("value") for x in e["stats"]}
         w, l = int(s.get("wins") or 0), int(s.get("losses") or 0)
@@ -40,7 +50,8 @@ nowtw = lambda: datetime.now(TZ).strftime("%Y-%m-%d %H:%M") + " (UTC+8)"
 evs = {}
 for off in range(-3, 3):
     d = (now - timedelta(hours=5) + timedelta(days=off)).strftime("%Y%m%d")
-    for e in get(f"{ESPN}/scoreboard?dates={d}").get("events", []): evs[e["id"]] = e
+    day = (_sb or {}).get("days", {}).get(d) or get(f"{ESPN}/scoreboard?dates={d}")
+    for e in day.get("events", []): evs[e["id"]] = e
 for e in evs.values():
     if e["season"]["type"] != 2: continue
     c = e["competitions"][0]; H = next(x for x in c["competitors"] if x["homeAway"] == "home"); A = next(x for x in c["competitors"] if x["homeAway"] == "away")
@@ -53,11 +64,12 @@ for e in evs.values():
                 "predictedWinner": None, "final": None, "actualWinner": None, "correct": None}
         if r["official"] is None:
             p = model(H["team"]["id"], A["team"]["id"])
+            r["latestStandingsAt"] = ST_AT   # 開打前最後一次所用戰績的抓取時間
             if not r["snapshots"] or r["snapshots"][-1]["homeWinProb"] != p:
-                r["snapshots"].append({"at": nowtw(), "model": MODEL, "homeWinProb": p,
+                r["snapshots"].append({"at": nowtw(), "model": MODEL, "homeWinProb": p, "standingsFetchedAt": ST_AT,
                     "homeGames": T.get(H["team"]["id"], {}).get("g", 0), "awayGames": T.get(A["team"]["id"], {}).get("g", 0)})
     if r and r["official"] is None and (state != "pre" or now >= start) and r["snapshots"]:
-        r["official"] = r["snapshots"][-1]
+        r["official"] = {**r["snapshots"][-1], "standingsFetchedAt": r.get("latestStandingsAt") or r["snapshots"][-1].get("standingsFetchedAt")}
         r["predictedWinner"] = r["home"] if r["official"]["homeWinProb"] >= 0.5 else r["away"]
     if r and r["official"] and r["final"] is None and e["status"]["type"]["completed"]:
         hs, as_ = int(H["score"]), int(A["score"])
