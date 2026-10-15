@@ -358,7 +358,7 @@ function renderPredict(games, isPast){
     const v1note = off && off.model && !off.model.startsWith(MODEL_V) ? `<div class="vnote">ℹ️ 此場正式紀錄為舊版模型 ${off.model.slice(0,2)}</div>` : "";
     const w = g.weather && g.weather.condition ? `ℹ️ 參考資訊：天氣 ${g.weather.condition}${g.weather.temp?`，氣溫 ${Math.round((g.weather.temp-32)*5/9)}°C`:""}（不列入勝率計算）` : "";
     html += `<div class="pcard">
-      <div class="meta"><span class="nw">客 ${ts(A.team)}</span> @ <span class="nw">主 ${ts(H.team)}</span><br>${tw(g.gameDate)}（台灣時間）${g.seriesStatus ? `<br>${[sz(g.seriesStatus.description), seriesPre(g.seriesStatus).replace("系列賽目前","系列賽")].filter(Boolean).join("・")}` : ""}</div>
+      <div class="meta"><span class="nw">客 ${ts(A.team)}</span> @ <span class="nw">主 ${ts(H.team)}</span><br>${tw(g.gameDate)}（台灣時間）${g.seriesStatus ? `<br>${[sz(g.seriesStatus.description), seriesPre(g.seriesStatus).replace("系列賽目前","系列賽").replace(/（(.+)領先）/," $1領先")].filter(Boolean).join("・")}` : ""}</div>
       <div class="headline">${fp === 50 ? `五五波：<span class="nw">雙方各 50%</span>` : `${fp>=60?"明顯看好":fp>=53?"略占上風":"勢均力敵"}：${tn(fav)} <span class="nw">${fp}%</span>`}</div>
       ${(!aP||!hP)?`<span class="wait-tag">⏳ 等先發公布</span>`:""}
       <div class="tier-row"><span class="tier ${tc}">${tl}</span><span class="upset">${upset(A.team, H.team, ap, hp, aP, hP, fav, fp)}</span></div>
