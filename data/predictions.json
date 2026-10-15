@@ -1,5 +1,5 @@
 {
- "updated": "2026-10-15 15:57 (UTC+8)",
+ "updated": "2026-10-15 16:22 (UTC+8)",
  "records": [
   {
    "gamePk": 849818,
@@ -13,7 +13,22 @@
    "predictedAt": "2026-10-15 15:56 (UTC+8)",
    "final": null,
    "actualWinner": null,
-   "correct": null
+   "correct": null,
+   "snapshots": [
+    {
+     "homeWinProb": 0.4751,
+     "awayWinProb": 0.5249,
+     "model": "v1：勝率50%+畢氏勝率50%、Log5、主場+4%",
+     "at": "2026-10-15 15:56 (UTC+8)"
+    }
+   ],
+   "official": {
+    "homeWinProb": 0.4751,
+    "awayWinProb": 0.5249,
+    "model": "v1：勝率50%+畢氏勝率50%、Log5、主場+4%",
+    "at": "2026-10-15 15:56 (UTC+8)",
+    "note": "v1 舊紀錄，視為正式預測"
+   }
   },
   {
    "gamePk": 849810,
@@ -27,7 +42,22 @@
    "predictedAt": "2026-10-15 15:56 (UTC+8)",
    "final": null,
    "actualWinner": null,
-   "correct": null
+   "correct": null,
+   "snapshots": [
+    {
+     "homeWinProb": 0.5279,
+     "awayWinProb": 0.4721,
+     "model": "v1：勝率50%+畢氏勝率50%、Log5、主場+4%",
+     "at": "2026-10-15 15:56 (UTC+8)"
+    }
+   ],
+   "official": {
+    "homeWinProb": 0.5279,
+    "awayWinProb": 0.4721,
+    "model": "v1：勝率50%+畢氏勝率50%、Log5、主場+4%",
+    "at": "2026-10-15 15:56 (UTC+8)",
+    "note": "v1 舊紀錄，視為正式預測"
+   }
   },
   {
    "gamePk": 849817,
@@ -41,7 +71,22 @@
    "predictedAt": "2026-10-15 15:56 (UTC+8)",
    "final": null,
    "actualWinner": null,
-   "correct": null
+   "correct": null,
+   "snapshots": [
+    {
+     "homeWinProb": 0.4751,
+     "awayWinProb": 0.5249,
+     "model": "v1：勝率50%+畢氏勝率50%、Log5、主場+4%",
+     "at": "2026-10-15 15:56 (UTC+8)"
+    }
+   ],
+   "official": {
+    "homeWinProb": 0.4751,
+    "awayWinProb": 0.5249,
+    "model": "v1：勝率50%+畢氏勝率50%、Log5、主場+4%",
+    "at": "2026-10-15 15:56 (UTC+8)",
+    "note": "v1 舊紀錄，視為正式預測"
+   }
   },
   {
    "gamePk": 849808,
@@ -55,7 +100,22 @@
    "predictedAt": "2026-10-15 15:56 (UTC+8)",
    "final": null,
    "actualWinner": null,
-   "correct": null
+   "correct": null,
+   "snapshots": [
+    {
+     "homeWinProb": 0.5279,
+     "awayWinProb": 0.4721,
+     "model": "v1：勝率50%+畢氏勝率50%、Log5、主場+4%",
+     "at": "2026-10-15 15:56 (UTC+8)"
+    }
+   ],
+   "official": {
+    "homeWinProb": 0.5279,
+    "awayWinProb": 0.4721,
+    "model": "v1：勝率50%+畢氏勝率50%、Log5、主場+4%",
+    "at": "2026-10-15 15:56 (UTC+8)",
+    "note": "v1 舊紀錄，視為正式預測"
+   }
   },
   {
    "gamePk": 849816,
@@ -69,7 +129,22 @@
    "predictedAt": "2026-10-15 15:56 (UTC+8)",
    "final": null,
    "actualWinner": null,
-   "correct": null
+   "correct": null,
+   "snapshots": [
+    {
+     "homeWinProb": 0.4751,
+     "awayWinProb": 0.5249,
+     "model": "v1：勝率50%+畢氏勝率50%、Log5、主場+4%",
+     "at": "2026-10-15 15:56 (UTC+8)"
+    }
+   ],
+   "official": {
+    "homeWinProb": 0.4751,
+    "awayWinProb": 0.5249,
+    "model": "v1：勝率50%+畢氏勝率50%、Log5、主場+4%",
+    "at": "2026-10-15 15:56 (UTC+8)",
+    "note": "v1 舊紀錄，視為正式預測"
+   }
   }
  ]
 }

@@ -1,8 +1,7 @@
-name: 每日預測紀錄
+name: 每小時預測紀錄
 on:
   schedule:
-    - cron: "30 0 * * *"
-    - cron: "30 12 * * *"
+    - cron: "15 * * * *"
   workflow_dispatch:
 permissions:
   contents: write
@@ -19,4 +18,4 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898810+github-actions[bot]@users.noreply.github.com"
           git add data/predictions.json
-          git diff --cached --quiet || (git commit -m "更新預測紀錄" && git push)
+          git diff --cached --quiet || (git commit -m "更新預測紀錄" && git pull --rebase && git push)

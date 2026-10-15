@@ -153,3 +153,14 @@ a:focus-visible,button:focus-visible,summary:focus-visible{outline:2px solid var
 .dl{flex:none;min-width:4.6em;text-align:center;font-weight:700;font-size:var(--fs-xs);padding:2px 6px;border-radius:10px;color:#fff}
 .dl.up{background:var(--c-win)} .dl.down{background:var(--c-loss)} .dl.zero{background:var(--c-muted)}
 .br-seg.start{background:var(--c-muted)} .br-row.muted{color:var(--c-muted)}
+
+/* ===== 設計驗收 #1 修正 ===== */
+.nw{white-space:nowrap}
+@media(max-width:767px){ .pcard .headline{font-size:var(--fs-lg)} }
+/* 展開符號只留一個 ▾，展開時轉 180° */
+details>summary{list-style:none} details>summary::-webkit-details-marker{display:none}
+details>summary::after{content:"▾";display:inline-block;margin-left:4px;transition:transform .15s}
+details[open]>summary::after{transform:rotate(180deg)}
+.pcard details.algo{margin:0} .pcard details.algo summary{padding:var(--sp-2) 0}
+.pcard{gap:var(--sp-2)}
+.pcard details.algo summary{padding:0;line-height:1.4} .pcard details.algo[open]>summary{margin-bottom:var(--sp-2)}

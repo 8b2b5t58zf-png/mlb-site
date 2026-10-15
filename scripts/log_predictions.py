@@ -55,36 +55,61 @@ def model_v2(h, a, hp, ap):
     return sig(xb+0.082+xs), {"start": 50.0, "standings": (R1-500)/10, "home": (R2-R1)/10, "starter": (F-R2)/10, "final": F/10, "starterUsed": used}
 
 data = json.load(open(OUT, encoding="utf-8")) if os.path.exists(OUT) else {"records": []}
+ORIG = json.dumps(data.get("records", []), sort_keys=True, ensure_ascii=False)   # 原始內容，用來判斷有沒有變動
 recs = {r["gamePk"]: r for r in data["records"]}
+nowtw = lambda: datetime.now(TZ).strftime("%Y-%m-%d %H:%M") + " (UTC+8)"
+
+# 舊版 v1 紀錄：原欄位一律不動，只補上 snapshots 與 official（就是當時那筆預測）
+for r in recs.values():
+    if "snapshots" not in r:
+        snap = {k: r.get(k) for k in ("predictedAt", "homeWinProb", "awayWinProb", "model")}
+        snap["at"] = snap.pop("predictedAt")
+        r["snapshots"] = [snap]; r["official"] = dict(snap, note="v1 舊紀錄，視為正式預測")
 
 d = get(f"/schedule?sportId=1&startDate={(now-timedelta(7)).date()}&endDate={(now+timedelta(2)).date()}&hydrate=probablePitcher")
-added = filled = 0
+added = snaps = frozen = filled = 0
 for g in (x for dt in d.get("dates", []) for x in dt["games"]):
     pk, H, A = g["gamePk"], g["teams"]["home"], g["teams"]["away"]
     state = g["status"]["abstractGameState"]
-    # 1) 尚未開打、且沒記錄過 → 記下預測
-    if pk not in recs and state == "Preview" and H["team"]["id"] in TEAM and A["team"]["id"] in TEAM:
-        hp = pitcher(H["probablePitcher"]["id"]) if H.get("probablePitcher") else None
-        ap = pitcher(A["probablePitcher"]["id"]) if A.get("probablePitcher") else None
-        p, steps = model_v2(H["team"]["id"], A["team"]["id"], hp, ap)
-        p = round(p, 4)
-        recs[pk] = {"gamePk": pk,
-            "gameTime": datetime.fromisoformat(g["gameDate"].replace("Z", "+00:00")).astimezone(TZ).strftime("%Y-%m-%d %H:%M") + " (UTC+8)",
-            "away": tn(A["team"]), "home": tn(H["team"]), "homeWinProb": p, "awayWinProb": round(1-p, 4),
-            "predictedWinner": tn(H["team"]) if p >= 0.5 else tn(A["team"]),
-            "model": MODEL, "steps": steps,
-            "homeStarter": H.get("probablePitcher", {}).get("fullName"), "awayStarter": A.get("probablePitcher", {}).get("fullName"), "predictedAt": datetime.now(TZ).strftime("%Y-%m-%d %H:%M") + " (UTC+8)",
-            "final": None, "actualWinner": None, "correct": None}
-        added += 1
-    # 2) 已記錄、已結束、還沒填結果 → 補實際結果（只填結果欄位，預測欄位不動）
+    start = datetime.fromisoformat(g["gameDate"].replace("Z", "+00:00"))
     r = recs.get(pk)
-    if r and r["final"] is None and state == "Final" and "score" in H and H["score"] != A["score"]:
+    # 1) 尚未開打：記一筆快照（只往後加，不覆蓋；和上一筆相同就不重複記）
+    if state == "Preview" and now < start and H["team"]["id"] in TEAM and A["team"]["id"] in TEAM:
+        if r is None:
+            r = recs[pk] = {"gamePk": pk, "date": start.astimezone(TZ).strftime("%Y-%m-%d"),
+                "gameTime": start.astimezone(TZ).strftime("%Y-%m-%d %H:%M") + " (UTC+8)",
+                "away": tn(A["team"]), "home": tn(H["team"]), "snapshots": [], "official": None,
+                "predictedWinner": None, "final": None, "actualWinner": None, "correct": None}
+            added += 1
+        if r.get("official") is None:
+            hpp, app_ = H.get("probablePitcher"), A.get("probablePitcher")
+            hp = pitcher(hpp["id"]) if hpp else None
+            ap = pitcher(app_["id"]) if app_ else None
+            p, st = model_v2(H["team"]["id"], A["team"]["id"], hp, ap)
+            snap = {"at": nowtw(), "model": MODEL, "homeWinProb": round(p, 4),
+                    "steps": {"standings": st["standings"], "home": st["home"], "starter": st["starter"]},
+                    "starterUsed": st["starterUsed"],
+                    "homeStarter": hpp and {"id": hpp["id"], "name": hpp["fullName"]},
+                    "awayStarter": app_ and {"id": app_["id"], "name": app_["fullName"]}}
+            last = r["snapshots"][-1] if r["snapshots"] else None
+            if not last or {k: v for k, v in last.items() if k != "at"} != {k: v for k, v in snap.items() if k != "at"}:
+                r["snapshots"].append(snap); snaps += 1
+    # 2) 已開打：正式預測＝開打前最後一筆快照（固定後不再改）
+    if r and r.get("official") is None and (state != "Preview" or now >= start) and r["snapshots"]:
+        r["official"] = r["snapshots"][-1]
+        r["predictedWinner"] = r["home"] if r["official"]["homeWinProb"] >= 0.5 else r["away"]
+        frozen += 1
+    # 3) 已結束：補實際結果（只填結果欄位）
+    if r and r.get("official") and r["final"] is None and state == "Final" and "score" in H and H["score"] != A["score"]:
         r["final"] = f'{r["away"]} {A["score"]} : {H["score"]} {r["home"]}'
+        r["homeScore"], r["awayScore"] = H["score"], A["score"]
         r["actualWinner"] = r["home"] if H["score"] > A["score"] else r["away"]
         r["correct"] = r["actualWinner"] == r["predictedWinner"]
         filled += 1
 
-data = {"updated": datetime.now(TZ).strftime("%Y-%m-%d %H:%M") + " (UTC+8)",
-        "records": sorted(recs.values(), key=lambda r: r["gameTime"])}
-json.dump(data, open(OUT, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
-print(f"新增預測 {added} 筆、補上結果 {filled} 筆、總共 {len(recs)} 筆")
+new = {"records": sorted(recs.values(), key=lambda r: r["gameTime"])}
+# 有資料變動才更新時間並寫檔（避免每小時都產生沒意義的 commit）
+if json.dumps(new["records"], sort_keys=True, ensure_ascii=False) != ORIG or "updated" not in data:
+    new = {"updated": nowtw(), **new}
+    json.dump(new, open(OUT, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
+print(f"新比賽 {added}、新快照 {snaps}、固定正式預測 {frozen}、補上結果 {filled}；總共 {len(recs)} 場")

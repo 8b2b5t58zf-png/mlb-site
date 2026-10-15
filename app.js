@@ -210,8 +210,8 @@ function whyBlock(A, H, m, s, ap, hp, aP, hP, fav, fp){
   const favHome = fav.id === H.id, other = favHome ? A : H;
   const items = [["戰績", s.d1], ["主場", s.d2], ["先發投手", m.used ? s.d3 : 0]];
   const big = items.reduce((x,y) => Math.abs(y[1]) > Math.abs(x[1]) ? y : x);
-  const head = fp === 50 ? "雙方各 50%，條件接近" : items.every(x => Math.abs(x[1]) < 2) ? `兩隊條件接近，${ts(fav)}僅以 ${fp}% 些微看好` : `看好${ts(fav)} ${fp}%，主要靠${big[0]}`;
-  const li = (v, txt, na) => `<li><span class="dl ${na?"zero":dCls(v)}">${na?"－":dTxt(v)}</span><span>${txt}</span></li>`;
+  const head = fp === 50 ? "兩隊五五波，勝負難料" : items.every(x => Math.abs(x[1]) < 2) ? `兩隊條件接近，${ts(fav)}僅以 ${fp}% 些微看好` : `看好${ts(fav)} ${fp}%，主要靠${big[0]}`;
+  const li = (v, txt, na) => `<li><span class="dl ${na?"zero":dCls(v)}">${na?"未調整":dTxt(v)}</span><span>${txt}</span></li>`;
   // ① 戰績：m.d1 是主隊角度，正值代表主隊戰績較好
   let t1;
   if(Math.abs(s.d1) < 1) t1 = "戰績：兩隊戰績相近，影響不大";
@@ -220,22 +220,14 @@ function whyBlock(A, H, m, s, ap, hp, aP, hP, fav, fp){
   const t2 = `主場：${ts(H)}主場作戰`;
   // ③ 先發
   let t3;
-  if(!m.used) t3 = "先發：投手未公布，資料不足，未調整";
+  if(!m.used) t3 = "先發：投手未公布，未調整";
+  else if(Math.abs(m.d3) < 0.05) t3 = `先發：${pn(aP)}與${pn(hP)}數據相近`;
   else {
-    const fa = `${pn(aP)}（ERA ${ap.era}、WHIP ${ap.whip}）`, fh = `${pn(hP)}（ERA ${hp.era}、WHIP ${hp.whip}）`;
-    if(Math.abs(m.d3) < 0.05) t3 = `先發：${fa}與${fh}數據相近`;
-    else {
-      // 以模型淨差值決定誰佔優；ERA、WHIP 方向不同時分開說明
-      const homeAdv = m.d3 > 0, P = homeAdv ? hp : ap, Q = homeAdv ? ap : hp;
-      const fP = homeAdv ? fh : fa, fQ = homeAdv ? fa : fh, nP = pn(homeAdv ? hP : aP);
-      const eraB = +P.era < +Q.era, eraW = +P.era > +Q.era, whB = +P.whip < +Q.whip, whW = +P.whip > +Q.whip;
-      if((eraB || !eraW) && (whB || !whW)) t3 = `先發：${fP}優於${fQ}`;
-      else {
-        const good = whB ? "WHIP" : "ERA", bad = whB ? "ERA" : "WHIP";
-        t3 = `先發：${fP}對上${fQ}，${nP} ${good} 較佳、${bad} 稍高，整體略佔優勢`;
-      }
-    }
-    if(ap.gs < 3 || hp.gs < 3) t3 += "（出賽少，數據已往聯盟平均修正）";
+    // ERA、WHIP 指向同一人 → 數據優於；指向不同人 → 互有優劣（▲▼ 照模型那一步標）
+    const eraH = +hp.era < +ap.era, eraA = +ap.era < +hp.era, whH = +hp.whip < +ap.whip, whA = +ap.whip < +hp.whip;
+    const split = (eraH && whA) || (eraA && whH);
+    if(split) t3 = "先發對決互有優劣";
+    else { const homeAdv = m.d3 > 0; t3 = `先發：${pn(homeAdv?hP:aP)}數據優於${pn(homeAdv?aP:hP)}`; }
   }
   return `<div class="why"><div class="why-h">為什麼這樣預測？</div><div class="why-c">${head}</div>
     <ul class="why-l">${li(s.d1, t1)}${li(s.d2, t2)}${li(s.d3, t3, !m.used)}</ul></div>`;
@@ -281,15 +273,15 @@ function renderPredict(games, isPast){
     const w = g.weather && g.weather.condition ? `ℹ️ 參考資訊：天氣 ${g.weather.condition}${g.weather.temp?`，氣溫 ${Math.round((g.weather.temp-32)*5/9)}°C`:""}（不列入勝率計算）` : "";
     html += `<div class="pcard">
       <div class="meta">客 ${tn(A.team)} @ 主 ${tn(H.team)}<br>${tw(g.gameDate)}（台灣時間）${g.seriesStatus ? "｜"+sz(g.seriesStatus.description) : ""}</div>
-      <div class="headline">${fp === 50 ? "五五波：雙方各 50%" : `看好：${tn(fav)} ${fp}%`}</div>
+      <div class="headline">${fp === 50 ? `五五波：<span class="nw">雙方各 50%</span>` : `看好：${tn(fav)} <span class="nw">${fp}%</span>`}</div>
       <div><span class="tier ${tc}">${tl}</span></div>
       <div class="pbar-lab"><span>客 ${ts(A.team)} ${apct}%</span><span>主 ${ts(H.team)} ${hpct}%</span></div>
       <div class="pbar" role="img" aria-label="${tn(A.team)} ${apct}%，${tn(H.team)} ${hpct}%">
         <div class="${favHome?"oth":"fav"}" style="width:${apct}%"></div><div class="${favHome?"fav":"oth"}" style="width:${hpct}%"></div></div>
       ${whyBlock(A.team, H.team, m, st, ap, hp, aP, hP, fav, fp)}
-      <details class="algo"><summary>🔍 看算法 ▾</summary>${bridge(m, st, fav)}
+      <details class="algo"><summary>🔍 看算法</summary>${bridge(m, st, fav)}
         <p class="desc">戰績：兩隊實力分數（勝率與畢氏期望勝率各半）用 Log5 比較，再依回測縮回 50% 附近；主場與先發投手依 2026 例行賽回測校正。三格差值依序計算，加總等於最終勝率。模型 ${MODEL_V}。</p></details>
-      <details class="algo"><summary>📊 兩隊數據對比 ▾</summary>${compare(A.team, H.team, ap, hp)}</details>
+      <details class="algo"><summary>📊 兩隊數據對比</summary>${compare(A.team, H.team, ap, hp)}</details>
       ${w ? `<div class="ref">${w}</div>` : ""}
     </div>`;
   }
@@ -374,13 +366,17 @@ async function secHit(){
   const r = await fetch("data/predictions.json?t=" + Date.now());
   if(!r.ok) throw new Error("HTTP " + r.status);
   const d = await r.json();
-  const done = d.records.filter(x => x.correct !== null), ok = done.filter(x => x.correct).length;
+  // 只計算「正式預測」（開打前最後一筆快照；舊 v1 紀錄即為正式預測）
+  const off = d.records.filter(x => x.official);
+  const done = off.filter(x => x.correct !== null), ok = done.filter(x => x.correct).length;
   const rate = done.length ? Math.round(ok / done.length * 100) + "%" : "尚無已完賽紀錄";
-  let html = `<p><b>命中率：${rate}</b>（已完賽 ${done.length} 場中猜對 ${ok} 場；總紀錄 ${d.records.length} 筆，等待結果 ${d.records.length - done.length} 筆）<br><small>最後更新：${d.updated.replace("(UTC+8)","（台灣時間）")}</small></p>`;
+  let html = `<p><b>命中率：${rate}</b>（已完賽 ${done.length} 場中猜對 ${ok} 場；正式預測 ${off.length} 筆，等待結果 ${off.length - done.length} 筆）<br><small>最後更新：${d.updated.replace("(UTC+8)","（台灣時間）")}｜每小時記錄一次，開打前最後一筆為正式預測</small></p>`;
   html += '<div style="overflow-x:auto"><table><tr><th>比賽時間</th><th>對戰（客 @ 主）</th><th>預測勝方</th><th>預測勝率</th><th>實際比分</th><th>結果</th></tr>';
   for(const x of d.records.slice().reverse().slice(0,15)){
-    const p = x.predictedWinner === x.home ? x.homeWinProb : x.awayWinProb;
-    html += `<tr><td>${x.gameTime.replace(" (UTC+8)","")}</td><td>${x.away} @ ${x.home}</td><td>${x.predictedWinner}</td><td>${Math.round(p*100)}%</td><td>${x.final || "尚未開打／進行中"}</td><td>${x.correct === null ? "⏳" : x.correct ? "✅ 猜對" : "❌ 猜錯"}</td></tr>`;
+    const snap = x.official || x.snapshots[x.snapshots.length-1], hp = snap.homeWinProb;
+    const pw = hp >= 0.5 ? x.home : x.away, p = Math.max(hp, 1-hp);
+    const tag = x.official ? "" : "（暫定）";
+    html += `<tr><td>${x.gameTime.replace(" (UTC+8)","")}</td><td>${x.away} @ ${x.home}</td><td>${pw}${tag}</td><td>${Math.round(p*100)}%</td><td>${x.final || "尚未開打／進行中"}</td><td>${x.correct === null ? "⏳" : x.correct ? "✅ 猜對" : "❌ 猜錯"}</td></tr>`;
   }
   el.innerHTML = html + "</table></div>";
 }
