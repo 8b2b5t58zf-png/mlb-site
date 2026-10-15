@@ -259,10 +259,11 @@ const sd = arr => { const v = arr.filter(x=>!isNaN(x)); if(v.length<2) return nu
 function matchup(A, H){
   const sa = TSTAT[A.id]||{}, sh = TSTAT[H.id]||{}, all = Object.values(TSTAT), out = [];
   if(sa.rpg && sh.rpg && sa.rpg!==sh.rpg){ const X = +sa.rpg > +sh.rpg ? [A,sa,sh] : [H,sh,sa], s0 = sd(all.map(t=>+t.rpg));
-    out.push({z: s0 ? Math.abs(sa.rpg-sh.rpg)/s0 : 0, txt:`${ts(X[0])}打線每場平均多得 ${(X[1].rpg-X[2].rpg).toFixed(2)} 分（<b>${X[1].rpg}</b> 對 ${X[2].rpg}）`}); }
+    out.push({z: s0 ? Math.abs(sa.rpg-sh.rpg)/s0 : 0, short:`${ts(X[0])}打線較強`, txt:`${ts(X[0])}打線每場平均多得 ${(X[1].rpg-X[2].rpg).toFixed(2)} 分（<b>${X[1].rpg}</b> 對 ${X[2].rpg}）`}); }
   if(sa.era && sh.era && sa.era!==sh.era){ const [X,Y,a,b] = +sa.era < +sh.era ? [A,H,sa.era,sh.era] : [H,A,sh.era,sa.era], s0 = sd(all.map(t=>+t.era));
-    out.push({z: s0 ? Math.abs(sa.era-sh.era)/s0 : 0, txt:`${ts(X)}投手群防禦率 <b>${a}</b>，優於${ts(Y)}的 ${b}`}); }
+    out.push({z: s0 ? Math.abs(sa.era-sh.era)/s0 : 0, short:`${ts(X)}投手群較穩`, txt:`${ts(X)}投手群防禦率 <b>${a}</b>，優於${ts(Y)}的 ${b}`}); }
   out.sort((x,y)=>y.z-x.z);
+  if(out.length && out[0].z < 0.5) out.unshift({z:-2, close:true, txt:"兩隊打線和投手群相當接近"});
   const hr = homeRec(TEAM[H.id]); if(hr) out.push({z:-1, txt:`${ts(H)}本季主場 ${hr.wins}勝${hr.losses}敗`});
   const h2 = H2H[A.id+"-"+H.id];
   if(h2){ const n = h2.hw+h2.aw, [X,w,l] = h2.aw > h2.hw ? [A,h2.aw,h2.hw] : [H,h2.hw,h2.aw];
@@ -282,7 +283,7 @@ function whyBlock(A, H, m, s, ap, hp, aP, hP, fav, fp){
   else if(!m.used) head = "先發未公布，目前主要依主場判斷，公布後會更新";
   else if(big[0]==="先發投手") head = `先發對決是勝負關鍵，${pn(m.d3>0?hP:aP)}這邊占優`;
   else if(big[0]==="戰績") head = `${ts(m.d1>0?H:A)}整季實力較穩，是看好主因`;
-  else head = `兩隊實力接近，主場可能是關鍵${look[0]&&look[0].z>=0?"；"+look[0].txt.replace(/<[^>]+>/g,""):""}`;
+  else head = `兩隊實力接近，主場可能是關鍵${look[0]&&look[0].short?"；"+look[0].short:""}`;
   // ① 戰績
   const rdA = ta.runsScored-ta.runsAllowed, rdH = th.runsScored-th.runsAllowed;
   const t1 = Math.abs(s.d1) < 1 ? "戰績：兩隊整季實力相近，影響不大" : `戰績：${ts(m.d1>0?H:A)}整季實力較${ts(m.d1>0?A:H)}佳`;
@@ -302,8 +303,8 @@ function whyBlock(A, H, m, s, ap, hp, aP, hP, fav, fp){
   const c3 = m.used ? chip("防禦率", ap.era, hp.era, bt(+ap.era, +hp.era, true)) + chip("WHIP", ap.whip, hp.whip, bt(+ap.whip, +hp.whip, true)) : "";
   const sp = seriesPre(SS_NOW);
   const L = look.length ? `<div class="why-k"><div class="why-kh">對戰看點 <span class="ref-tag">參考，不計入勝率</span></div><div class="mk-focus">${look[0].txt}</div>
-    ${look.length>1?`<details class="mk-more"><summary>看更多對戰看點 ▾</summary><ul>${look.slice(1).map(x=>`<li>${x.txt}</li>`).join("")}</ul></details>`:""}</div>` : "";
-  return `<div class="why"><div class="why-h">為什麼這樣預測？</div><div class="why-c">${head}</div>${sp?`<div class="why-s">${sp}</div>`:""}
+    ${look.length>1?`<details class="mk-more"><summary>看更多對戰看點</summary><ul>${look.slice(1).map(x=>`<li>${x.txt}</li>`).join("")}</ul></details>`:""}</div>` : "";
+  return `<div class="why"><div class="why-h">為什麼這樣預測？</div><div class="why-c">${head}</div>
     <ul class="why-l">${li(s.d1, t1, false, c1)}${li(s.d2, t2)}${li(s.d3, t3, !m.used, c3)}</ul></div>${L}`;
 }
 // 爆冷提醒（標籤旁小字；只用劣勢方勝率與先發 ERA／WHIP）
@@ -357,8 +358,8 @@ function renderPredict(games, isPast){
     const v1note = off && off.model && !off.model.startsWith(MODEL_V) ? `<div class="vnote">ℹ️ 此場正式紀錄為舊版模型 ${off.model.slice(0,2)}</div>` : "";
     const w = g.weather && g.weather.condition ? `ℹ️ 參考資訊：天氣 ${g.weather.condition}${g.weather.temp?`，氣溫 ${Math.round((g.weather.temp-32)*5/9)}°C`:""}（不列入勝率計算）` : "";
     html += `<div class="pcard">
-      <div class="meta">客 ${tn(A.team)} @ 主 ${tn(H.team)}<br>${tw(g.gameDate)}（台灣時間）${g.seriesStatus ? "｜"+sz(g.seriesStatus.description) : ""}</div>
-      <div class="headline">${fp === 50 ? `五五波：<span class="nw">雙方各 50%</span>` : `看好：${tn(fav)} <span class="nw">${fp}%</span>`}</div>
+      <div class="meta"><span class="nw">客 ${ts(A.team)}</span> @ <span class="nw">主 ${ts(H.team)}</span><br>${tw(g.gameDate)}（台灣時間）${g.seriesStatus ? `<br>${[sz(g.seriesStatus.description), seriesPre(g.seriesStatus).replace("系列賽目前","系列賽")].filter(Boolean).join("・")}` : ""}</div>
+      <div class="headline">${fp === 50 ? `五五波：<span class="nw">雙方各 50%</span>` : `${fp>=60?"明顯看好":fp>=53?"略占上風":"勢均力敵"}：${tn(fav)} <span class="nw">${fp}%</span>`}</div>
       ${(!aP||!hP)?`<span class="wait-tag">⏳ 等先發公布</span>`:""}
       <div class="tier-row"><span class="tier ${tc}">${tl}</span><span class="upset">${upset(A.team, H.team, ap, hp, aP, hP, fav, fp)}</span></div>
       <div class="pbar-lab"><span>客 ${ts(A.team)} ${apct}%</span><span>主 ${ts(H.team)} ${hpct}%</span></div>
