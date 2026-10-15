@@ -164,3 +164,14 @@ details[open]>summary::after{transform:rotate(180deg)}
 .pcard details.algo{margin:0} .pcard details.algo summary{padding:var(--sp-2) 0}
 .pcard{gap:var(--sp-2)}
 .pcard details.algo summary{padding:0;line-height:1.4} .pcard details.algo[open]>summary{margin-bottom:var(--sp-2)}
+
+/* ===== 6.7 模型版本、6.8 命中率累積中、系列賽 ===== */
+.vnote{font-size:var(--fs-xs);color:var(--c-muted)}
+.vp{display:inline-block;padding:1px 8px;border-radius:10px;font-size:var(--fs-xs);font-weight:700}
+.vp.v1{background:var(--c-border);color:var(--c-text)} .vp.v2{background:var(--c-lean-bg);color:var(--c-lean)}
+.hr-big{font-size:var(--fs-xl);font-weight:800} .hr-big.muted{color:var(--c-muted)}
+.hr-prog{display:flex;align-items:center;gap:var(--sp-2);margin:var(--sp-1) 0;font-size:var(--fs-sm)}
+.hr-bar{flex:1;height:8px;background:var(--c-border);border-radius:4px;overflow:hidden} .hr-bar div{height:100%;background:var(--c-lean)}
+.hr-sub,.hr-ref,.hr-upd{font-size:var(--fs-sm);color:var(--c-muted)} .hr-ref{margin:var(--sp-2) 0}
+.hr-vers{font-size:var(--fs-sm);line-height:1.9;margin-bottom:var(--sp-2)}
+.why-s,.hl-s{font-size:var(--fs-sm);font-weight:700;color:var(--c-brand);margin-bottom:var(--sp-1)}

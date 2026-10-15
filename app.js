@@ -172,6 +172,7 @@ async function loadGames(){
   const done = games.filter(g=>g.status.abstractGameState==="Final").reverse().slice(0,5); // 最近 5 場已完賽
   const next = games.filter(g=>g.status.abstractGameState==="Preview").slice(0,4);         // 接下來 4 場
   const show = next.length ? next : done;
+  if(location.protocol !== "file:"){ try{ const r = await fetch("data/predictions.json?t="+Date.now()); if(r.ok) for(const x of (await r.json()).records) if(x.official) OFFICIAL[x.gamePk] = x.official; }catch(e){} }
   // 先抓先發投手成績與 FIP 常數，再畫預測卡
   await Promise.all([loadFIPC(), loadPitchers(show.flatMap(g=>[g.teams.home.probablePitcher, g.teams.away.probablePitcher]).filter(Boolean).map(p=>p.id))]);
   renderPredict(show, !next.length);
@@ -185,6 +186,22 @@ function tier(p){
   if(p >= 0.55) return ["lean","👍 略佔優勢"];
   return ["toss","⚖️ 五五波"];
 }
+// 系列賽狀態（只用 API 的 seriesStatus）
+const NEXT = {"AL Wild Card Series":"美聯分區系列賽","NL Wild Card Series":"國聯分區系列賽","AL Division Series":"美聯冠軍賽","NL Division Series":"國聯冠軍賽","AL Championship Series":"世界大賽","NL Championship Series":"世界大賽"};
+const tById = id => ({id, name:""});
+function seriesPost(ss){      // 賽後：比賽結束後的系列戰狀態
+  if(!ss || !ss.totalGames || ss.totalGames<2) return "";
+  const W = ss.wins, L = ss.losses, lead = ss.winningTeam && ts(tById(ss.winningTeam.id));
+  if(ss.isOver && lead) return ss.description==="World Series" ? `${lead}以 ${W}:${L} 拿下世界大賽` : `${lead}以 ${W}:${L} 晉級${NEXT[ss.description]||"下一輪"}`;
+  if(ss.isTied || W===L) return W ? `系列賽 ${W}:${L} 戰成平手` : "";
+  return lead ? `${lead}系列賽 ${W}:${L} 領先` : "";
+}
+function seriesPre(ss){       // 賽前：目前系列戰比數
+  if(!ss || !ss.totalGames || ss.totalGames<2 || (!ss.wins && !ss.losses)) return "";
+  if(ss.isTied || ss.wins===ss.losses) return `系列賽目前 ${ss.wins}:${ss.losses}`;
+  return `系列賽目前 ${ss.wins}:${ss.losses}（${ts(tById(ss.winningTeam.id))}領先）`;
+}
+
 // 修正過程圖（從看好方的角度）：起點 50% → 戰績 → 主場 → 先發 → 最終
 function favSteps(m, favHome){
   const k = favHome ? 1 : -1;
@@ -206,6 +223,8 @@ function bridge(m, s, fav){
 }
 
 // 「為什麼這樣預測」：結論句＋三條（戰績、主場、先發），數字與修正過程圖相同
+let SS_NOW = null;
+const OFFICIAL = {};   // gamePk → 正式預測紀錄（判斷是否為舊版模型）
 function whyBlock(A, H, m, s, ap, hp, aP, hP, fav, fp){
   const favHome = fav.id === H.id, other = favHome ? A : H;
   const items = [["戰績", s.d1], ["主場", s.d2], ["先發投手", m.used ? s.d3 : 0]];
@@ -229,7 +248,8 @@ function whyBlock(A, H, m, s, ap, hp, aP, hP, fav, fp){
     if(split) t3 = "先發對決互有優劣";
     else { const homeAdv = m.d3 > 0; t3 = `先發：${pn(homeAdv?hP:aP)}數據優於${pn(homeAdv?aP:hP)}`; }
   }
-  return `<div class="why"><div class="why-h">為什麼這樣預測？</div><div class="why-c">${head}</div>
+  const sp = seriesPre(SS_NOW);
+  return `<div class="why"><div class="why-h">為什麼這樣預測？</div><div class="why-c">${head}</div>${sp?`<div class="why-s">${sp}</div>`:""}
     <ul class="why-l">${li(s.d1, t1)}${li(s.d2, t2)}${li(s.d3, t3, !m.used)}</ul></div>`;
 }
 
@@ -270,6 +290,9 @@ function renderPredict(games, isPast){
     const favHome = hpct >= apct, fp = Math.max(hpct, apct), fav = favHome ? H.team : A.team;
     const [tc, tl] = tier(fp/100);
     const st = favSteps(m, favHome);
+    SS_NOW = g.seriesStatus;
+    const off = OFFICIAL[g.gamePk];
+    const v1note = off && off.model && !off.model.startsWith(MODEL_V) ? `<div class="vnote">ℹ️ 此場正式紀錄為舊版模型 ${off.model.slice(0,2)}</div>` : "";
     const w = g.weather && g.weather.condition ? `ℹ️ 參考資訊：天氣 ${g.weather.condition}${g.weather.temp?`，氣溫 ${Math.round((g.weather.temp-32)*5/9)}°C`:""}（不列入勝率計算）` : "";
     html += `<div class="pcard">
       <div class="meta">客 ${tn(A.team)} @ 主 ${tn(H.team)}<br>${tw(g.gameDate)}（台灣時間）${g.seriesStatus ? "｜"+sz(g.seriesStatus.description) : ""}</div>
@@ -278,7 +301,7 @@ function renderPredict(games, isPast){
       <div class="pbar-lab"><span>客 ${ts(A.team)} ${apct}%</span><span>主 ${ts(H.team)} ${hpct}%</span></div>
       <div class="pbar" role="img" aria-label="${tn(A.team)} ${apct}%，${tn(H.team)} ${hpct}%">
         <div class="${favHome?"oth":"fav"}" style="width:${apct}%"></div><div class="${favHome?"fav":"oth"}" style="width:${hpct}%"></div></div>
-      ${whyBlock(A.team, H.team, m, st, ap, hp, aP, hP, fav, fp)}
+      ${v1note}${whyBlock(A.team, H.team, m, st, ap, hp, aP, hP, fav, fp)}
       <details class="algo"><summary>🔍 看算法</summary>${bridge(m, st, fav)}
         <p class="desc">戰績：兩隊實力分數（勝率與畢氏期望勝率各半）用 Log5 比較，再依回測縮回 50% 附近；主場與先發投手依 2026 例行賽回測校正。三格差值依序計算，加總等於最終勝率。模型 ${MODEL_V}。</p></details>
       <details class="algo"><summary>📊 兩隊數據對比</summary>${compare(A.team, H.team, ap, hp)}</details>
@@ -345,8 +368,9 @@ async function renderAnalysis(games){
     else if(bpN>0 && bpRuns===0) HL.push(`牛棚 ${bpN} 位投手零失分`);
     // 驚嘆號一篇最多一個：只加在第一條
     if(HL.length) HL[0] += "！";
+    const spost = seriesPost(g.seriesStatus);
     html += `<article><h3>${tw(g.gameDate)}｜${tn(A.team)} ${A.score} : ${H.score} ${tn(H.team)}</h3>
-      <div class="hl"><div class="hl-title">⚡ 三行重點</div><ol>${HL.map(x=>`<li>${x}</li>`).join("")}</ol></div>
+      <div class="hl"><div class="hl-title">⚡ 三行重點</div>${spost?`<div class="hl-s">🏆 ${spost}</div>`:""}<ol>${HL.map(x=>`<li>${x}</li>`).join("")}</ol></div>
       <details class="full"><summary>📖 看完整分析</summary>
       ${ls}
       <p><b>${wName} 為什麼贏？</b>${reasons.join("")}</p>
@@ -368,15 +392,26 @@ async function secHit(){
   const d = await r.json();
   // 只計算「正式預測」（開打前最後一筆快照；舊 v1 紀錄即為正式預測）
   const off = d.records.filter(x => x.official);
-  const done = off.filter(x => x.correct !== null), ok = done.filter(x => x.correct).length;
-  const rate = done.length ? Math.round(ok / done.length * 100) + "%" : "尚無已完賽紀錄";
-  let html = `<p><b>命中率：${rate}</b>（已完賽 ${done.length} 場中猜對 ${ok} 場；正式預測 ${off.length} 筆，等待結果 ${off.length - done.length} 筆）<br><small>最後更新：${d.updated.replace("(UTC+8)","（台灣時間）")}｜每小時記錄一次，開打前最後一筆為正式預測</small></p>`;
-  html += '<div style="overflow-x:auto"><table><tr><th>比賽時間</th><th>對戰（客 @ 主）</th><th>預測勝方</th><th>預測勝率</th><th>實際比分</th><th>結果</th></tr>';
+  const ver = x => (x.official.model||"").slice(0,2);
+  const done = off.filter(x => x.correct !== null), n = done.length, ok = done.filter(x => x.correct).length;
+  const GOAL = 50;
+  const vers = [...new Set([...off.map(ver), MODEL_V])].sort();
+  const vline = v => { const dv = done.filter(x=>ver(x)===v), k = dv.length;
+    return k >= GOAL ? `${v}：命中率 ${Math.round(dv.filter(x=>x.correct).length/k*100)}%（共 ${k} 場）` : `${v}：累積中（目前 ${k} 場，滿 ${GOAL} 場後顯示）`; };
+  let html = n >= GOAL
+    ? `<div class="hr-big">${Math.round(ok/n*100)}%</div><div class="hr-sub">命中率 ${Math.round(ok/n*100)}%（共 ${n} 場，模型 ${[...new Set(done.map(ver))].join("、")}）</div>`
+    : `<div class="hr-big muted">累積中</div><div class="hr-prog"><div class="hr-bar"><div style="width:${n/GOAL*100}%"></div></div><span>${n} / ${GOAL} 場</span></div>
+       <div class="hr-sub">累積中（目前 ${n} 場，滿 ${GOAL} 場後顯示）</div>`;
+  html += `<div class="hr-ref">2026 例行賽回測約 57.8%<br>季後賽場數少，正式命中率預計於 2027 例行賽累積後顯示</div>`;
+  html += `<div class="hr-vers">${vers.map(v=>`<span class="vp ${v}">${v}</span> ${vline(v).slice(3)}`).join("<br>")}</div>`;
+  html += `<p class="hr-upd">正式預測 ${off.length} 筆，等待結果 ${off.length - n} 筆｜最後更新：${d.updated.replace("(UTC+8)","（台灣時間）")}｜每小時記錄一次，開打前最後一筆為正式預測</p>`;
+  html += '<div style="overflow-x:auto"><table><tr><th>比賽時間</th><th>對戰（客 @ 主）</th><th>模型</th><th>預測勝方</th><th>預測勝率</th><th>實際比分</th><th>結果</th></tr>';
   for(const x of d.records.slice().reverse().slice(0,15)){
     const snap = x.official || x.snapshots[x.snapshots.length-1], hp = snap.homeWinProb;
     const pw = hp >= 0.5 ? x.home : x.away, p = Math.max(hp, 1-hp);
     const tag = x.official ? "" : "（暫定）";
-    html += `<tr><td>${x.gameTime.replace(" (UTC+8)","")}</td><td>${x.away} @ ${x.home}</td><td>${pw}${tag}</td><td>${Math.round(p*100)}%</td><td>${x.final || "尚未開打／進行中"}</td><td>${x.correct === null ? "⏳" : x.correct ? "✅ 猜對" : "❌ 猜錯"}</td></tr>`;
+    const v = (snap.model||"").slice(0,2);
+    html += `<tr><td>${x.gameTime.replace(" (UTC+8)","")}</td><td>${x.away} @ ${x.home}</td><td><span class="vp ${v}">${v}</span></td><td>${pw}${tag}</td><td>${Math.round(p*100)}%</td><td>${x.final || "尚未開打／進行中"}</td><td>${x.correct === null ? "⏳" : x.correct ? "✅ 猜對" : "❌ 猜錯"}</td></tr>`;
   }
   el.innerHTML = html + "</table></div>";
 }
