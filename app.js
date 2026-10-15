@@ -84,9 +84,9 @@ function drawChart(teams){
     type:"bar",
     data:{labels:teams.map(t=>ts(t.team)||tn(t.team)),
       datasets:[{label:"勝率",data:teams.map(t=>parseFloat(t.winningPercentage)),
-        backgroundColor:teams.map(t=>t.team.league.id===103?"#c8102e":"#002d72")}]},
-    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},title:{display:true,text:"紅色＝美國聯盟，藍色＝國家聯盟"}},
-      scales:{y:{min:0.3,max:0.7}}}
+        backgroundColor:teams.map(t=>t.team.league.id===103?"#d4af37":"#6b6b72")}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},title:{display:true,text:"金色＝美國聯盟，灰色＝國家聯盟",color:"#9a9aa0"}},
+      scales:{y:{min:0.3,max:0.7,ticks:{color:"#9a9aa0"},grid:{color:"#2a2a2e"}},x:{ticks:{color:"#9a9aa0"},grid:{display:false}}}}
   });
 }
 
@@ -203,9 +203,9 @@ async function loadGames(){
 // 畫出預測卡片
 // 信心分級（看好方的機率）
 function tier(p){
-  if(p >= 0.60) return ["strong","💪 明顯看好"];
-  if(p >= 0.53) return ["lean","👍 略占上風"];
-  return ["toss","⚖️ 接近五五波"];
+  if(p >= 0.60) return ["strong","明顯看好"];
+  if(p >= 0.53) return ["lean","略占上風"];
+  return ["toss","接近五五波"];
 }
 // 系列賽狀態（只用 API 的 seriesStatus）
 const NEXT = {"AL Wild Card Series":"美聯分區系列賽","NL Wild Card Series":"國聯分區系列賽","AL Division Series":"美聯冠軍賽","NL Division Series":"國聯冠軍賽","AL Championship Series":"世界大賽","NL Championship Series":"世界大賽"};
@@ -355,8 +355,8 @@ function renderPredict(games, isPast){
     const st = favSteps(m, favHome);
     SS_NOW = g.seriesStatus;
     const off = OFFICIAL[g.gamePk];
-    const v1note = off && off.model && !off.model.startsWith(MODEL_V) ? `<div class="vnote">ℹ️ 此場正式紀錄為舊版模型 ${off.model.slice(0,2)}</div>` : "";
-    const w = g.weather && g.weather.condition ? `ℹ️ 參考資訊：天氣 ${g.weather.condition}${g.weather.temp?`，氣溫 ${Math.round((g.weather.temp-32)*5/9)}°C`:""}（不列入勝率計算）` : "";
+    const v1note = off && off.model && !off.model.startsWith(MODEL_V) ? `<div class="vnote">此場正式紀錄為舊版模型 ${off.model.slice(0,2)}</div>` : "";
+    const w = g.weather && g.weather.condition ? `參考資訊：天氣 ${g.weather.condition}${g.weather.temp?`，氣溫 ${Math.round((g.weather.temp-32)*5/9)}°C`:""}（不列入勝率計算）` : "";
     html += `<div class="pcard">
       <div class="meta"><span class="nw">客 ${ts(A.team)}</span> @ <span class="nw">主 ${ts(H.team)}</span><br>${tw(g.gameDate)}（台灣時間）${g.seriesStatus ? `<br><span class="nw ser">${[sz(g.seriesStatus.description), seriesPre(g.seriesStatus).replace("系列賽目前","系列賽").replace(/（(.+)領先）/," $1領先")].filter(Boolean).join("・")}</span>` : ""}</div>
       <div class="headline">${fp === 50 ? `五五波：<span class="nw">雙方各 50%</span>` : `${fp>=60?"明顯看好":fp>=53?"略占上風":"勢均力敵"}：${ts(fav)} <span class="nw">${fp}%</span>`}</div>
@@ -366,9 +366,9 @@ function renderPredict(games, isPast){
       <div class="pbar" role="img" aria-label="${tn(A.team)} ${apct}%，${tn(H.team)} ${hpct}%">
         <div class="${favHome?"oth":"fav"}" style="width:${apct}%"></div><div class="${favHome?"fav":"oth"}" style="width:${hpct}%"></div></div>
       ${v1note}${whyBlock(A.team, H.team, m, st, ap, hp, aP, hP, fav, fp)}
-      <details class="algo"><summary>🔍 看算法</summary>${bridge(m, st, fav)}
+      <details class="algo"><summary>看算法</summary>${bridge(m, st, fav)}
         <p class="desc">戰績：兩隊實力分數（勝率與畢氏期望勝率各半）用 Log5 比較，再依回測縮回 50% 附近；主場與先發投手依 2026 例行賽回測校正。三格差值依序計算，加總等於最終勝率。模型 ${MODEL_V}。</p></details>
-      <details class="algo"><summary>📊 兩隊數據對比</summary>${compare(A.team, H.team, ap, hp)}</details>
+      <details class="algo"><summary>兩隊數據對比</summary>${compare(A.team, H.team, ap, hp)}</details>
       ${w ? `<div class="ref">${w}</div>` : ""}
       <div class="upd">最後更新：${tw(Date.now())}（台灣時間）</div>
     </div>`;
@@ -435,8 +435,8 @@ async function renderAnalysis(games){
     if(HL.length) HL[0] += "！";
     const spost = seriesPost(g.seriesStatus);
     html += `<article><h3><span class="ah-d">${tw(g.gameDate)}</span><span class="ah-s">${tn(A.team)} ${A.score} : ${H.score} ${tn(H.team)}</span></h3>
-      <div class="hl"><div class="hl-title">⚡ 三行重點</div>${spost?`<div class="hl-s">🏆 ${spost}</div>`:""}<ol>${HL.map(x=>`<li>${x}</li>`).join("")}</ol></div>
-      <details class="full"><summary>📖 看完整分析</summary>
+      <div class="hl"><div class="hl-title">三行重點</div>${spost?`<div class="hl-s">${spost}</div>`:""}<ol>${HL.map(x=>`<li>${x}</li>`).join("")}</ol></div>
+      <details class="full"><summary>看完整分析</summary>
       ${ls}
       <p><b>${wName} 為什麼贏？</b>${reasons.join("")}</p>
       <p><b>先發投手：</b>勝方 ${pLine(sp(W))}；敗方 ${pLine(sp(Lo))}。</p>

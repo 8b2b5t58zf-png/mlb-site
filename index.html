@@ -2,25 +2,26 @@
 <html lang="zh-Hant-TW">
 <head>
 <meta charset="UTF-8">
+<meta name="theme-color" content="#0e0e10">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>AI Sports Lab｜MLB 勝負預測與賽後分析</title>
 <meta name="description" content="AI Sports Lab（AI 運動實驗室）：MLB 美國職棒大聯盟中文勝負預測與賽後分析，資料來自大聯盟官方數據。">
 <meta property="og:title" content="AI Sports Lab｜MLB 勝負預測與賽後分析">
 <meta property="og:description" content="AI 運動實驗室：MLB 中文勝負預測與賽後分析">
 <meta property="og:type" content="website">
-<meta property="og:image" content="https://8b2b5t58zf-png.github.io/mlb-site/img/og-image.png?v=202610151751">
+<meta property="og:image" content="https://8b2b5t58zf-png.github.io/mlb-site/img/og-image.png?v=202610151813">
 <meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
-<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png?v=202610151751">
-<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png?v=202610151751">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png?v=202610151813">
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png?v=202610151813">
 <meta property="og:url" content="https://8b2b5t58zf-png.github.io/mlb-site/">
 <!-- 引入樣式檔，負責網頁外觀 -->
-<link rel="stylesheet" href="style.css?v=202610151751">
+<link rel="stylesheet" href="style.css?v=202610151813">
 <!-- 從 CDN 載入 Chart.js，用來畫圖表 -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
 </head>
 <body>
 <header>
-  <h1 class="brand"><img class="logo" src="img/logo-icon.png?v=202610151751" alt="" width="30" height="30"><span class="nw">AI Sports Lab</span><span class="sport">｜MLB</span></h1>
+  <h1 class="brand"><img class="logo" src="img/logo-icon.png?v=202610151813" alt="" width="30" height="30"><span class="nw">AI Sports Lab</span><span class="sport">｜MLB</span></h1>
   <div class="brand-sub">AI 運動實驗室・美國職棒大聯盟勝負預測與賽後分析</div>
   <p>資料來源：大聯盟官方數據 API（statsapi.mlb.com）｜球季：<span id="season">載入中…</span><span id="cacheinfo"></span></p>
 </header>
@@ -28,10 +29,10 @@
 <nav id="topnav" aria-label="主選單"><a href="#sec-predict" data-sec="sec-predict">預測</a><a href="#sec-analysis" data-sec="sec-analysis">賽後</a><a href="#sec-hit" data-sec="sec-hit">命中率</a><a href="#sec-standings" data-sec="sec-standings">戰績</a><a href="#sec-batting" data-sec="sec-batting">排行</a></nav>
 <main>
   <!-- 重點一：比賽勝負預測（簡單估算模型） -->
-  <section id="sec-predict"><h2>🔮 比賽勝負預測（簡易估算）</h2>
-    <p class="note">⚠️ 這只是用公開數據算出的「簡單估算」，不是保證結果，也不是投注建議。</p>
+  <section id="sec-predict"><h2>比賽勝負預測（簡易估算）</h2>
+    <p class="note">這只是用公開數據算出的「簡單估算」，不是保證結果，也不是投注建議。</p>
     <!-- 可展開的算法說明：一般人不用看，有興趣再點開 -->
-    <details class="algo"><summary>🔍 看算法（模型 v2）</summary>
+    <details class="algo"><summary>看算法（模型 v2）</summary>
       <ol><li><b>畢氏期望勝率</b>：用球隊的總得分、總失分推算「應該」有的勝率（得分<sup>1.83</sup> ÷（得分<sup>1.83</sup>＋失分<sup>1.83</sup>））。</li>
       <li>每隊<b>實力分數</b>＝實際勝率 50%＋畢氏期望勝率 50%，用 <b>Log5 公式</b>比較兩隊，再依回測縮回 50% 附近，得到<b>基礎勝率</b>。</li>
       <li><b>主場加成</b>：約 +2%（2026 例行賽主場勝率 52.8%）。</li>
@@ -41,11 +42,11 @@
       <p>2026/10/15 之前記錄的預測是舊版模型 v1（主場 +4%、未含先發投手），紀錄保留不修改。</p></details>
     <div class="status" id="st-predict"></div><div id="predict" class="grid">載入中…</div></section>
   <!-- 重點二：賽後分析文章（依真實比賽數據自動產生） -->
-  <section id="sec-analysis"><h2>📝 賽後分析</h2>
+  <section id="sec-analysis"><h2>賽後分析</h2>
     <p class="note">以下文字由程式根據官方比分、安打、失誤、先發投手與打者數據自動整理，不加入任何臆測。</p>
     <div class="status" id="st-analysis"></div><div id="analysis">載入中…</div></section>
   <!-- 預測命中率：每天自動記錄的賽前預測與實際結果 -->
-  <section id="sec-hit"><h2>🎯 預測命中率</h2>
+  <section id="sec-hit"><h2>預測命中率</h2>
     <p class="note">每小時自動記錄賽前預測，開打前最後一筆為正式預測，賽後補上結果；正式預測不再修改。</p>
     <div class="status" id="st-hit"></div><div id="hit">載入中…</div></section>
   <!-- 第一區：聯盟戰績表 -->
@@ -53,15 +54,15 @@
   <!-- 第二區：各隊勝率圖表 -->
   
   <!-- 第三區：打擊與投手排行榜 -->
-  <section id="sec-batting"><h2>📊 排行榜</h2>
+  <section id="sec-batting"><h2>排行榜</h2>
     <div class="tabs" role="tablist"><button role="tab" aria-selected="true" data-tab="bat">打擊</button><button role="tab" aria-selected="false" data-tab="pit">投手</button></div>
     <div class="tabp" id="tab-bat"><div class="status" id="st-batting"></div><div id="batting" class="grid">載入中…</div></div>
     <div class="tabp" id="tab-pit" hidden><div class="status" id="st-pitching"></div><div id="pitching" class="grid">載入中…</div></div></section>
 </main>
 <!-- 手機底部固定導覽列（寬度小於 768px 才顯示） -->
-<nav id="bottomnav" aria-label="主選單"><a href="#sec-predict" data-sec="sec-predict"><span class="ic" aria-hidden="true">🎯</span><span>預測</span></a><a href="#sec-analysis" data-sec="sec-analysis"><span class="ic" aria-hidden="true">📝</span><span>賽後</span></a><a href="#sec-hit" data-sec="sec-hit"><span class="ic" aria-hidden="true">✅</span><span>命中率</span></a><a href="#sec-standings" data-sec="sec-standings"><span class="ic" aria-hidden="true">🏆</span><span>戰績</span></a><a href="#sec-batting" data-sec="sec-batting"><span class="ic" aria-hidden="true">📊</span><span>排行</span></a></nav>
-<script src="players.js?v=202610151751"></script>
-<script src="app.js?v=202610151751"></script>
+<nav id="bottomnav" aria-label="主選單"><a href="#sec-predict" data-sec="sec-predict"><span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l5-5 4 4 8-8"/><path d="M14 8h6v6"/></svg></span><span>預測</span></a><a href="#sec-analysis" data-sec="sec-analysis"><span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h10l4 4v12H5z"/><path d="M8 12h8M8 16h6"/></svg></span><span>賽後</span></a><a href="#sec-hit" data-sec="sec-hit"><span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><path d="M8 12l3 3 5-6"/></svg></span><span>命中率</span></a><a href="#sec-standings" data-sec="sec-standings"><span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 4h8v5a4 4 0 01-8 0z"/><path d="M12 13v4M8 20h8"/></svg></span><span>戰績</span></a><a href="#sec-batting" data-sec="sec-batting"><span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 20V12M12 20V5M19 20v-8"/></svg></span><span>排行</span></a></nav>
+<script src="players.js?v=202610151813"></script>
+<script src="app.js?v=202610151813"></script>
 <footer class="site-foot">AI Sports Lab｜AI 運動實驗室・資料來源：MLB 官方 Stats API・預測僅供參考，非投注建議</footer>
 </body>
 </html>
