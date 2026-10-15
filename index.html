@@ -15,7 +15,7 @@
   <p>資料來源：大聯盟官方數據 API（statsapi.mlb.com）｜球季：<span id="season">載入中…</span><span id="cacheinfo"></span></p>
 </header>
 <!-- 固定在上方的導覽列，點了會跳到對應區塊 -->
-<nav id="topnav"><a href="#sec-predict">預測</a><a href="#sec-analysis">賽後分析</a><a href="#sec-standings">戰績</a><a href="#sec-chart">勝率圖</a><a href="#sec-batting">打擊</a><a href="#sec-pitching">投手</a></nav>
+<nav id="topnav"><a href="#sec-predict">預測</a><a href="#sec-analysis">賽後分析</a><a href="#sec-hit">命中率</a><a href="#sec-standings">戰績</a><a href="#sec-chart">勝率圖</a><a href="#sec-batting">打擊</a><a href="#sec-pitching">投手</a></nav>
 <main>
   <!-- 重點一：比賽勝負預測（簡單估算模型） -->
   <section id="sec-predict"><h2>🔮 比賽勝負預測（簡易估算）</h2>
@@ -26,6 +26,10 @@
   <section id="sec-analysis"><h2>📝 賽後分析</h2>
     <p class="note">以下文字由程式根據官方比分、安打、失誤、先發投手與打者數據自動整理，不加入任何臆測。</p>
     <div class="status" id="st-analysis"></div><div id="analysis">載入中…</div></section>
+  <!-- 預測命中率：每天自動記錄的賽前預測與實際結果 -->
+  <section id="sec-hit"><h2>🎯 預測命中率</h2>
+    <p class="note">每天自動在比賽開打前記下預測，賽後再補上結果；預測一旦記錄就不再修改。</p>
+    <div class="status" id="st-hit"></div><div id="hit">載入中…</div></section>
   <!-- 第一區：聯盟戰績表 -->
   <section id="sec-standings"><h2>聯盟戰績</h2><div class="status" id="st-standings"></div><div id="standings">載入中…</div></section>
   <!-- 第二區：各隊勝率圖表 -->

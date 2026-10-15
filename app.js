@@ -194,6 +194,24 @@ async function renderAnalysis(games){
   document.getElementById("analysis").innerHTML = html || "最近沒有已完賽的比賽";
 }
 
+// 預測命中率：讀取網站上的 data/predictions.json
+async function secHit(){
+  const el = document.getElementById("hit");
+  if(location.protocol === "file:"){ el.innerHTML = '<p class="note">📂 直接開啟本機檔案時無法讀取預測紀錄，請到線上網站查看：<a href="https://8b2b5t58zf-png.github.io/mlb-site/#sec-hit">點這裡</a></p>'; return; }
+  const r = await fetch("data/predictions.json?t=" + Date.now());
+  if(!r.ok) throw new Error("HTTP " + r.status);
+  const d = await r.json();
+  const done = d.records.filter(x => x.correct !== null), ok = done.filter(x => x.correct).length;
+  const rate = done.length ? Math.round(ok / done.length * 100) + "%" : "尚無已完賽紀錄";
+  let html = `<p><b>命中率：${rate}</b>（已完賽 ${done.length} 場中猜對 ${ok} 場；總紀錄 ${d.records.length} 筆，等待結果 ${d.records.length - done.length} 筆）<br><small>最後更新：${d.updated.replace("(UTC+8)","（台灣時間）")}</small></p>`;
+  html += '<div style="overflow-x:auto"><table><tr><th>比賽時間</th><th>對戰（客 @ 主）</th><th>預測勝方</th><th>預測勝率</th><th>實際比分</th><th>結果</th></tr>';
+  for(const x of d.records.slice().reverse().slice(0,15)){
+    const p = x.predictedWinner === x.home ? x.homeWinProb : x.awayWinProb;
+    html += `<tr><td>${x.gameTime.replace(" (UTC+8)","")}</td><td>${x.away} @ ${x.home}</td><td>${x.predictedWinner}</td><td>${Math.round(p*100)}%</td><td>${x.final || "尚未開打／進行中"}</td><td>${x.correct === null ? "⏳" : x.correct ? "✅ 猜對" : "❌ 猜錯"}</td></tr>`;
+  }
+  el.innerHTML = html + "</table></div>";
+}
+
 // 每個區塊各自的載入步驟（取名字是為了讓「重試」按鈕能再呼叫一次）
 async function secStandings(){ await loadStandings(); }
 async function secGames(){ if(!Object.keys(TEAM).length) await loadStandings(); await loadGames(); }
@@ -207,5 +225,6 @@ async function secPitching(){ await loadLeaders({earnedRunAverage:"防禦率",st
     runSection(["predict","analysis"], secGames),
     runSection(["batting"], secBatting),
     runSection(["pitching"], secPitching),
+    runSection(["hit"], secHit),
   ]);
 })();

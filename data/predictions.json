@@ -1,0 +1,75 @@
+{
+ "updated": "2026-10-15 15:56 (UTC+8)",
+ "records": [
+  {
+   "gamePk": 849818,
+   "gameTime": "2026-10-16 01:00 (UTC+8)",
+   "away": "坦帕灣光芒",
+   "home": "克里夫蘭守護者",
+   "homeWinProb": 0.4751,
+   "awayWinProb": 0.5249,
+   "predictedWinner": "坦帕灣光芒",
+   "model": "v1：勝率50%+畢氏勝率50%、Log5、主場+4%",
+   "predictedAt": "2026-10-15 15:56 (UTC+8)",
+   "final": null,
+   "actualWinner": null,
+   "correct": null
+  },
+  {
+   "gamePk": 849810,
+   "gameTime": "2026-10-16 08:00 (UTC+8)",
+   "away": "密爾瓦基釀酒人",
+   "home": "洛杉磯道奇",
+   "homeWinProb": 0.5279,
+   "awayWinProb": 0.4721,
+   "predictedWinner": "洛杉磯道奇",
+   "model": "v1：勝率50%+畢氏勝率50%、Log5、主場+4%",
+   "predictedAt": "2026-10-15 15:56 (UTC+8)",
+   "final": null,
+   "actualWinner": null,
+   "correct": null
+  },
+  {
+   "gamePk": 849817,
+   "gameTime": "2026-10-17 06:00 (UTC+8)",
+   "away": "坦帕灣光芒",
+   "home": "克里夫蘭守護者",
+   "homeWinProb": 0.4751,
+   "awayWinProb": 0.5249,
+   "predictedWinner": "坦帕灣光芒",
+   "model": "v1：勝率50%+畢氏勝率50%、Log5、主場+4%",
+   "predictedAt": "2026-10-15 15:56 (UTC+8)",
+   "final": null,
+   "actualWinner": null,
+   "correct": null
+  },
+  {
+   "gamePk": 849808,
+   "gameTime": "2026-10-17 09:00 (UTC+8)",
+   "away": "密爾瓦基釀酒人",
+   "home": "洛杉磯道奇",
+   "homeWinProb": 0.5279,
+   "awayWinProb": 0.4721,
+   "predictedWinner": "洛杉磯道奇",
+   "model": "v1：勝率50%+畢氏勝率50%、Log5、主場+4%",
+   "predictedAt": "2026-10-15 15:56 (UTC+8)",
+   "final": null,
+   "actualWinner": null,
+   "correct": null
+  },
+  {
+   "gamePk": 849816,
+   "gameTime": "2026-10-18 08:00 (UTC+8)",
+   "away": "坦帕灣光芒",
+   "home": "克里夫蘭守護者",
+   "homeWinProb": 0.4751,
+   "awayWinProb": 0.5249,
+   "predictedWinner": "坦帕灣光芒",
+   "model": "v1：勝率50%+畢氏勝率50%、Log5、主場+4%",
+   "predictedAt": "2026-10-15 15:56 (UTC+8)",
+   "final": null,
+   "actualWinner": null,
+   "correct": null
+  }
+ ]
+}

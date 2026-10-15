@@ -8,3 +8,7 @@
 
 使用方式：直接用瀏覽器開啟 `index.html` 即可。
 `make_excel.py` 可產生 Excel 版分析表（需 Python 與 openpyxl）。
+
+## 預測紀錄
+GitHub Actions（`.github/workflows/daily-log.yml`）每天台灣時間 08:30、20:30 執行 `scripts/log_predictions.py`，
+在比賽開打前記下預測、賽後補上結果，存於 `data/predictions.json`。
