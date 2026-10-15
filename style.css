@@ -202,3 +202,5 @@ article h3 .ah-s{display:block;white-space:nowrap}
 .brand .sport{opacity:.85}
 .brand-sub{font-size:var(--fs-sm);opacity:.9;margin-top:2px}
 .site-foot{text-align:center;font-size:var(--fs-xs);color:var(--c-muted);padding:16px 12px 90px}
+.brand{display:flex;align-items:center;gap:8px}
+.brand .logo{width:30px;height:30px;flex:none;background:#fff;border-radius:50%;padding:2px}
