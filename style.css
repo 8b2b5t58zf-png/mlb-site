@@ -276,3 +276,48 @@ header{position:relative}
 header h1.brand{padding-right:104px}
 .lgsw{position:static;display:inline-flex;margin-bottom:8px}
 header h1.brand{padding-right:0}
+/* ===================== refresh-1 試改：偏藍炭黑・數據儀表板 ===================== */
+:root{
+  --bg:#0d1117; --card:#151b23; --card-2:#1c232d; --line:#262e39; --text:#e6edf3; --text2:#8b949e;
+  --gold:#d4af37; --up:#3fb950; --down:#f85149; --bar-oth:#2d3540; --link:#c9d1d9;
+  --c-strong:#0d1117; --c-strong-bg:var(--gold); --c-lean:var(--gold); --c-lean-bg:transparent;
+  --c-toss:#c9d1d9; --c-toss-bg:#262e39; --c-muted:var(--text2); --c-border:var(--line);
+  --fs-xs:12px; --fs-sm:14px; --fs-md:15px; --fs-lg:18px; --fs-xl:26px;
+  --num:"SF Mono","Roboto Mono",ui-monospace,monospace;
+  --sp-5:20px; --sp-6:24px; --radius:12px; --radius-sm:8px; --radius-pill:999px;
+}
+body{background:var(--bg)}
+a{color:var(--link)}
+header{background:var(--bg)}
+.tagline{margin:6px 0 0;color:var(--text);font-size:var(--fs-sm);font-weight:600}
+.tagline a{color:var(--link);font-weight:400;white-space:nowrap;text-decoration:none}
+.tagline-sub{margin:2px 0 0;color:var(--text2);font-size:var(--fs-xs)}
+.hdr-meta{margin:4px 0 0;font-size:var(--fs-xs)!important}
+#topnav,#bottomnav{background:rgba(13,17,23,.94)}
+#sec-predict,#nsec-predict{background:none;border:0;padding:8px 4px}
+#sec-predict h2,#nsec-predict h2{font-size:var(--fs-lg);border:0;padding:0;margin:0 0 4px}
+#sec-predict>.note,#nsec-predict>.note{background:none;border:0;padding:0;margin:0 0 12px;font-size:var(--fs-xs);color:var(--text2)}
+#sec-predict .grid,#nsec-predict .grid{gap:var(--sp-3)}
+.pcard{background:var(--card);border:0;box-shadow:0 1px 0 rgba(255,255,255,.03) inset;padding:var(--sp-4);border-radius:var(--radius)}
+.pcard .headline{font-size:var(--fs-xl)}
+.pcard .headline,.pbar-lab,.pcard .meta,.chip,.dl,.why,.cmpt,.pcard td{font-variant-numeric:tabular-nums}
+.pbar-lab,.dl{font-family:var(--num)}
+.why{background:var(--card-2);border:0;border-radius:var(--radius-sm)}
+.why .why,.why .why-k,.pcard .why-k{background:none;border:0;border-top:1px solid var(--line);border-radius:0}
+.chip{background:none;border:0;padding:0;color:var(--text2);font-size:var(--fs-sm)} .chip b{color:var(--text);font-weight:700}
+.dl.up{background:rgba(63,185,80,.12);color:var(--up)} .dl.down{background:rgba(248,81,73,.12);color:var(--down)} .dl.zero{background:none;color:var(--text2)}
+.tier{border-radius:var(--radius-pill)}
+.tier.lean{border:1px solid var(--gold)}
+.wait-tag{background:#262e39;color:var(--text2)}
+.pcard details>summary,.algo summary,.full summary,.mk-more summary{color:var(--link)}
+.br-seg.up{background:var(--up)} .br-seg.down{background:var(--down)} .br-seg.final{background:var(--gold)}
+.site-foot{color:var(--text2);font-size:var(--fs-xs);border-top:1px solid var(--line);padding:16px 16px calc(96px + env(safe-area-inset-bottom))}
+.site-foot p{margin:2px 0} .site-foot a{color:var(--link)}
+/* 驗證頁 */
+.vpage{max-width:720px;margin:0 auto;padding:16px}
+.vpage h1{font-size:22px;margin:0 0 4px} .vpage h2{border:0;font-size:var(--fs-lg);margin:24px 0 8px;padding:0}
+.vpage p,.vpage li{color:var(--text);font-size:var(--fs-md)}
+.vpage table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+.vpage td,.vpage th{padding:8px 6px;text-align:left} .vpage td.n{font-family:var(--num);text-align:right}
+.vpage .card{background:var(--card);border-radius:var(--radius);padding:12px 16px}
+.vpage .back{color:var(--link);text-decoration:none;font-size:var(--fs-sm)}

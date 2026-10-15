@@ -49,11 +49,11 @@ async function runSection(ids, fn){
   usedCache = null;
   try{
     await fn();
-    if(usedCache) for(const id of ids) document.getElementById("st-"+id).innerHTML = `<div class="stale">⚠️ 目前無法連線，顯示的是先前存下的資料（更新於 ${twFull(usedCache)}）</div>`;
+    if(usedCache) for(const id of ids) document.getElementById("st-"+id).innerHTML = `<div class="stale">目前無法連線，顯示的是先前存下的資料（更新於 ${twFull(usedCache)}）</div>`;
     setTimeout(trackNav, 0);
     return true;
   }catch(e){
-    for(const id of ids) document.getElementById("st-"+id).innerHTML = `<div class="err">😢 資料載入失敗（${e.message||e}）<button onclick='runSection(${JSON.stringify(ids)}, ${fn.name})'>重試</button></div>`;
+    for(const id of ids) document.getElementById("st-"+id).innerHTML = `<div class="err">資料載入失敗（${e.message||e}）<button onclick='runSection(${JSON.stringify(ids)}, ${fn.name})'>重試</button></div>`;
     for(const id of ids) if(id!=="chart") document.getElementById(id).innerHTML = "";
     return false;
   }
@@ -361,7 +361,7 @@ function renderPredict(games, isPast){
     html += `<div class="pcard">
       <div class="meta"><span class="nw">客 ${ts(A.team)}</span> @ <span class="nw">主 ${ts(H.team)}</span><br>${tw(g.gameDate)}（台灣時間）${g.seriesStatus ? `<br><span class="nw ser">${[sz(g.seriesStatus.description), seriesPre(g.seriesStatus).replace("系列賽目前","系列賽").replace(/（(.+)領先）/," $1領先")].filter(Boolean).join("・")}</span>` : ""}</div>
       <div class="headline">${fp === 50 ? `五五波：<span class="nw">雙方各 50%</span>` : `${fp>=60?"明顯看好":fp>=53?"略占上風":"勢均力敵"}：${ts(fav)} <span class="nw">${fp}%</span>`}</div>
-      ${(!aP||!hP)?`<span class="wait-tag">⏳ 等先發公布</span>`:""}
+      ${(!aP||!hP)?`<span class="wait-tag">等先發</span>`:""}
       <div class="tier-row"><span class="tier ${tc}">${tl}</span><span class="upset">${upset(A.team, H.team, ap, hp, aP, hP, fav, fp)}</span></div>
       <div class="pbar-lab"><span>客 ${ts(A.team)} ${apct}%</span><span>主 ${ts(H.team)} ${hpct}%</span></div>
       <div class="pbar" role="img" aria-label="${tn(A.team)} ${apct}%，${tn(H.team)} ${hpct}%">
@@ -456,7 +456,7 @@ const short = n => FULL2SHORT[n] || n;
 // 預測命中率：讀取網站上的 data/predictions.json
 async function secHit(){
   const el = document.getElementById("hit");
-  if(location.protocol === "file:"){ el.innerHTML = '<p class="note">📂 直接開啟本機檔案時無法讀取預測紀錄，請到線上網站查看：<a href="https://8b2b5t58zf-png.github.io/mlb-site/#sec-hit">點這裡</a></p>'; return; }
+  if(location.protocol === "file:"){ el.innerHTML = '<p class="note">直接開啟本機檔案時無法讀取預測紀錄，請到線上網站查看：<a href="https://8b2b5t58zf-png.github.io/mlb-site/#sec-hit">點這裡</a></p>'; return; }
   const r = await fetch("data/predictions.json?t=" + Date.now());
   if(!r.ok) throw new Error("HTTP " + r.status);
   const d = await r.json();
@@ -483,7 +483,7 @@ async function secHit(){
     const pw = hp >= 0.5 ? x.home : x.away, p = Math.max(hp, 1-hp);
     const tag = x.official ? "" : "（暫定）";
     const v = (snap.model||"").slice(0,2);
-    html += `<tr><td class="nw">${fmtT(x.gameTime)}</td><td class="nw">${short(x.away)} @ ${short(x.home)}</td><td><span class="vp ${v}">${v}</span></td><td>${short(pw)}${tag}</td><td>${Math.round(p*100)}%</td><td>${x.final || "尚未開打／進行中"}</td><td>${x.correct === null ? "⏳" : x.correct ? "✅ 猜對" : "❌ 猜錯"}</td></tr>`;
+    html += `<tr><td class="nw">${fmtT(x.gameTime)}</td><td class="nw">${short(x.away)} @ ${short(x.home)}</td><td><span class="vp ${v}">${v}</span></td><td>${short(pw)}${tag}</td><td>${Math.round(p*100)}%</td><td>${x.final || "尚未開打／進行中"}</td><td>${x.correct === null ? "待賽" : x.correct ? "猜對" : "猜錯"}</td></tr>`;
   }
   el.innerHTML = html + "</table></div>";
 }
@@ -522,7 +522,7 @@ function setLeague(lg){
   document.querySelectorAll(".lgsw button").forEach(b => b.setAttribute("aria-selected", b.dataset.lg===lg));
   document.getElementById("lg-tag").textContent = "｜" + lg.toUpperCase();
   document.getElementById("lg-sub").textContent = lg==="nba" ? "AI 運動實驗室・NBA 美國職籃勝負預測與賽後分析" : "AI 運動實驗室・美國職棒大聯盟勝負預測與賽後分析";
-  document.getElementById("foot").textContent = `AI Sports Lab｜AI 運動實驗室・資料來源：${lg==="nba"?"ESPN 公開數據":"MLB 官方 Stats API"}・預測僅供參考，非投注建議`;
+  document.getElementById("foot").innerHTML = lg==="nba" ? '<p>本站為 NBA 數據分析，非投注建議。</p><p>資料來源：ESPN 公開數據。</p>' : '<p>本站為 MLB 數據分析，非投注建議。</p><p>資料來源：MLB 官方 Stats API（statsapi.mlb.com）。</p><p><a href="validation.html">回測說明</a></p>';
   document.title = `AI Sports Lab｜${lg.toUpperCase()} 勝負預測與賽後分析`;
   renderNav(); scrollTo(0,0);
   if(lg==="nba") loadNBA();
