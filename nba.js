@@ -166,7 +166,7 @@ async function nbaGames(){
   up.sort((a,b) => new Date(a.date) - new Date(b.date));   // 依開賽時間排序
   const nCards = (DG => nFocusList(up.slice(0,8)).map(e => dayHdr(e.date, DG) + nbaCard(e, DG)).join(""))({last:null, cnt:dayCounts(up.slice(0,8).map(e => e.date))});
   const nNext = (all.filter(e => e.status.type.state === "pre" && !isTbd(e)).sort((a,b) => a.date.localeCompare(b.date))[0] || {}).date;
-  document.getElementById("nba-predict").innerHTML = note + (nCards || emptyCard(nNext)) + (nCards && nPost ? '<p class="po-note">下一戰在本戰結束後顯示</p>' : "") + (tbdE ? `<p class="tbd-note">季後賽下一輪 ${twWD(tbdE.date)}開打・對戰組合待前一輪結束後確定</p>` : "");
+  document.getElementById("nba-predict").innerHTML = note + (nCards || emptyCard(nNext)) + (nCards && nPost ? '<p class="po-note">下一戰在本戰結束後顯示</p>' : "") + (tbdE ? `<p class="tbd-note">季後賽下一輪 ${twWD(tbdE.date)}開打<br>對戰組合待前一輪結束後確定</p>` : "");
   const done = all.filter(e => e.status.type.completed).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,5);
   await nbaRecaps(done);
 }
