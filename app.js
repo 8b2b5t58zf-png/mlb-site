@@ -239,7 +239,7 @@ function seriesPost(ss){      // 賽後：比賽結束後的系列戰狀態
   if(ss.isTied || W===L) return W ? `系列賽 ${W}:${L} 戰成平手` : "";
   return lead ? `${lead}系列賽 ${W}:${L} 領先` : "";
 }
-// 系列賽標籤（卡片第一行）：「ALCS 第 4 戰・10/17（六）08:00」，第 6、7 戰加「（如有需要）」
+// 系列賽標籤（卡片第一行）：「ALCS 第 4 戰」，第 6、7 戰加「（如有需要）」
 const SER_AB = {"World Series":"WS","AL Championship Series":"ALCS","NL Championship Series":"NLCS","AL Division Series":"ALDS","NL Division Series":"NLDS","AL Wild Card Series":"AL 外卡","NL Wild Card Series":"NL 外卡"};
 function serTag(g){
   const ss = g.seriesStatus, n = g.seriesGameNumber;
@@ -248,7 +248,7 @@ function serTag(g){
   const p = Object.fromEntries(new Intl.DateTimeFormat("en-GB",{timeZone:"Asia/Taipei",hour12:false,month:"numeric",day:"numeric",weekday:"short",hour:"2-digit",minute:"2-digit"}).formatToParts(new Date(g.gameDate)).map(x=>[x.type,x.value]));
   const wd = {Sun:"日",Mon:"一",Tue:"二",Wed:"三",Thu:"四",Fri:"五",Sat:"六"}[p.weekday];
   const ifn = (n >= 6 && (g.gamesInSeries||ss.totalGames) >= 7) ? "（如有需要）" : "";
-  return `<div class="ser-row"><span class="ser-tag">${ab} 第 <span class="num">${n}</span> 戰${ifn}・<span class="num">${p.month}/${p.day}</span>（${wd}）<span class="num">${p.hour==="24"?"00":p.hour}:${p.minute}</span></span></div>`;
+  return `<div class="ser-row"><span class="ser-tag">${ab} 第 <span class="num">${n}</span> 戰${ifn}</span></div>`;
 }
 // 第三行縮短：「系列賽 2:1 守護者領先」／「系列賽 2:2 平手」
 function serShort(ss){
@@ -528,7 +528,7 @@ function accLine(id, recs, isVer, label, href){
   const el = document.getElementById(id); if(!el) return;
   const done = recs.filter(x => x.status !== "cancelled" && x.official && isVer(x) && x.correct !== null && x.correct !== undefined && x.official.homeWinProb !== 0.5);
   const n = done.length, k = done.filter(x => x.correct).length;
-  const t = n >= 50 ? `${label} 命中率 <span class="num">${Math.round(k/n*100)}%</span>（<span class="num">${k}/${n}</span> 場）` : `${label} 累積中（<span class="num">${n}</span> 場）`;
+  const t = n >= 50 ? `${label} 命中率 <span class="num">${Math.round(k/n*100)}%</span>（<span class="num">${k}/${n}</span> 場）` : n===0 ? `${label} 尚無結算場次` : `${label} 累積中（<span class="num">${n}</span> 場）`;
   el.innerHTML = `${t}・<a href="${href}">看命中率 ›</a>`; el.hidden = false;
 }
 // 預測命中率：讀取網站上的 data/predictions.json
@@ -592,10 +592,12 @@ function markNav(){
   document.querySelectorAll("#topnav a, #bottomnav a").forEach(a => a.dataset.tab===TAB_NOW ? a.setAttribute("aria-current","page") : a.removeAttribute("aria-current"));
 }
 function showTab(){
-  const i = Math.max(0, TABS.indexOf(TAB_NOW));
+  const i = TABS.indexOf(TAB_NOW);
   for(const lg of ["mlb","nba"]) NAVS[lg].forEach(([id],k)=>{ const el=document.getElementById(id); if(!el) return; const on = lg===LG_NOW && k===i; el.classList.toggle("tab-off", !on); el.classList.toggle("tab-on", on); });
   document.body.classList.toggle("tab-predict", TAB_NOW===TABS[0]);
-  try{ localStorage.setItem("aisl:tab", TAB_NOW); }catch(e){}
+  document.body.classList.toggle("view-about", TAB_NOW==="about");
+  document.getElementById("about").hidden = TAB_NOW!=="about";
+  if(TAB_NOW!=="about") try{ localStorage.setItem("aisl:tab", TAB_NOW); }catch(e){}
   markNav();
   // 圖表在隱藏時畫出來會是 0 大小，顯示後重新量尺寸
   if(TAB_NOW==="standings" && LG_NOW==="mlb") requestAnimationFrame(()=>{ try{ const c = window.Chart && Chart.getChart("winChart"); if(c){ c.resize(); c.update("none"); } }catch(e){} });
@@ -608,7 +610,7 @@ function setLeague(lg){
   document.getElementById("tg-scope").textContent = lg==="nba" ? "用 2025-26 季比賽驗證過" : "用 2026 整季比賽驗證過";
   document.getElementById("tg-link").href = lg==="nba" ? "validation-nba.html" : "validation.html";
   document.getElementById("lg-sub").textContent = lg==="nba" ? "AI 運動實驗室・NBA 美國職籃勝負預測與賽後分析" : "AI 運動實驗室・美國職棒大聯盟勝負預測與賽後分析";
-  document.getElementById("foot").innerHTML = lg==="nba" ? '<p class="foot-src">AI Sports Lab 為個人數據分析網站，非投注建議。資料來源：MLB Stats API、ESPN。</p><p><a href="validation-nba.html">NBA 回測說明</a></p>' : '<p class="foot-src">AI Sports Lab 為個人數據分析網站，非投注建議。資料來源：MLB Stats API、ESPN。</p><p><a href="validation.html">回測說明</a></p>';
+  document.getElementById("foot").innerHTML = lg==="nba" ? '<p class="foot-src">AI Sports Lab 為個人數據分析網站，非投注建議。資料來源：MLB Stats API、ESPN。</p><p><a href="#about" data-go="about" class="foot-about">關於與免責</a>・<a href="validation-nba.html">NBA 回測說明</a></p>' : '<p class="foot-src">AI Sports Lab 為個人數據分析網站，非投注建議。資料來源：MLB Stats API、ESPN。</p><p><a href="#about" data-go="about" class="foot-about">關於與免責</a>・<a href="validation.html">回測說明</a></p>';
   document.title = `AI Sports Lab｜${lg.toUpperCase()} 勝負預測與賽後分析`;
   renderNav();
   if(lg==="nba") loadNBA();
@@ -616,6 +618,7 @@ function setLeague(lg){
 // 網址 #mlb-standings → {lg, tab}；舊的 #sec-xxx / #nsec-xxx 也認得
 function parseHash(h){
   h = decodeURIComponent((h||"").replace(/^#/,""));
+  if(h==="about") return {lg:LG_NOW, tab:"about"};
   let m = h.match(/^(mlb|nba)-(predict|recap|hitrate|standings|leaders)$/);
   if(m) return {lg:m[1], tab:m[2]};
   for(const lg of ["mlb","nba"]){ const k = NAVS[lg].findIndex(([id])=>id===h); if(k>=0) return {lg, tab:TABS[k]}; }
@@ -635,11 +638,11 @@ function gcCount(){
   }catch(e){}
 }
 function go(lg, tab, push){
-  if(!TABS.includes(tab)) tab = "predict";
+  if(tab!=="about" && !TABS.includes(tab)) tab = "predict";
   TAB_NOW = tab;
   if(lg!==LG_NOW || !NAV_READY){ NAV_READY = true; setLeague(lg); } else { try{ localStorage.setItem("aisl:league", lg); }catch(e){} }
   showTab();
-  const h = `#${lg}-${tab}`;
+  const h = tab==="about" ? "#about" : `#${lg}-${tab}`;
   if(location.hash !== h){ if(push) history.pushState(null,"",location.pathname+h); else history.replaceState(null,"",location.pathname+h); }
   gcCount();
   scrollTo(0,0);
@@ -658,6 +661,7 @@ function setupNav(){
   });
   addEventListener("popstate", () => { const p = parseHash(location.hash) || {lg:"mlb", tab:"predict"}; go(p.lg, p.tab, false); });
   addEventListener("hashchange", () => { const p = parseHash(location.hash); if(p && (p.lg!==LG_NOW || p.tab!==TAB_NOW)) go(p.lg, p.tab, false); });
+  document.addEventListener("click", e => { const a = e.target.closest("a[data-go]"); if(!a) return; e.preventDefault(); go(LG_NOW, a.dataset.go, true); });
   // 優先順序：網址 # > ?lg= > 上次記住的 > 預設 MLB 預測
   let p = parseHash(location.hash), lg = "mlb", tab = "predict";
   try{

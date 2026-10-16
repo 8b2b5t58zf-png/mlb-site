@@ -277,3 +277,11 @@ body.tab-predict header{padding-bottom:10px}
 .acc-line .num{font-family:var(--num)} .acc-line a{color:#8b949e}
 .ser-row{margin:0 0 4px;padding-right:96px} .ser-tag{display:inline-block;font-size:11px;background:#1c232d;border-radius:4px;padding:0 6px;color:#8b949e;white-space:nowrap}
 .ser-tag .num{font-family:var(--num)}
+/* 關於與免責 */
+body.view-about #mlb-main,body.view-about #nba-main{display:none}
+.about-page{max-width:720px;margin:0 auto;padding:0 12px}
+.about-page p,.about-page li{font-size:15px;line-height:1.75;color:#e6edf3}
+.about-page ul{padding-left:20px;margin:8px 0 16px} .about-page li{margin:6px 0}
+.about-page h3{font-size:16px;color:#e6edf3;margin:20px 0 6px}
+.about-page b{color:#e6edf3}
+.about-back a{color:#d4af37;display:inline-block;padding:12px 0;min-height:44px}
