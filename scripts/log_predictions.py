@@ -66,15 +66,17 @@ for r in recs.values():
         snap["at"] = snap.pop("predictedAt")
         r["snapshots"] = [snap]; r["official"] = dict(snap, note="v1 舊紀錄，視為正式預測")
 
-d = get(f"/schedule?sportId=1&startDate={(now-timedelta(7)).date()}&endDate={(now+timedelta(7)).date()}&hydrate=probablePitcher")
+ONLY = os.environ.get("ONLY_PKS", "").strip()   # 15 分鐘輕量檢查發現先發有變時，只更新這幾場
+d = get(f"/schedule?sportId=1&gamePks={ONLY}&hydrate=probablePitcher") if ONLY else get(f"/schedule?sportId=1&startDate={(now-timedelta(7)).date()}&endDate={(now+timedelta(7)).date()}&hydrate=probablePitcher")
 added = snaps = frozen = filled = unfrozen = 0
 for g in (x for dt in d.get("dates", []) for x in dt["games"]):
     pk, H, A = g["gamePk"], g["teams"]["home"], g["teams"]["away"]
     state = g["status"]["abstractGameState"]
+    ppd = g["status"].get("detailedState", "").startswith("Postponed")   # 延賽：API 可能標 Final，但其實沒開打，不能鎖
     start = datetime.fromisoformat(g["gameDate"].replace("Z", "+00:00"))
     r = recs.get(pk)
     # 0) 依 API 目前的開賽時間：還沒開打就不能鎖定（解除過早的正式紀錄，舊快照留著當歷史）；賽程改期就更新時間
-    if r is not None and state == "Preview" and now < start:
+    if r is not None and ((state == "Preview" and now < start) or ppd):
         gt = start.astimezone(TZ).strftime("%Y-%m-%d %H:%M") + " (UTC+8)"
         if r.get("gameTime") != gt: r["gameTime"], r["date"] = gt, start.astimezone(TZ).strftime("%Y-%m-%d")
         if r.get("official") is not None:
@@ -103,7 +105,8 @@ for g in (x for dt in d.get("dates", []) for x in dt["games"]):
             if not last or {k: v for k, v in last.items() if k != "at"} != {k: v for k, v in snap.items() if k != "at"}:
                 r["snapshots"].append(snap); snaps += 1
     # 2) 已開打：正式預測＝開打前最後一筆快照（固定後不再改）
-    if r and r.get("official") is None and (state != "Preview" or now >= start) and r["snapshots"]:
+    # 鎖定條件：依本次 API 的 gameDate；比賽進行中／結束，或已過開賽時間（延賽不鎖）
+    if r and r.get("official") is None and not ppd and (state in ("Live", "Final") or now >= start) and r["snapshots"]:
         r["official"] = r["snapshots"][-1]
         r["predictedWinner"] = r["home"] if r["official"]["homeWinProb"] >= 0.5 else r["away"]
         frozen += 1

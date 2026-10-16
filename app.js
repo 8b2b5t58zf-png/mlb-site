@@ -219,7 +219,7 @@ function daySummary(games){
   const d0 = games.map(x => day(x.gameDate)).sort()[0], g = games.filter(x => day(x.gameDate) === d0);
   const md = `${+d0.slice(5,7)}/${+d0.slice(8,10)}`;
   const a = g.filter(x => x.teams.home.probablePitcher && x.teams.away.probablePitcher).length;
-  el.hidden = false; el.innerHTML = a === g.length ? wf("dayAll", {d:md, n:g.length}, ["n"]) : wf("dayPart", {d:md, n:g.length, a, b:g.length-a}, ["n","a","b"]);
+  el.hidden = false; el.innerHTML = a === g.length ? wf("dayAll", {d:md, n:g.length}, ["n"]) : [wf("dayHead", {d:md, n:g.length}, ["n"]), a ? wf("dayA", {a}, ["a"]) : "", wf("dayB", {b:g.length-a}, ["b"])].filter(Boolean).join("・");
 }
 const noSp = o => o && (o.starterStatus ? o.starterStatus !== "both" : o.hasStarters === false || ("homeStarter" in o && (!o.homeStarter || !o.awayStarter)));
 // 畫出預測卡片
