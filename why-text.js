@@ -23,7 +23,8 @@ const WHY_TXT = {
   total: "合計 → {t} {p}%（約 {r}%）",
   // 參考數據（只寫事實，最多 4 列，固定順序）
   refBtn: "參考數據",
-  refTitle: "參考數據（未計入勝率）",
+  refTitle: "以下數據未計入勝率",
+  refOpen: "▲", refClosed: "▼",
   last10: "近 10 場：{a} {aw}-{al}，{h} {hw}-{hl}",
   last10Post: "例行賽最後 10 場：{a} {aw}-{al}，{h} {hw}-{hl}",
   homeAway: "{h}主場 {hw}-{hl}，{a}客場 {aw}-{al}",
@@ -59,7 +60,7 @@ function whyBlock2(rows, favName, fp, F){
 function refBlock(lines, lg){
   lines = lines.filter(Boolean).slice(0,4);
   if(!lines.length) return "";
-  return `<details class="refd" data-lg="${lg}"><summary>${WHY_TXT.refBtn} ›</summary><div class="ref-t">${WHY_TXT.refTitle}</div><ul>${lines.map(x=>`<li>${x}</li>`).join("")}</ul></details>`;
+  return `<details class="refd" data-lg="${lg}"><summary>${WHY_TXT.refBtn} <span class="ref-c">${WHY_TXT.refClosed}</span><span class="ref-o">${WHY_TXT.refOpen}</span></summary><div class="ref-t">${WHY_TXT.refTitle}</div><ul>${lines.map(x=>`<li>${x}</li>`).join("")}</ul></details>`;
 }
 // 展開時記一次 GoatCounter 事件
 document.addEventListener("toggle", e => {

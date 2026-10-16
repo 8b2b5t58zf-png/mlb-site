@@ -218,7 +218,6 @@ body.tab-predict header{padding-bottom:10px}
 .refd{border:1px dashed #262e39;border-radius:6px;padding:8px 10px;margin-top:var(--sp-2);color:#c9d1d9}
 .refd summary{font-size:12px;color:#8b949e;cursor:pointer;list-style:none;min-height:24px;display:flex;align-items:center}
 .refd summary::-webkit-details-marker{display:none}
-.refd[open] summary{display:none}
 .refd .ref-t{font-size:12px;color:#8b949e;margin-bottom:4px}
 .refd ul{list-style:none;margin:0;padding:0;font-size:var(--fs-sm);line-height:1.6;color:#c9d1d9}
 .refd .num{color:#c9d1d9}
@@ -228,7 +227,14 @@ body.tab-predict header{padding-bottom:10px}
 .pcard,#analysis article,#nba-analysis article{background:#151b23;border:1px solid #262e39;border-radius:12px;padding:16px;margin:0;box-shadow:none}
 .pcard .why,article .hl{background:#1c232d;border:0}
 .pcard .why-k{border-top:0}
-.pcard .tier.lean{border:0}
 .pcard th,.pcard td,article th,article td{border-bottom:0}
 .dgrp{grid-column:1/-1;font-size:12px;color:#8b949e;margin:4px 0 -4px;padding:0 2px}
 .dgrp:first-child{margin-top:0}
+/* 信心標籤（10/16）：高＝金底黑字、中＝淡金底金字、低／五五波＝深灰底灰字，皆無框 */
+.tier.strong,.tier.lean,.tier.toss{border:0}
+.tier.strong{background:#d4af37;color:#0d1117}
+.tier.lean{background:rgba(212,175,55,.15);color:#d4af37}
+.tier.toss{background:#1c232d;color:#8b949e}
+.refd .ref-o{display:none} .refd[open] .ref-o{display:inline} .refd[open] .ref-c{display:none}
+.pcard .cmpt th,.pcard .cmpt td,article .ls th,article .ls td,article table th,article table td{border-bottom:1px solid #262e39}
+.pcard .cmpt tr:last-child td,article table tr:last-child td{border-bottom:0}
