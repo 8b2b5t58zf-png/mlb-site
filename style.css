@@ -223,3 +223,12 @@ body.tab-predict header{padding-bottom:10px}
 .refd ul{list-style:none;margin:0;padding:0;font-size:var(--fs-sm);line-height:1.6;color:#c9d1d9}
 .refd .num{color:#c9d1d9}
 .site-foot .foot-src{font-size:12px;color:#8b949e;text-align:center;border:0;background:none;padding:0}
+/* 卡片規格（UI 設計師 10/16）：一場一卡、卡內不再套框 */
+#predict,#nba-predict{gap:12px} #analysis,#nba-analysis{display:flex;flex-direction:column;gap:12px}
+.pcard,#analysis article,#nba-analysis article{background:#151b23;border:1px solid #262e39;border-radius:12px;padding:16px;margin:0;box-shadow:none}
+.pcard .why,article .hl{background:#1c232d;border:0}
+.pcard .why-k{border-top:0}
+.pcard .tier.lean{border:0}
+.pcard th,.pcard td,article th,article td{border-bottom:0}
+.dgrp{grid-column:1/-1;font-size:12px;color:#8b949e;margin:4px 0 -4px;padding:0 2px}
+.dgrp:first-child{margin-top:0}

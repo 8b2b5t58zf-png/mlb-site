@@ -66,3 +66,10 @@ document.addEventListener("toggle", e => {
   const d = e.target; if(!d.classList || !d.classList.contains("refd") || !d.open) return;
   try{ if(window.goatcounter && window.goatcounter.count) window.goatcounter.count({path:`ref-open-${d.dataset.lg}`, title:"參考數據展開", event:true}); }catch(_){}
 }, true);
+// 日期分組標籤（台灣時間），例：10/17（五）；st＝{last:null} 每次渲染新建一個
+const WD = "日一二三四五六";
+function dayHdr(d, st){
+  const t = new Date(new Date(d).getTime() + 8*3600e3), k = t.toISOString().slice(0,10);
+  if(st.last === k) return ""; st.last = k;
+  return `<div class="dgrp">${t.getUTCMonth()+1}/${t.getUTCDate()}（${WD[t.getUTCDay()]}）</div>`;
+}

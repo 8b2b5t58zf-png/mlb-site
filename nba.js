@@ -141,7 +141,7 @@ async function nbaGames(){
     note = '<p class="note">例行賽 10/21（台灣時間）開打。以下為開幕賽程，兩隊都還沒有本季戰績，預測目前依上一季實力加主場優勢，開打後會逐步改看本季戰績。</p>';
   }
   NALL = all.concat(up);
-  document.getElementById("nba-predict").innerHTML = note + (up.slice(0,8).map(nbaCard).join("") || nbaNoGames(all));
+  document.getElementById("nba-predict").innerHTML = note + ((DG => up.slice(0,8).map(e => dayHdr(e.date, DG) + nbaCard(e)).join(""))({last:null}) || nbaNoGames(all));
   const done = all.filter(e => e.status.type.completed).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,5);
   await nbaRecaps(done);
 }
@@ -156,6 +156,7 @@ const npS = n => { const z = npn(n); return /[A-Za-z]/.test(z) ? ` ${z} ` : z; }
 const STYPE = {1:"熱身賽",2:"例行賽",3:"季後賽",5:"季中錦標賽"};
 async function nbaRecaps(games){
   let html = "";
+  const DG = {last:null};
   for(const ev of games){
     let d; try{ d = (await nbaGet("summaries", f => f.games && f.games[ev.id], `${ESPN}/summary?event=${ev.id}`)).data; }catch(e){ continue; }
     const comp = d.header.competitions[0], H = comp.competitors.find(x=>x.homeAway==="home"), A = comp.competitors.find(x=>x.homeAway==="away");
@@ -178,7 +179,7 @@ async function nbaRecaps(games){
     if(hs-as === 0) continue;
     const ls = `<table class="ls"><tr><th>球隊</th>${qw.map((_,i)=>`<th>${i<4?i+1:"OT"+(i-3)}</th>`).join("")}<th>總分</th></tr>`
       + [A,H].map(s=>`<tr><td>${nts(s.team)}</td>${q(s).map(v=>`<td>${v}</td>`).join("")}<td><b>${s.score}</b></td></tr>`).join("") + "</table>";
-    html += `<article><h3><span class="ah-d">${twT(ev.date)}（台灣時間）・${STYPE[ev.season.type]||""}</span><span class="ah-s">${nts(A.team)} ${as} : ${hs} ${nts(H.team)}</span></h3>
+    html += dayHdr(ev.date, DG) + `<article><h3><span class="ah-d">${twT(ev.date)}（台灣時間）・${STYPE[ev.season.type]||""}</span><span class="ah-s">${nts(A.team)} ${as} : ${hs} ${nts(H.team)}</span></h3>
       <div class="hl"><div class="hl-title">${nts(W.team)} 為什麼贏？</div><ol>${R.map(x=>`<li>${x}</li>`).join("")}</ol></div>
       <details class="full"><summary>看各節比分</summary>${ls}</details></article>`;
   }

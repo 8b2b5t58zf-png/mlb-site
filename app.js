@@ -344,9 +344,11 @@ function compare(A, H, ap, hp){
 // 畫出預測卡片
 function renderPredict(games, isPast){
   let html = isPast ? "<p>目前沒有即將開打的比賽，改顯示最近比賽的賽前估算：</p>" : "";
+  const DG = {last:null};
   for(const g of games){
     const H = g.teams.home, A = g.teams.away;
     if(!TEAM[H.team.id] || !TEAM[A.team.id]) continue;
+    html += dayHdr(g.gameDate, DG);
     const aP = A.probablePitcher, hP = H.probablePitcher;
     const ap = aP && PSTAT[aP.id], hp = hP && PSTAT[hP.id];
     const m = modelV2(H.team.id, A.team.id, hp, ap);
@@ -383,6 +385,7 @@ function pLine(p){ const s = p.stats.pitching; return `${pn(p.person)} 投 ${s.i
 // 為每場已完賽比賽產生分析文章（全部取自官方 boxscore 數據）
 async function renderAnalysis(games){
   let html = "";
+  const DG = {last:null};
   for(const g of games){
     const box = await getJSON(`${API}/game/${g.gamePk}/boxscore`);
     const L = g.linescore, H = g.teams.home, A = g.teams.away;
@@ -435,7 +438,7 @@ async function renderAnalysis(games){
     // 驚嘆號一篇最多一個：只加在第一條
     if(HL.length) HL[0] += "！";
     const spost = seriesPost(g.seriesStatus);
-    html += `<article><h3><span class="ah-d">${tw(g.gameDate)}</span><span class="ah-s">${tn(A.team)} ${A.score} : ${H.score} ${tn(H.team)}</span></h3>
+    html += dayHdr(g.gameDate, DG) + `<article><h3><span class="ah-d">${tw(g.gameDate)}</span><span class="ah-s">${tn(A.team)} ${A.score} : ${H.score} ${tn(H.team)}</span></h3>
       <div class="hl"><div class="hl-title">三行重點</div>${spost?`<div class="hl-s">${spost}</div>`:""}<ol>${HL.map(x=>`<li>${x}</li>`).join("")}</ol></div>
       <details class="full"><summary>看完整分析</summary>
       ${ls}
