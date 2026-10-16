@@ -410,6 +410,7 @@ function renderPredict(games, isPast){
   let html = isPast ? "<p>目前沒有即將開打的比賽，改顯示最近比賽的賽前估算：</p>" : "";
   const DG = {last:null, cnt:dayCounts(games.filter(g => TEAM[g.teams.home.team.id] && TEAM[g.teams.away.team.id]).map(g => g.gameDate))};
   // 今日數據焦點：列表第一天、兩隊先發都公布的場次
+  games = games.slice().sort((a,b) => new Date(a.gameDate) - new Date(b.gameDate));   // 依開賽時間排序
   const vg = games.filter(g => TEAM[g.teams.home.team.id] && TEAM[g.teams.away.team.id]);
   const day0 = vg.length ? twKey(vg[0].gameDate) : null;
   const FC = pickFocus(vg.map((g,i) => ({g,i})).filter(({g}) => !isPast && twKey(g.gameDate) === day0 && g.teams.home.probablePitcher && g.teams.away.probablePitcher).map(({g,i}) => {
@@ -417,9 +418,9 @@ function renderPredict(games, isPast){
     const ss = g.seriesStatus, need = ss && ss.totalGames ? Math.ceil(ss.totalGames/2) : 0;
     const key = !!(need && (ss.wins === need-1 || ss.losses === need-1 || g.seriesGameNumber === ss.totalGames));
     let txt = "";
-    if(ss && need && !ss.isOver){ const lead = ss.wins !== ss.losses ? serShort(ss) : "";
-      if(lead) txt = lead;
-      else if(ss.wins === need-1 && ss.losses === need-1) txt = serShort(ss); }
+    if(ss && need && !ss.isOver){
+      if(ss.wins === need-1 && ss.losses < need-1 && ss.winningTeam) txt = `${ts(tById(ss.winningTeam.id))}再贏一場晉級`;
+      else txt = serShort(ss); }
     return {i, fh:m.final, key, txt};
   }));
   if(FC){ const f = vg[FC.i]; games = [f, ...games.filter(g => g !== f)]; }

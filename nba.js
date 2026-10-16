@@ -83,7 +83,7 @@ let NALL = [];   // 近期所有賽程（判斷背靠背：前 36 小時內同�
 // 今日數據焦點（NBA）：列表第一天勝率最接近五成的一場，排第一張
 let NFOCUS = null;
 function nFocusList(list){
-  NFOCUS = null; if(!list.length) return list;
+  NFOCUS = null; list = list.slice().sort((a,b) => new Date(a.date) - new Date(b.date)); if(!list.length) return list;
   const d0 = twKey(list[0].date);
   const fc = pickFocus(list.map((e,i) => ({e,i})).filter(({e}) => twKey(e.date) === d0).map(({e,i}) => { const c = e.competitions[0], H = c.competitors.find(x=>x.homeAway==="home"), A = c.competitors.find(x=>x.homeAway==="away");
     return {i, fh: nModel(H.team.id, A.team.id, c.neutralSite).F/100, key:false, txt:""}; }));
@@ -154,6 +154,7 @@ async function nbaGames(){
     PRE_NOTE["nba-predict"] = "例行賽 10/21 開打";
   }
   NALL = all.concat(up);
+  up.sort((a,b) => new Date(a.date) - new Date(b.date));   // 依開賽時間排序
   document.getElementById("nba-predict").innerHTML = note + ((DG => nFocusList(up.slice(0,8)).map(e => dayHdr(e.date, DG) + nbaCard(e, DG)).join(""))({last:null, cnt:dayCounts(up.slice(0,8).map(e => e.date))}) || nbaNoGames(all));
   const done = all.filter(e => e.status.type.completed).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,5);
   await nbaRecaps(done);
