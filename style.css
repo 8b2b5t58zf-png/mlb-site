@@ -259,3 +259,4 @@ body.tab-predict header{padding-bottom:10px}
 
 .hrt .md{width:40px;max-width:40px}
 @media(max-width:767px){ .hrt th{white-space:normal;vertical-align:bottom} }
+@media(max-width:767px){ .hrt td.dt{font-size:13px} .hrt td,.hrt th{padding-left:3px;padding-right:3px} }

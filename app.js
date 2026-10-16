@@ -535,7 +535,7 @@ async function secHit(){
     const pw = hp >= 0.5 ? x.home : x.away, p = Math.max(hp, 1-hp);
     const tag = x.official ? "" : `<div class="tent">未開賽・預測會更新</div>`;
     const v = (snap.model||"").slice(0,2);
-    html += `<tr><td class="nw">${fmtD(x.gameTime)}</td><td class="nw mu">${short(x.away)} @ ${short(x.home)}</td><td class="md"><span class="vp ${v}">${v}</span></td><td class="nw">${short(pw)}${x.correct==null?"":" "+resMark(x.correct)}${tag}${noSp(x.official) ? `<div class="nosp">${WHY_TXT.noSp}</div>` : ""}</td><td class="dk">${Math.round(p*100)}%</td><td class="dk">${x.final || "尚未開打／進行中"}</td><td class="dk">${x.correct === null ? "待賽" : x.correct ? "猜對" : "猜錯"}</td></tr>`;
+    html += `<tr><td class="nw dt">${fmtD(x.gameTime)}</td><td class="nw mu">${short(x.away)} @ ${short(x.home)}</td><td class="md"><span class="vp ${v}">${v}</span></td><td class="nw">${short(pw)}${x.correct==null?"":" "+resMark(x.correct)}${tag}${noSp(x.official) ? `<div class="nosp">${WHY_TXT.noSp}</div>` : ""}</td><td class="dk">${Math.round(p*100)}%</td><td class="dk">${x.final || "尚未開打／進行中"}</td><td class="dk">${x.correct === null ? "待賽" : x.correct ? "猜對" : "猜錯"}</td></tr>`;
   }
   el.innerHTML = html + "</table></div>";
 }
