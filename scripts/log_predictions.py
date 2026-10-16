@@ -89,6 +89,7 @@ for g in (x for dt in d.get("dates", []) for x in dt["games"]):
             snap = {"at": nowtw(), "model": MODEL, "homeWinProb": round(p, 4),
                     "steps": {"standings": st["standings"], "home": st["home"], "starter": st["starter"]},
                     "starterUsed": st["starterUsed"],
+                    "hasStarters": bool(hpp and app_),
                     "homeStarter": hpp and {"id": hpp["id"], "name": hpp["fullName"]},
                     "awayStarter": app_ and {"id": app_["id"], "name": app_["fullName"]}}
             last = r["snapshots"][-1] if r["snapshots"] else None

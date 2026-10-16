@@ -205,9 +205,21 @@ async function loadGames(){
   // 先抓先發投手成績與 FIP 常數，再畫預測卡
   await Promise.all([loadFIPC(), loadTeamHit(), ...show.map(g=>loadH2H(g.teams.away.team.id, g.teams.home.team.id)), loadPitchers(show.flatMap(g=>[g.teams.home.probablePitcher, g.teams.away.probablePitcher]).filter(Boolean).map(p=>p.id))]);
   renderPredict(show, !next.length);
+  daySummary(games);
   await renderAnalysis(done);
 }
 
+// 今日先發總覽（台灣日期）：標題下 12px 灰字；當天無比賽不顯示
+function daySummary(games){
+  const day = d => new Date(new Date(d).getTime() + 8*3600e3).toISOString().slice(0,10);
+  const today = day(Date.now()), g = games.filter(x => day(x.gameDate) === today);
+  let el = document.getElementById("mlb-day");
+  if(!el){ el = document.createElement("p"); el.id = "mlb-day"; el.className = "day-sum"; const h = document.querySelector("#sec-predict h2"); h.after(el); }
+  if(!g.length){ el.hidden = true; return; }
+  const a = g.filter(x => x.teams.home.probablePitcher && x.teams.away.probablePitcher).length;
+  el.hidden = false; el.innerHTML = a === g.length ? wf("dayAll", {n:g.length}, ["n"]) : wf("dayPart", {n:g.length, a, b:g.length-a}, ["n","a","b"]);
+}
+const noSp = o => o && (o.hasStarters === false || ("homeStarter" in o && (!o.homeStarter || !o.awayStarter)));
 // 畫出預測卡片
 // 信心分級（看好方的機率）
 function tier(p){
@@ -297,8 +309,8 @@ function whyBlock(A, H, m, s, ap, hp, aP, hP, fav, fp){
     else { const hA = m.d3 > 0, [P, S, O, OS] = hA ? [hP, hp, aP, ap] : [aP, ap, hP, hp];
       t3 = wf("sp", {p:pn(P), era:S.era, whip:S.whip, o:pn(O), oera:OS.era, owhip:OS.whip}, ["era","whip","oera","owhip"]); }
   }
-  if(m.used && SPCHG && SPCHG.p0 != null){ const hp0 = SPCHG.p0*100, nowH = m.F;
-    if(Math.abs(hp0 - nowH) >= 1){ const H0 = hp0 >= 50; t3 += wf("pBefore", {t:ts(H0?H:A), p:Math.round(H0?hp0:100-hp0)}, ["p"]); } }
+  if(m.used && SPCHG){ const isC = SPCHG.p0c != null, p0 = isC ? SPCHG.p0c : SPCHG.p0a;
+    if(p0 != null && Math.abs(p0*100 - m.F) >= 1){ const hp0 = p0*100, H0 = hp0 >= 50; t3 += wf(isC ? "pBefore" : "pAnnBefore", {t:ts(H0?H:A), p:Math.round(H0?hp0:100-hp0)}, ["p"]); } }
   const html = whyBlock2([[s.d1, t1, "rec"], [s.d2, t2, "home"], [m.used ? s.d3 : 0, t3, "sp"]], ts(fav), fp, s.F);
   // 參考數據（事實，不計入勝率）
   const spl = (t, type) => t && t.records && (t.records.splitRecords||[]).find(x=>x.type===type);
@@ -311,16 +323,19 @@ function whyBlock(A, H, m, s, ap, hp, aP, hP, fav, fp){
   ], "mlb");
   return html + ref;
 }
-// 先發異動：和排程較早的快照比，同一邊先發換人就回傳 {away/home:原投手名, p0:異動前主隊勝率}
+// 先發異動／公布：和排程較早的快照比。同一邊換人＝異動（金字）；原本沒人、現在有人＝公布（白字）；異動優先
 function spChange(pk, aP, hP){
   const sn = SNAPS[pk]; if(!sn || !sn.length) return null;
-  const out = {};
+  const out = {chg:{}, ann:{}};
   for(const [side, cur] of [["away", aP], ["home", hP]]){
     if(!cur) continue;
-    for(let i = sn.length-1; i >= 0; i--){ const o = sn[i][side+"Starter"];
-      if(o && o.id !== cur.id){ out[side] = pn({id:o.id, fullName:o.name}); if(out.p0 == null) out.p0 = sn[i].homeWinProb; break; } }
+    for(let i = sn.length-1; i >= 0; i--){ const k = side+"Starter"; if(!(k in sn[i])) continue; const o = sn[i][k];
+      if(o && o.id !== cur.id){ out.chg[side] = pn({id:o.id, fullName:o.name}); out.p0c ??= sn[i].homeWinProb; break; } }
+    if(!out.chg[side]){ const j = sn.map(x => (side+"Starter") in x && !x[side+"Starter"]).lastIndexOf(true);
+      if(j >= 0){ out.ann[side] = true; out.p0a ??= sn[j].homeWinProb; } }
   }
-  return out.away || out.home ? out : null;
+  const any = o => o.away || o.home;
+  return any(out.chg) || any(out.ann) ? out : null;
 }
 // 先發投手對比列（勝率條下方；左客右主，不分好壞色）
 function pitchRow(aP, hP, ap, hp, chg){
@@ -328,7 +343,7 @@ function pitchRow(aP, hP, ap, hp, chg){
   const col = (P, S, side) => {
     if(!P) return `<div class="pc-col"><div class="pc-tbd">${WHY_TXT.pTbd}</div></div>`;
     const line = S && S.era && S.era !== "-" ? wf("pLine", {era:S.era, whip:S.whip, ip:ipTxt(S.ip)}, ["era","whip","ip"]).split("・").map(x=>`<span class="nw">${x}</span>`).join("・") + (S.ip < 40 ? `<span class="pc-small">${WHY_TXT.pSmall}</span>` : "") : "";
-    const ch = chg && chg[side] ? `<div class="pc-chg">${wf("pChange", {p:chg[side]})}</div>` : "";
+    const ch = chg && chg.chg[side] ? `<div class="pc-chg">${wf("pChange", {p:chg.chg[side]})}</div>` : chg && chg.ann[side] ? `<div class="pc-ann">${WHY_TXT.pAnn}</div>` : "";
     return `<div class="pc-col"><div class="pc-n">${pn(P)}</div>${line ? `<div class="pc-s">${line}</div>` : ""}${ch}</div>`;
   };
   return `<div class="pitch"><div class="pc-lab">${WHY_TXT.pLabel}</div><div class="pc-row">${col(aP, ap, "away")}<div class="pc-div"></div>${col(hP, hp, "home")}</div></div>`;
@@ -465,7 +480,7 @@ async function renderAnalysis(games){
     // 驚嘆號一篇最多一個：只加在第一條
     if(HL.length) HL[0] += "！";
     const spost = seriesPost(g.seriesStatus);
-    html += dayHdr(g.gameDate, DG) + `<article><h3><span class="ah-d">${tw(g.gameDate)}</span><span class="ah-s">${tn(A.team)} ${A.score} : ${H.score} ${tn(H.team)}</span></h3>
+    html += dayHdr(g.gameDate, DG) + `<article><h3><span class="ah-d">${tw(g.gameDate)}${noSp(OFFICIAL[g.gamePk]) ? `・${WHY_TXT.noSp}` : ""}</span><span class="ah-s">${tn(A.team)} ${A.score} : ${H.score} ${tn(H.team)}</span></h3>
       <div class="hl"><div class="hl-title">三行重點</div>${spost?`<div class="hl-s">${spost}</div>`:""}<ol>${HL.map(x=>`<li>${x}</li>`).join("")}</ol></div>
       <details class="full"><summary>看完整分析</summary>
       ${ls}
@@ -515,7 +530,7 @@ async function secHit(){
     const pw = hp >= 0.5 ? x.home : x.away, p = Math.max(hp, 1-hp);
     const tag = x.official ? "" : "（暫定）";
     const v = (snap.model||"").slice(0,2);
-    html += `<tr><td class="nw">${fmtD(x.gameTime)}</td><td class="nw">${short(x.away)} @ ${short(x.home)}</td><td><span class="vp ${v}">${v}</span></td><td class="nw">${short(pw)}${tag} ${resMark(x.correct)}</td><td class="dk">${Math.round(p*100)}%</td><td class="dk">${x.final || "尚未開打／進行中"}</td><td class="dk">${x.correct === null ? "待賽" : x.correct ? "猜對" : "猜錯"}</td></tr>`;
+    html += `<tr><td class="nw">${fmtD(x.gameTime)}</td><td class="nw">${short(x.away)} @ ${short(x.home)}</td><td><span class="vp ${v}">${v}</span></td><td class="nw">${short(pw)}${tag} ${resMark(x.correct)}${noSp(x.official) ? `<div class="nosp">${WHY_TXT.noSp}</div>` : ""}</td><td class="dk">${Math.round(p*100)}%</td><td class="dk">${x.final || "尚未開打／進行中"}</td><td class="dk">${x.correct === null ? "待賽" : x.correct ? "猜對" : "猜錯"}</td></tr>`;
   }
   el.innerHTML = html + "</table></div>";
 }
