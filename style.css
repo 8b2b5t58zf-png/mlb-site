@@ -266,3 +266,9 @@ body.tab-predict header{padding-bottom:10px}
   .hrt .mu-short{display:inline;white-space:nowrap}
 }
 @media(max-width:767px){ .hrt td.dt{font-size:12px} .hrt td,.hrt th{padding-left:3px;padding-right:3px} }
+
+.hrt .tent .ts{display:none}
+@media(max-width:360px){
+  .hrt td.dt .dd,.hrt td.dt .tt{display:block}
+  .hrt td.dt .tt{font-size:11px;color:#8b949e}
+}
