@@ -327,7 +327,7 @@ function pitchRow(aP, hP, ap, hp, chg){
   const ipTxt = v => { const w = Math.floor(v + 1e-9), o = Math.round((v - w)*3); return `${w}.${o}`; };
   const col = (P, S, side) => {
     if(!P) return `<div class="pc-col"><div class="pc-tbd">${WHY_TXT.pTbd}</div></div>`;
-    const line = S && S.era && S.era !== "-" ? wf("pLine", {era:S.era, whip:S.whip, ip:ipTxt(S.ip)}, ["era","whip","ip"]) + (S.ip < 40 ? `<span class="pc-small">${WHY_TXT.pSmall}</span>` : "") : "";
+    const line = S && S.era && S.era !== "-" ? wf("pLine", {era:S.era, whip:S.whip, ip:ipTxt(S.ip)}, ["era","whip","ip"]).split("・").map(x=>`<span class="nw">${x}</span>`).join("・") + (S.ip < 40 ? `<span class="pc-small">${WHY_TXT.pSmall}</span>` : "") : "";
     const ch = chg && chg[side] ? `<div class="pc-chg">${wf("pChange", {p:chg[side]})}</div>` : "";
     return `<div class="pc-col"><div class="pc-n">${pn(P)}</div>${line ? `<div class="pc-s">${line}</div>` : ""}${ch}</div>`;
   };
