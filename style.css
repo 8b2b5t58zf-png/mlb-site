@@ -19,7 +19,7 @@ a:focus-visible,button:focus-visible,summary:focus-visible{outline:2px solid var
 .nw{white-space:nowrap}
 
 /* 頁首 */
-header{position:relative;background:var(--bg);border-bottom:1px solid var(--line);padding:16px}
+header{position:relative;background:var(--bg);border-bottom:1px solid var(--line);padding:0 16px}
 header h1{margin:0;color:var(--text);font-size:22px;font-weight:700;letter-spacing:.2px}
 .brand{display:flex;align-items:center;gap:8px;white-space:nowrap;font-size:clamp(20px,6vw,28px)}
 .brand .logo{width:30px;height:30px;flex:none;background:#fff;border-radius:50%;padding:2px}
@@ -204,3 +204,13 @@ article h3 .ah-s{display:block;white-space:nowrap}
 .nst td:first-child,.nst th:first-child{position:sticky;left:0;background:var(--card);z-index:1}
 .vt-g{display:block;font-size:var(--fs-xs);color:var(--text2);font-family:var(--num)}
 @media(max-width:767px){ .dk{display:none} .hrt td,.hrt th{padding-left:4px;padding-right:4px} }
+
+/* header-2：logo 列一行 ≤48px，隨頁面捲走；標語只在預測區 */
+header .brand,header h1.brand{height:48px;margin:0;font-size:18px;gap:8px;line-height:48px}
+.brand .logo{width:24px;height:24px;padding:1px}
+.tagline,.tagline-sub,.tagline-link{display:none}
+body.tab-predict .tagline,body.tab-predict .tagline-sub,body.tab-predict .tagline-link{display:block}
+body.tab-predict header{padding-bottom:10px}
+.tagline{margin-top:0}
+.dtime{color:var(--text2);font-size:12px;margin:0 0 6px;background:none;padding:0;border:0}
+@media(min-width:700px){header h1.brand{font-size:18px}}

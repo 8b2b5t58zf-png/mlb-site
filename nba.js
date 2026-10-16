@@ -11,10 +11,13 @@ async function nbaFile(name){
 const nAge = f => f && f.fetched_at ? Date.now() - Date.parse(f.fetched_at) : Infinity;
 async function nbaGet(name, pick, url){
   const f = await nbaFile(name), v = f ? pick(f) : null;
-  if(v && nAge(f) < NFRESH) return {data:v, at:Date.parse(f.fetched_at)};
+  const markAt = t => { if(!dataAt || t < dataAt) dataAt = t; };
+  if(v && nAge(f) < NFRESH){ markAt(Date.parse(f.fetched_at)); return {data:v, at:Date.parse(f.fetched_at)}; }
   const before = usedCache;
   try{ const d = await getJSON(url); return {data:d, at: usedCache !== before ? usedCache : Date.now()}; }
-  catch(e){ if(v){ const t = Date.parse(f.fetched_at); if(!usedCache || t < usedCache) usedCache = t; return {data:v, at:t}; } throw e; }
+  catch(e){ if(v){ const t = Date.parse(f.fetched_at);
+    // 排程檔 6 小時內仍算正常（只顯示資料時間）；更舊才算真的抓不到
+    if(nAge(f) < 6*3600e3) markAt(t); else if(!usedCache || t < usedCache) usedCache = t; return {data:v, at:t}; } throw e; }
 }
 // 30 隊台灣常用隊名（ESPN 縮寫 → [全名, 簡稱]），來源 /workspace/nba/teams.md
 const NZH = {ATL:["亞特蘭大老鷹","老鷹"],BOS:["波士頓塞爾提克","塞爾提克"],BKN:["布魯克林籃網","籃網"],CHA:["夏洛特黃蜂","黃蜂"],CHI:["芝加哥公牛","公牛"],

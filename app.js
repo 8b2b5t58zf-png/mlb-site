@@ -21,7 +21,8 @@ const DIV = {201:"美聯東區",202:"美聯中區",200:"美聯西區",204:"國�
 
 // 小工具：抓取網址並轉成 JSON 資料
 // 抓資料，成功時存一份到瀏覽器（localStorage）；失敗時改用上次存的舊資料
-let usedCache = null;   // 若本區塊用了舊資料，記下那份資料的時間
+let usedCache = null;
+let dataAt = null;      // 排程存檔的資料時間（正常狀況，只顯示一行灰字）   // 若本區塊用了舊資料，記下那份資料的時間
 async function getJSON(url){
   const key = "mlbcache:" + url.replace(/startDate=[^&]*&endDate=[^&]*/,"sched"); // 賽程網址每天不同，統一一個鑰匙
   try{
@@ -44,14 +45,16 @@ const twFull = t => new Date(t).toLocaleString("zh-TW",{timeZone:"Asia/Taipei",h
 const skeleton = n => Array.from({length:n},(_, i)=>`<div class="sk" style="width:${90-i*7}%"></div>`).join("");
 
 const RETRY = {};
+const twMD = t => { const p = Object.fromEntries(new Intl.DateTimeFormat("en-GB",{timeZone:"Asia/Taipei",hour12:false,month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit"}).formatToParts(new Date(t)).map(x=>[x.type,x.value])); return `${p.month}/${p.day} ${p.hour==="24"?"00":p.hour}:${p.minute}`; };
 const twShort = t => new Date(t).toLocaleString("zh-TW",{timeZone:"Asia/Taipei",hour12:false,month:"numeric",day:"numeric",hour:"2-digit",minute:"2-digit"});
 // 執行一個區塊：先顯示骨架，成功顯示資料；失敗顯示錯誤＋重試按鈕
 async function runSection(ids, fn){
   for(const id of ids){ document.getElementById("st-"+id).innerHTML = ""; document.getElementById(id).innerHTML = id==="chart" ? '<canvas id="winChart"></canvas>' : skeleton(5); }
-  usedCache = null;
+  usedCache = null; dataAt = null;
   try{
     await fn();
-    if(usedCache) for(const id of ids) document.getElementById("st-"+id).innerHTML = `<div class="stale">目前顯示 ${twShort(usedCache)}（台灣時間）的資料，連線恢復後會更新</div>`;
+    if(usedCache) for(const id of ids) document.getElementById("st-"+id).innerHTML = `<div class="stale">暫時抓不到最新資料，目前顯示 ${twMD(usedCache)} 的資料</div>`;
+    else if(dataAt) for(const id of ids) document.getElementById("st-"+id).innerHTML = `<div class="dtime">資料時間：${twMD(dataAt)}</div>`;
     setTimeout(markNav, 0);
     return true;
   }catch(e){
@@ -520,6 +523,7 @@ function markNav(){
 function showTab(){
   const i = Math.max(0, TABS.indexOf(TAB_NOW));
   for(const lg of ["mlb","nba"]) NAVS[lg].forEach(([id],k)=>{ const el=document.getElementById(id); if(!el) return; const on = lg===LG_NOW && k===i; el.classList.toggle("tab-off", !on); el.classList.toggle("tab-on", on); });
+  document.body.classList.toggle("tab-predict", TAB_NOW===TABS[0]);
   try{ localStorage.setItem("aisl:tab", TAB_NOW); }catch(e){}
   markNav();
   // 圖表在隱藏時畫出來會是 0 大小，顯示後重新量尺寸
