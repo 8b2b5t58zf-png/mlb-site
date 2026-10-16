@@ -20,7 +20,7 @@ const WHY_TXT = {
   spMixed: "{a}與{h}互有優劣",
   spClose: "{a}與{h}數據相近",
   spWait: "先發投手未公布，未調整",
-  total: "合計 → {t} {p}%",
+  total: "合計 → {t} {p}%（約 {r}%）",
   // 參考數據（只寫事實，最多 4 列，固定順序）
   refBtn: "參考數據",
   refTitle: "參考數據（未計入勝率）",
@@ -53,7 +53,7 @@ function whyBlock2(rows, favName, fp, F){
   const head = fp === 50 || tk === "toss" ? WHY_TXT.sum.toss : WHY_TXT.sum[tk].replace("{t}", favName).replace("{item}", WHY_TXT.item[rows[best][2]]);
   const li = rows.map((r,i) => `<li><span class="dl ${wc(vals[i])}">${wd(vals[i])}</span><span>${r[1]}</span></li>`).join("");
   return `<div class="why"><div class="why-h">${WHY_TXT.title}</div><div class="why-c">${head}</div>
-    <ul class="why-l">${li}<li class="why-tot"><span class="dl"></span><span>${wf("total", {t:favName, p:F.toFixed(1)}, ["p"])}</span></li></ul></div>`;
+    <ul class="why-l">${li}<li class="why-tot"><span class="dl"></span><span>${wf("total", {t:favName, p:F.toFixed(1), r:fp}, ["p","r"])}</span></li></ul></div>`;
 }
 // 參考數據：lines＝字串陣列（空的略過），最多 4 列；預設收合
 function refBlock(lines, lg){
