@@ -409,6 +409,20 @@ function compare(A, H, ap, hp){
 function renderPredict(games, isPast){
   let html = isPast ? "<p>目前沒有即將開打的比賽，改顯示最近比賽的賽前估算：</p>" : "";
   const DG = {last:null, cnt:dayCounts(games.filter(g => TEAM[g.teams.home.team.id] && TEAM[g.teams.away.team.id]).map(g => g.gameDate))};
+  // 今日數據焦點：列表第一天、兩隊先發都公布的場次
+  const vg = games.filter(g => TEAM[g.teams.home.team.id] && TEAM[g.teams.away.team.id]);
+  const day0 = vg.length ? twKey(vg[0].gameDate) : null;
+  const FC = pickFocus(vg.map((g,i) => ({g,i})).filter(({g}) => !isPast && twKey(g.gameDate) === day0 && g.teams.home.probablePitcher && g.teams.away.probablePitcher).map(({g,i}) => {
+    const hp = PSTAT[g.teams.home.probablePitcher.id], ap = PSTAT[g.teams.away.probablePitcher.id], m = modelV2(g.teams.home.team.id, g.teams.away.team.id, hp, ap);
+    const ss = g.seriesStatus, need = ss && ss.totalGames ? Math.ceil(ss.totalGames/2) : 0;
+    const key = !!(need && (ss.wins === need-1 || ss.losses === need-1 || g.seriesGameNumber === ss.totalGames));
+    let txt = "";
+    if(ss && need && !ss.isOver){ const lead = ss.wins !== ss.losses ? serShort(ss) : "";
+      if(lead) txt = lead;
+      else if(ss.wins === need-1 && ss.losses === need-1) txt = serShort(ss); }
+    return {i, fh:m.final, key, txt};
+  }));
+  if(FC){ const f = vg[FC.i]; games = [f, ...games.filter(g => g !== f)]; }
   for(const g of games){
     const H = g.teams.home, A = g.teams.away;
     if(!TEAM[H.team.id] || !TEAM[A.team.id]) continue;
@@ -440,7 +454,7 @@ function renderPredict(games, isPast){
       <details class="algo"><summary>兩隊數據對比</summary>${compare(A.team, H.team, ap, hp)}</details>
       ${w ? `<div class="ref">${w}</div>` : ""}
       <div class="upd">最後更新：${tw(Date.now())}（台灣時間）</div>`;
-    html += ccCard({lg:"mlb", ser, time:cardTime(g.gameDate, DG), tag: wait ? "等先發" : "先發已公布", A:ts(A.team), H:ts(H.team), conf:CONF[tc], tc, ap:apct, hp:hpct, favHome, reason, body});
+    html += ccCard({lg:"mlb", focus: FC && g === vg[FC.i] ? FC.txt : "", ser, time:cardTime(g.gameDate, DG), tag: wait ? "等先發" : "先發已公布", A:ts(A.team), H:ts(H.team), conf:CONF[tc], tc, ap:apct, hp:hpct, favHome, reason, body});
   }
   document.getElementById("predict").innerHTML = html || '<p class="note">MLB 目前休賽中</p>';
 }

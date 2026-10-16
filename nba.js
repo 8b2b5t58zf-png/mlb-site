@@ -80,6 +80,17 @@ const nEarly = (dt=new Date()) => { const m = dt.getMonth(), d = dt.getDate(); r
 const nTier = (p, early) => p >= 70 ? (early ? ["lean","看好"] : ["strong","明顯看好"]) : p >= 60 ? ["lean","略占上風"] : ["toss","接近五五波"];
 const nWord = (p, early) => p >= 70 ? (early ? "看好" : "明顯看好") : p >= 60 ? "略占上風" : "勢均力敵";
 let NALL = [];   // 近期所有賽程（判斷背靠背：前 36 小時內同隊有比賽）
+// 今日數據焦點（NBA）：列表第一天勝率最接近五成的一場，排第一張
+let NFOCUS = null;
+function nFocusList(list){
+  NFOCUS = null; if(!list.length) return list;
+  const d0 = twKey(list[0].date);
+  const fc = pickFocus(list.map((e,i) => ({e,i})).filter(({e}) => twKey(e.date) === d0).map(({e,i}) => { const c = e.competitions[0], H = c.competitors.find(x=>x.homeAway==="home"), A = c.competitors.find(x=>x.homeAway==="away");
+    return {i, fh: nModel(H.team.id, A.team.id, c.neutralSite).F/100, key:false, txt:""}; }));
+  if(!fc) return list;
+  NFOCUS = {id:list[fc.i].id, txt:fc.txt};
+  return [list[fc.i], ...list.filter((_,j) => j !== fc.i)];
+}
 function nbaCard(ev, DG){
   const c = ev.competitions[0], H = c.competitors.find(x=>x.homeAway==="home"), A = c.competitors.find(x=>x.homeAway==="away");
   const th = NT[H.team.id] || {g:0,w:0,l:0}, ta = NT[A.team.id] || {g:0,w:0,l:0};
@@ -123,7 +134,7 @@ function nbaCard(ev, DG){
     ${early && fp >= 70 ? '<div class="early-note">開季數據少，保守看待</div>' : ""}
     <div class="tier-row"><span class="tier ${tc}">${tl}</span>${fp!==50?`<span class="upset">${nts(oth)}仍有 ${100-fp}% 勝率</span>`:""}</div>
     ${NST_AT && Date.now() - NST_AT > NFRESH ? `<div class="upd">依據 ${twT(NST_AT)}（台灣時間）時的戰績</div>` : `<div class="upd">戰績更新：${twT(NST_AT || Date.now())}（台灣時間）</div>`}`;
-  return ccCard({lg:"nba", ser:"", time:cardTime(ev.date, DG), tag: small ? "樣本不足" : "", A:nts(A.team), H:nts(H.team), conf:CONF[tc], tc, ap, hp, favHome, reason, body});
+  return ccCard({lg:"nba", focus: NFOCUS && NFOCUS.id === ev.id ? NFOCUS.txt : "", ser:"", time:cardTime(ev.date, DG), tag: small ? "樣本不足" : "", A:nts(A.team), H:nts(H.team), conf:CONF[tc], tc, ap, hp, favHome, reason, body});
 }
 
 async function nbaGames(){
@@ -143,7 +154,7 @@ async function nbaGames(){
     PRE_NOTE["nba-predict"] = "例行賽 10/21 開打";
   }
   NALL = all.concat(up);
-  document.getElementById("nba-predict").innerHTML = note + ((DG => up.slice(0,8).map(e => dayHdr(e.date, DG) + nbaCard(e, DG)).join(""))({last:null, cnt:dayCounts(up.slice(0,8).map(e => e.date))}) || nbaNoGames(all));
+  document.getElementById("nba-predict").innerHTML = note + ((DG => nFocusList(up.slice(0,8)).map(e => dayHdr(e.date, DG) + nbaCard(e, DG)).join(""))({last:null, cnt:dayCounts(up.slice(0,8).map(e => e.date))}) || nbaNoGames(all));
   const done = all.filter(e => e.status.type.completed).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,5);
   await nbaRecaps(done);
 }

@@ -104,13 +104,13 @@ function mainReason(items, favHome, wait, fp){
   return s + (wait ? "（先發公布後會重算）" : "");
 }
 function ccCard(o){   // spec-compact v1
-  const id = `cc-${++CC_N}`, cf = `<span class="tier ${o.tc} cc-conf">信心 ${o.conf}</span>`;
-  return `<div class="pcard cc">
-  <button type="button" class="cc-head" aria-expanded="false" aria-controls="${id}" data-lg="${o.lg}">
-    <span class="cc-r1"><span class="cc-ser">${o.ser||""}</span><span class="cc-rt"><span class="cc-time num">${o.time}</span>${o.tag?`<span class="cc-tag">${o.tag}</span>`:""}<span class="cc-c1">${cf}</span></span></span>
+  const id = `cc-${++CC_N}`, ft = o.focus ? `<span class="cc-focus">數據焦點</span>` : "", cf = `<span class="tier ${o.tc} cc-conf">信心 ${o.conf}</span>`;
+  return `<div class="pcard cc${o.focus?" focus":""}">
+  <button type="button" class="cc-head" aria-expanded="false" aria-controls="${id}" data-lg="${o.focus?"focus":o.lg}">
+    <span class="cc-r1"><span class="cc-ser">${ft}${o.ser||""}</span><span class="cc-rt"><span class="cc-time num">${o.time}</span>${o.tag?`<span class="cc-tag">${o.tag}</span>`:""}<span class="cc-c1">${cf}</span></span></span>
     <span class="cc-r2"><span class="cc-tm">${o.A}</span><span class="cc-c2">${cf}</span><span class="cc-tm r">${o.H}</span></span>
     <span class="cc-r3"><span class="num cc-p">${o.ap}%</span><span class="cc-bar"><span class="${o.favHome?"oth":"fav"}" style="width:${o.ap}%"></span><span class="${o.favHome?"fav":"oth"}" style="width:${o.hp}%"></span></span><span class="num cc-p r">${o.hp}%</span></span>
-    <span class="cc-r4"><span class="cc-why">${o.reason||""}</span><span class="cc-more">看分析 ›</span></span>
+    <span class="cc-r4"><span class="cc-why">${o.focus || o.reason || ""}</span><span class="cc-more">看分析 ›</span></span>
   </button>
   <div class="cc-body" id="${id}" inert><div class="cc-in">${o.body}</div></div></div>`;
 }
@@ -159,4 +159,13 @@ function confGroups(recs, isVer, cuts, lg){   // cuts: [中下限, 高下限]（
     const v = n >= 50 ? `平均預測 <span class="num">${Math.round(g.xs.reduce((a,x)=>a+x.p,0)/n*100)}%</span>｜實際 <span class="num">${Math.round(k/n*100)}%</span>（<span class="num">${k}/${n}</span> 場）` : `累積中（<span class="num">${n}</span> 場）`;
     return `<div class="cg-row"><span class="cg-l">信心 ${g.n}<span class="cg-r">${g.r}</span></span><span class="cg-v">${v}</span></div>`; }).join("");
   return `<div class="cg" id="cg-${lg}"><div class="cg-h">依信心分組（每組滿 <span class="num">50</span> 場才顯示命中率）</div>${rows}${half ? `<div class="cg-n">勝率剛好 <span class="num">50%</span> 的 <span class="num">${half}</span> 場不分組、不計命中率</div>` : ""}</div>`;
+}
+
+// 今日數據焦點（§25 修訂、spec-accuracy-display §3）：只看列表第一天；cands: [{i, fh(主隊勝率 0-1), key(季後賽關鍵戰), txt(系列賽句)}]
+function pickFocus(cands){
+  if(!cands.length) return null;
+  const key = cands.filter(c => c.key);
+  const c = (key.length ? key : cands).slice().sort((a,b) => Math.abs(a.fh-.5) - Math.abs(b.fh-.5))[0];
+  const hp = Math.round(c.fh*100), ap = 100-hp;
+  return {i:c.i, txt: c.txt || `本日勝率最接近（${ap}%：${hp}%）`};
 }
