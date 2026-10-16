@@ -57,6 +57,7 @@ for off in range(-3, 3):
 for e in evs.values():
     if e["season"]["type"] != 2: continue
     c = e["competitions"][0]; H = next(x for x in c["competitors"] if x["homeAway"] == "home"); A = next(x for x in c["competitors"] if x["homeAway"] == "away")
+    if any(not x["team"].get("id") or str(x["team"]["id"]) in ("0", "-1") or x["team"].get("abbreviation") == "TBD" for x in (H, A)): continue   # 對戰未定不預測
     start = datetime.fromisoformat(e["date"].replace("Z", "+00:00")); state = e["status"]["type"]["state"]
     r = recs.get(e["id"])
     if state == "pre" and now < start:

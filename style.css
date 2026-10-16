@@ -337,3 +337,7 @@ body.view-about #mlb-main,body.view-about #nba-main{display:none}
 .cc-ser{display:flex;align-items:center;gap:6px;min-width:0}
 .cc-focus{font-size:11px;color:#d4af37;border:1px solid #d4af37;border-radius:4px;padding:0 6px;line-height:16px;white-space:nowrap}
 .focus-sub{font-size:12px;color:#8b949e;margin:0 0 6px}
+
+.po-note{font-size:12px;color:#8b949e;text-align:center;margin:8px 0 0}
+.tbd-note{font-size:13px;color:#8b949e;text-align:center;margin:8px 0 0}
+.empty-card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:24px;font-size:13px;color:#8b949e;text-align:center}

@@ -206,7 +206,13 @@ async function loadGames(){
   const POST = ["F","D","L","W"], skey = g => g.gameType + ":" + [g.teams.home.team.id, g.teams.away.team.id].sort().join("-");
   const firstOpen = {};
   for(const g of games.filter(g=>POST.includes(g.gameType) && g.status.abstractGameState!=="Final").sort((a,b)=>new Date(a.gameDate)-new Date(b.gameDate))) if(!(skey(g) in firstOpen)) firstOpen[skey(g)] = g;
-  const next = games.filter(g=>g.status.abstractGameState==="Preview" && (!POST.includes(g.gameType) || firstOpen[skey(g)] === g)).slice(0,4);         // 接下來 4 場
+  const real = g => !!(TEAM[g.teams.home.team.id] && TEAM[g.teams.away.team.id]);   // 兩隊都確定才算
+  const next = games.filter(g=>g.status.abstractGameState==="Preview" && real(g) && (!POST.includes(g.gameType) || firstOpen[skey(g)] === g)).slice(0,4);
+  // 對戰組合未定的季後賽系列：不出卡片，只顯示一行開打日期
+  const SNAME = {W:"世界大賽", L:"聯盟冠軍賽", D:"分區系列賽", F:"外卡系列賽"}, tbdSeen = {};
+  const tbd = games.filter(g=>POST.includes(g.gameType) && g.status.abstractGameState==="Preview" && !real(g)).sort((a,b)=>new Date(a.gameDate)-new Date(b.gameDate)).filter(g => !tbdSeen[g.gameType] && (tbdSeen[g.gameType] = 1)).map(g => `${SNAME[g.gameType]} ${twWD(g.gameDate)}開打，對戰組合待${g.gameType==="W" ? "聯盟冠軍賽" : "前一輪"}結束後確定`);
+  const nr = games.filter(g=>g.status.abstractGameState==="Preview" && real(g))[0];
+  PEXTRA = {post: next.some(g => POST.includes(g.gameType)), tbd, nextAt: nr ? nr.gameDate : null};         // 接下來 4 場
   const show = next.length ? next : done;
   if(location.protocol !== "file:"){ try{ const r = await fetch("data/predictions.json?t="+Date.now()); if(r.ok) for(const x of (await r.json()).records){ if(x.status === "cancelled") continue; if(x.official) OFFICIAL[x.gamePk] = x.official; if(x.snapshots) SNAPS[x.gamePk] = x.snapshots; } }catch(e){} }
   // 先抓先發投手成績與 FIP 常數，再畫預測卡
@@ -409,6 +415,13 @@ function compare(A, H, ap, hp){
 
 
 
+// 台灣時間「10/23（五）」／加時間「10/18（日）08:00」
+function twWD(d, withTime){
+  const t = new Date(new Date(d).getTime() + 8*3600e3), wd = "日一二三四五六"[t.getUTCDay()];
+  return `${t.getUTCMonth()+1}/${t.getUTCDate()}（${wd}）` + (withTime ? String(t.getUTCHours()).padStart(2,"0") + ":" + String(t.getUTCMinutes()).padStart(2,"0") : "");
+}
+function emptyCard(nextAt){ return `<div class="empty-card">${nextAt ? `今天沒有比賽・下一戰 ${twWD(nextAt, true)}` : "今天沒有比賽，下一戰時間待公布"}</div>`; }
+let PEXTRA = {post:false, tbd:[], nextAt:null};
 // 畫出預測卡片
 function renderPredict(games, isPast){
   let html = isPast ? "<p>目前沒有即將開打的比賽，改顯示最近比賽的賽前估算：</p>" : "";
@@ -461,7 +474,11 @@ function renderPredict(games, isPast){
       <div class="upd">最後更新：${tw(Date.now())}（台灣時間）</div>`;
     html += ccCard({lg:"mlb", focus: FC && g === vg[FC.i] ? FC.txt : "", ser, time:cardTime(g.gameDate, DG), tag: wait ? "等先發" : "先發已公布", A:ts(A.team), H:ts(H.team), conf:CONF[tc], tc, ap:apct, hp:hpct, favHome, reason, body});
   }
-  document.getElementById("predict").innerHTML = html || '<p class="note">MLB 目前休賽中</p>';
+  const X = PEXTRA;
+  if(!html.includes('class="pcard')) html = emptyCard(X.nextAt);
+  else if(X.post && !isPast) html += '<p class="po-note">下一戰在本戰結束後顯示</p>';
+  html += X.tbd.map(t => `<p class="tbd-note">${t}</p>`).join("");
+  document.getElementById("predict").innerHTML = html;
 }
 
 // 投手成績轉成中文一句話

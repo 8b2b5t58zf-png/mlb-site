@@ -145,7 +145,7 @@ async function nbaGames(){
   const res = res0.map(x => x || {events:[]});
   const evs = res.flatMap(r=>r.events||[]);
   const seen = new Set(), all = evs.filter(e => !seen.has(e.id) && seen.add(e.id));
-  let up = all.filter(e => e.status.type.state==="pre" && e.season.type===2);
+  let up = all.filter(e => e.status.type.state==="pre" && (e.season.type===2 || e.season.type===3));
   let note = ""; PRE_NOTE["nba-predict"] = "";
   if(!up.length){
     // 例行賽還沒開打：顯示開幕賽程
@@ -159,8 +159,14 @@ async function nbaGames(){
     all.concat(up).filter(e => e.season.type===3 && !e.status.type.completed).sort((a,b) => new Date(a.date) - new Date(b.date)).forEach(e => { if(!(sk(e) in fo)) fo[sk(e)] = e.id; });
     up = up.filter(e => e.season.type!==3 || fo[sk(e)] === e.id);
   }
+  // 對戰組合未定（TBD）的比賽：不出卡片，只顯示一行開打日期
+  const isTbd = e => e.competitions[0].competitors.some(c => !c.team || !c.team.id || +c.team.id <= 0 || c.team.abbreviation === "TBD" || /TBD/i.test(c.team.displayName||""));
+  const tbdE = up.filter(isTbd)[0]; up = up.filter(e => !isTbd(e));
+  const nPost = up.slice(0,8).some(e => e.season.type===3);
   up.sort((a,b) => new Date(a.date) - new Date(b.date));   // 依開賽時間排序
-  document.getElementById("nba-predict").innerHTML = note + ((DG => nFocusList(up.slice(0,8)).map(e => dayHdr(e.date, DG) + nbaCard(e, DG)).join(""))({last:null, cnt:dayCounts(up.slice(0,8).map(e => e.date))}) || nbaNoGames(all));
+  const nCards = (DG => nFocusList(up.slice(0,8)).map(e => dayHdr(e.date, DG) + nbaCard(e, DG)).join(""))({last:null, cnt:dayCounts(up.slice(0,8).map(e => e.date))});
+  const nNext = (all.filter(e => e.status.type.state === "pre" && !isTbd(e)).sort((a,b) => a.date.localeCompare(b.date))[0] || {}).date;
+  document.getElementById("nba-predict").innerHTML = note + (nCards || emptyCard(nNext)) + (nCards && nPost ? '<p class="po-note">下一戰在本戰結束後顯示</p>' : "") + (tbdE ? `<p class="tbd-note">季後賽下一輪 ${twWD(tbdE.date)}開打，對戰組合待前一輪結束後確定</p>` : "");
   const done = all.filter(e => e.status.type.completed).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,5);
   await nbaRecaps(done);
 }
