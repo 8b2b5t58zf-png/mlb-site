@@ -152,7 +152,7 @@ new MutationObserver(() => requestAnimationFrame(ccFit)).observe(document.docume
 function confGroups(recs, isVer, cuts, lg){   // cuts: [中下限, 高下限]（看好方勝率，整數 %，與卡片信心標籤相同）
   const done = recs.filter(x => x.status !== "cancelled" && x.official && isVer(x) && x.correct !== null && x.correct !== undefined);
   const half = done.filter(x => x.official.homeWinProb === 0.5).length;
-  const G = [["低", `未滿 ${cuts[0]}%`], ["中", `${cuts[0]}～未滿 ${cuts[1]}%`], ["高", `${cuts[1]}% 以上`]].map(([n, r]) => ({n, r, xs:[]}));
+  const G = [["低", `未滿 <span class="num">${cuts[0]}%</span>`], ["中", `<span class="num">${cuts[0]}</span>～未滿 <span class="num">${cuts[1]}%</span>`], ["高", `<span class="num">${cuts[1]}%</span> 以上`]].map(([n, r]) => ({n, r, xs:[]}));
   for(const x of done){ const hp = x.official.homeWinProb; if(hp === 0.5) continue;
     const p = Math.max(hp, 1-hp), q = Math.round(p*100); G[q >= cuts[1] ? 2 : q >= cuts[0] ? 1 : 0].xs.push({p, ok:!!x.correct}); }
   const rows = G.map(g => { const n = g.xs.length, k = g.xs.filter(x => x.ok).length;

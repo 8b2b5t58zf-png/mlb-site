@@ -325,7 +325,7 @@ body.view-about #mlb-main,body.view-about #nba-main{display:none}
 .cg{background:#151b23;border:1px solid #262e39;border-radius:8px;padding:10px 12px;margin:10px 0;font-size:13px;color:#e6edf3}
 .cg-h{font-size:12px;color:#8b949e;margin-bottom:4px}
 .cg-row{display:flex;justify-content:space-between;align-items:baseline;gap:8px;padding:6px 0;border-top:1px solid #262e39}
-.cg-row:first-of-type{border-top:0}
+.cg-h+.cg-row{border-top:0}
 .cg-l{color:#e6edf3;white-space:nowrap}
 .cg-r{display:block;font-size:12px;color:#8b949e}
 .cg-v{text-align:right;color:#8b949e}
