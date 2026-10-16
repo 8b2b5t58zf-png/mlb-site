@@ -239,3 +239,15 @@ body.tab-predict header{padding-bottom:10px}
 .pcard .cmpt th,.pcard .cmpt td,article .ls th,article .ls td,article table th,article table td{border-bottom:1px solid #262e39}
 .pcard .cmpt tr:last-child td,article table tr:last-child td{border-bottom:0}
 .refd summary::after,.refd summary::before{content:none!important;display:none!important} .refd summary{gap:4px}
+/* 先發投手對比（spec-pitchers） */
+.pitch{background:#1c232d;border-radius:8px;padding:12px}
+.pc-lab{font-size:12px;color:#8b949e;text-align:center;margin-bottom:6px}
+.pc-row{display:flex;align-items:stretch}
+.pc-col{flex:1 1 50%;min-width:0;padding:0 8px} .pc-col:first-child{padding-left:0} .pc-col:last-child{padding-right:0;text-align:right}
+.pc-div{flex:0 0 1px;background:#262e39}
+.pc-n{font-size:15px;font-weight:700;color:#e6edf3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pc-s{font-size:12px;color:#8b949e;margin-top:2px;line-height:1.5}
+.pc-s .num{color:#8b949e}
+.pc-small{color:#8b949e}
+.pc-tbd{font-size:13px;color:#8b949e}
+.pc-chg{font-size:12px;color:#d4af37;margin-top:4px;line-height:1.4}

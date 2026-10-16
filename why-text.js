@@ -19,7 +19,14 @@ const WHY_TXT = {
   sp: "{p} 本季 ERA {era}、WHIP {whip}，數據優於{o}的 {oera}／{owhip}",
   spMixed: "{a}與{h}互有優劣",
   spClose: "{a}與{h}數據相近",
-  spWait: "先發投手未公布，未調整",
+  spWait: "先發未公布，未調整",
+  // 先發投手對比（style-guide 第二十一節）
+  pLabel: "先發",
+  pLine: "ERA {era}・WHIP {whip}・{ip} 局",
+  pSmall: "（樣本少）",
+  pTbd: "尚未公布",
+  pChange: "先發異動：原定{p}（勝率已重算）",
+  pBefore: "（異動前 {t} {p}%）",
   total: "合計 → {t} {p}%（約 {r}%）",
   // 參考數據（只寫事實，最多 4 列，固定順序）
   refBtn: "參考數據",

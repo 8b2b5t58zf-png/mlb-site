@@ -201,7 +201,7 @@ async function loadGames(){
   const done = games.filter(g=>g.status.abstractGameState==="Final").reverse().slice(0,5); // 最近 5 場已完賽
   const next = games.filter(g=>g.status.abstractGameState==="Preview").slice(0,4);         // 接下來 4 場
   const show = next.length ? next : done;
-  if(location.protocol !== "file:"){ try{ const r = await fetch("data/predictions.json?t="+Date.now()); if(r.ok) for(const x of (await r.json()).records) if(x.official) OFFICIAL[x.gamePk] = x.official; }catch(e){} }
+  if(location.protocol !== "file:"){ try{ const r = await fetch("data/predictions.json?t="+Date.now()); if(r.ok) for(const x of (await r.json()).records){ if(x.official) OFFICIAL[x.gamePk] = x.official; if(x.snapshots) SNAPS[x.gamePk] = x.snapshots; } }catch(e){} }
   // 先抓先發投手成績與 FIP 常數，再畫預測卡
   await Promise.all([loadFIPC(), loadTeamHit(), ...show.map(g=>loadH2H(g.teams.away.team.id, g.teams.home.team.id)), loadPitchers(show.flatMap(g=>[g.teams.home.probablePitcher, g.teams.away.probablePitcher]).filter(Boolean).map(p=>p.id))]);
   renderPredict(show, !next.length);
@@ -253,7 +253,8 @@ function bridge(m, s, fav){
 
 // 「為什麼這樣預測」：結論句＋三條（戰績、主場、先發），數字與修正過程圖相同
 let SS_NOW = null, GTYPE_NOW = null;
-const OFFICIAL = {};   // gamePk → 正式預測紀錄（判斷是否為舊版模型）
+const OFFICIAL = {}, SNAPS = {};   // SNAPS：gamePk → 排程快照（含當時先發）
+let GPK_NOW = null, SPCHG = null;   // gamePk → 正式預測紀錄（判斷是否為舊版模型）
 // 數字小標籤：較佳一方加粗（客隊數字在前）
 function chip(label, av, hv, better){   // better: "a" / "h" / ""
   if(av==null || hv==null || av==="-" || hv==="-") return "";
@@ -296,6 +297,8 @@ function whyBlock(A, H, m, s, ap, hp, aP, hP, fav, fp){
     else { const hA = m.d3 > 0, [P, S, O, OS] = hA ? [hP, hp, aP, ap] : [aP, ap, hP, hp];
       t3 = wf("sp", {p:pn(P), era:S.era, whip:S.whip, o:pn(O), oera:OS.era, owhip:OS.whip}, ["era","whip","oera","owhip"]); }
   }
+  if(m.used && SPCHG && SPCHG.p0 != null){ const hp0 = SPCHG.p0*100, nowH = m.F;
+    if(Math.abs(hp0 - nowH) >= 1){ const H0 = hp0 >= 50; t3 += wf("pBefore", {t:ts(H0?H:A), p:Math.round(H0?hp0:100-hp0)}, ["p"]); } }
   const html = whyBlock2([[s.d1, t1, "rec"], [s.d2, t2, "home"], [m.used ? s.d3 : 0, t3, "sp"]], ts(fav), fp, s.F);
   // 參考數據（事實，不計入勝率）
   const spl = (t, type) => t && t.records && (t.records.splitRecords||[]).find(x=>x.type===type);
@@ -307,6 +310,28 @@ function whyBlock(A, H, m, s, ap, hp, aP, hP, fav, fp){
     pg(ta) && pg(th) ? wf("diff", {a:ts(A), ad:pg(ta), h:ts(H), hd:pg(th)}, ["ad","hd"]) : "",
   ], "mlb");
   return html + ref;
+}
+// 先發異動：和排程較早的快照比，同一邊先發換人就回傳 {away/home:原投手名, p0:異動前主隊勝率}
+function spChange(pk, aP, hP){
+  const sn = SNAPS[pk]; if(!sn || !sn.length) return null;
+  const out = {};
+  for(const [side, cur] of [["away", aP], ["home", hP]]){
+    if(!cur) continue;
+    for(let i = sn.length-1; i >= 0; i--){ const o = sn[i][side+"Starter"];
+      if(o && o.id !== cur.id){ out[side] = pn({id:o.id, fullName:o.name}); if(out.p0 == null) out.p0 = sn[i].homeWinProb; break; } }
+  }
+  return out.away || out.home ? out : null;
+}
+// 先發投手對比列（勝率條下方；左客右主，不分好壞色）
+function pitchRow(aP, hP, ap, hp, chg){
+  const ipTxt = v => { const w = Math.floor(v + 1e-9), o = Math.round((v - w)*3); return `${w}.${o}`; };
+  const col = (P, S, side) => {
+    if(!P) return `<div class="pc-col"><div class="pc-tbd">${WHY_TXT.pTbd}</div></div>`;
+    const line = S && S.era && S.era !== "-" ? wf("pLine", {era:S.era, whip:S.whip, ip:ipTxt(S.ip)}, ["era","whip","ip"]) + (S.ip < 40 ? `<span class="pc-small">${WHY_TXT.pSmall}</span>` : "") : "";
+    const ch = chg && chg[side] ? `<div class="pc-chg">${wf("pChange", {p:chg[side]})}</div>` : "";
+    return `<div class="pc-col"><div class="pc-n">${pn(P)}</div>${line ? `<div class="pc-s">${line}</div>` : ""}${ch}</div>`;
+  };
+  return `<div class="pitch"><div class="pc-lab">${WHY_TXT.pLabel}</div><div class="pc-row">${col(aP, ap, "away")}<div class="pc-div"></div>${col(hP, hp, "home")}</div></div>`;
 }
 // 爆冷提醒（標籤旁小字；只用劣勢方勝率與先發 ERA／WHIP）
 function upset(A, H, ap, hp, aP, hP, fav, fp){
@@ -356,7 +381,8 @@ function renderPredict(games, isPast){
     const favHome = hpct >= apct, fp = Math.max(hpct, apct), fav = favHome ? H.team : A.team;
     const [tc, tl] = tier(fp/100);
     const st = favSteps(m, favHome);
-    SS_NOW = g.seriesStatus; GTYPE_NOW = g.gameType;
+    SS_NOW = g.seriesStatus; GTYPE_NOW = g.gameType; GPK_NOW = g.gamePk;
+    SPCHG = spChange(g.gamePk, aP, hP);
     const off = OFFICIAL[g.gamePk];
     const v1note = off && off.model && !off.model.startsWith(MODEL_V) ? `<div class="vnote">此場正式紀錄為舊版模型 ${off.model.slice(0,2)}</div>` : "";
     const w = g.weather && g.weather.condition ? `參考資訊：天氣 ${g.weather.condition}${g.weather.temp?`，氣溫 ${Math.round((g.weather.temp-32)*5/9)}°C`:""}（不列入勝率計算）` : "";
@@ -368,6 +394,7 @@ function renderPredict(games, isPast){
       <div class="pbar-lab"><span>客 ${ts(A.team)} <span class="num">${apct}%</span></span><span>主 ${ts(H.team)} <span class="num">${hpct}%</span></span></div>
       <div class="pbar" role="img" aria-label="${tn(A.team)} ${apct}%，${tn(H.team)} ${hpct}%">
         <div class="${favHome?"oth":"fav"}" style="width:${apct}%"></div><div class="${favHome?"fav":"oth"}" style="width:${hpct}%"></div></div>
+      ${pitchRow(aP, hP, ap, hp, SPCHG)}
       ${v1note}${whyBlock(A.team, H.team, m, st, ap, hp, aP, hP, fav, fp)}
       <details class="algo"><summary>看算法</summary>${bridge(m, st, fav)}
         <p class="desc">戰績：兩隊實力分數（勝率與畢氏期望勝率各半）用 Log5 比較，再依回測縮回 50% 附近；主場與先發投手依 2026 例行賽回測校正。三格差值依序計算，加總等於最終勝率。模型 ${MODEL_V}。</p></details>
