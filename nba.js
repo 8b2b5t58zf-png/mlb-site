@@ -80,7 +80,7 @@ const nEarly = (dt=new Date()) => { const m = dt.getMonth(), d = dt.getDate(); r
 const nTier = (p, early) => p >= 70 ? (early ? ["lean","看好"] : ["strong","明顯看好"]) : p >= 60 ? ["lean","略占上風"] : ["toss","接近五五波"];
 const nWord = (p, early) => p >= 70 ? (early ? "看好" : "明顯看好") : p >= 60 ? "略占上風" : "勢均力敵";
 let NALL = [];   // 近期所有賽程（判斷背靠背：前 36 小時內同隊有比賽）
-function nbaCard(ev){
+function nbaCard(ev, DG){
   const c = ev.competitions[0], H = c.competitors.find(x=>x.homeAway==="home"), A = c.competitors.find(x=>x.homeAway==="away");
   const th = NT[H.team.id] || {g:0,w:0,l:0}, ta = NT[A.team.id] || {g:0,w:0,l:0};
   const m = nModel(H.team.id, A.team.id, c.neutralSite), hp = Math.round(m.F), ap = 100-hp;
@@ -123,7 +123,7 @@ function nbaCard(ev){
     ${early && fp >= 70 ? '<div class="early-note">開季數據少，保守看待</div>' : ""}
     <div class="tier-row"><span class="tier ${tc}">${tl}</span>${fp!==50?`<span class="upset">${nts(oth)}仍有 ${100-fp}% 勝率</span>`:""}</div>
     ${NST_AT && Date.now() - NST_AT > NFRESH ? `<div class="upd">依據 ${twT(NST_AT)}（台灣時間）時的戰績</div>` : `<div class="upd">戰績更新：${twT(NST_AT || Date.now())}（台灣時間）</div>`}`;
-  return ccCard({lg:"nba", ser:"", time:hhmm(ev.date), tag: small ? "樣本不足" : "", A:nts(A.team), H:nts(H.team), conf:CONF[tc], tc, ap, hp, favHome, reason, body});
+  return ccCard({lg:"nba", ser:"", time:cardTime(ev.date, DG), tag: small ? "樣本不足" : "", A:nts(A.team), H:nts(H.team), conf:CONF[tc], tc, ap, hp, favHome, reason, body});
 }
 
 async function nbaGames(){
@@ -135,15 +135,15 @@ async function nbaGames(){
   const evs = res.flatMap(r=>r.events||[]);
   const seen = new Set(), all = evs.filter(e => !seen.has(e.id) && seen.add(e.id));
   let up = all.filter(e => e.status.type.state==="pre" && e.season.type===2);
-  let note = "";
+  let note = ""; PRE_NOTE["nba-predict"] = "";
   if(!up.length){
     // 例行賽還沒開打：顯示開幕賽程
     const o = (await Promise.all(["20261020","20261021","20261022"].map(sbd))).map(x => x || {events:[]});
     up = o.flatMap(r=>r.events||[]).filter(e => e.season.type===2 && e.status.type.state==="pre");
-    note = '<p class="note">例行賽 10/21（台灣時間）開打。以下為開幕賽程，兩隊都還沒有本季戰績，預測目前依上一季實力加主場優勢，開打後會逐步改看本季戰績。</p>';
+    PRE_NOTE["nba-predict"] = "例行賽 10/21 開打";
   }
   NALL = all.concat(up);
-  document.getElementById("nba-predict").innerHTML = note + ((DG => up.slice(0,8).map(e => dayHdr(e.date, DG) + nbaCard(e)).join(""))({last:null}) || nbaNoGames(all));
+  document.getElementById("nba-predict").innerHTML = note + ((DG => up.slice(0,8).map(e => dayHdr(e.date, DG) + nbaCard(e, DG)).join(""))({last:null, cnt:dayCounts(up.slice(0,8).map(e => e.date))}) || nbaNoGames(all));
   const done = all.filter(e => e.status.type.completed).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,5);
   await nbaRecaps(done);
 }

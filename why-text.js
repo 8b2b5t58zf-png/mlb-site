@@ -85,6 +85,7 @@ const WD = "日一二三四五六";
 function dayHdr(d, st){
   const t = new Date(new Date(d).getTime() + 8*3600e3), k = t.toISOString().slice(0,10);
   if(st.last === k) return ""; st.last = k;
+  if(st.cnt && st.cnt[k] === 1) return "";
   return `<div class="dgrp">${t.getUTCMonth()+1}/${t.getUTCDate()}（${WD[t.getUTCDay()]}）・台灣時間</div>`;
 }
 
@@ -106,11 +107,10 @@ function ccCard(o){   // spec-compact v1
   const id = `cc-${++CC_N}`, cf = `<span class="tier ${o.tc} cc-conf">信心 ${o.conf}</span>`;
   return `<div class="pcard cc">
   <button type="button" class="cc-head" aria-expanded="false" aria-controls="${id}" data-lg="${o.lg}">
-    <span class="cc-r1"><span class="cc-ser">${o.ser||""}</span><span class="cc-rt">${o.tag?`<span class="cc-tag">${o.tag}</span>`:""}<span class="cc-c1">${cf}</span></span></span>
-    <span class="cc-r2"><span class="cc-tm">${o.A}</span><span class="cc-at">@</span><span class="cc-tm r">${o.H}</span><span class="cc-c2">${cf}</span></span>
+    <span class="cc-r1"><span class="cc-ser">${o.ser||""}</span><span class="cc-rt"><span class="cc-time num">${o.time}</span>${o.tag?`<span class="cc-tag">${o.tag}</span>`:""}<span class="cc-c1">${cf}</span></span></span>
+    <span class="cc-r2"><span class="cc-tm">${o.A}</span><span class="cc-c2">${cf}</span><span class="cc-tm r">${o.H}</span></span>
     <span class="cc-r3"><span class="num cc-p">${o.ap}%</span><span class="cc-bar"><span class="${o.favHome?"oth":"fav"}" style="width:${o.ap}%"></span><span class="${o.favHome?"fav":"oth"}" style="width:${o.hp}%"></span></span><span class="num cc-p r">${o.hp}%</span></span>
-    ${o.reason?`<span class="cc-why">${o.reason}</span>`:""}
-    <span class="cc-r5"><span class="cc-time"><span class="num">${o.time}</span> 台灣時間</span><span class="cc-more">看分析 ›</span></span>
+    <span class="cc-r4"><span class="cc-why">${o.reason||""}</span><span class="cc-more">看分析 ›</span></span>
   </button>
   <div class="cc-body" id="${id}" inert><div class="cc-in">${o.body}</div></div></div>`;
 }
@@ -136,3 +136,14 @@ document.addEventListener("click", e => {
   const d = document.getElementById(b.getAttribute("aria-controls")); d.open = !d.open;
   b.setAttribute("aria-expanded", d.open); b.textContent = d.open ? "看算法 ▴" : "看算法 ▾";
 });
+
+// 某天只有一場：不放日期標題，日期改寫在卡片第一行
+const twKey = d => new Date(new Date(d).getTime() + 8*3600e3).toISOString().slice(0,10);
+function dayCounts(ds){ const m = {}; for(const d of ds){ const k = twKey(d); m[k] = (m[k]||0) + 1; } return m; }
+function cardTime(d, st){ const t = new Date(new Date(d).getTime() + 8*3600e3);
+  return st && st.cnt && st.cnt[twKey(d)] === 1 ? `${t.getUTCMonth()+1}/${t.getUTCDate()}（${WD[t.getUTCDay()]}）${hhmm(d)}` : hhmm(d); }
+
+// 第一行放不下時，信心標籤移到第二行中間
+function ccFit(){ document.querySelectorAll(".cc-head").forEach(h => { if(!h.offsetParent) return; const r = h.querySelector(".cc-r1"); h.classList.remove("tight"); const t = r.scrollWidth > r.clientWidth + 1; h.classList.toggle("tight", t); }); }
+addEventListener("resize", ccFit);
+new MutationObserver(() => requestAnimationFrame(ccFit)).observe(document.documentElement, {childList:true, subtree:true});

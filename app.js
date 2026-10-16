@@ -22,6 +22,7 @@ const DIV = {201:"美聯東區",202:"美聯中區",200:"美聯西區",204:"國�
 // 小工具：抓取網址並轉成 JSON 資料
 // 抓資料，成功時存一份到瀏覽器（localStorage）；失敗時改用上次存的舊資料
 let usedCache = null;
+const PRE_NOTE = {};   // 區塊狀態列前綴（NBA 開季前：「例行賽 10/21 開打」）
 let dataAt = null;      // 排程存檔的資料時間（正常狀況，只顯示一行灰字）   // 若本區塊用了舊資料，記下那份資料的時間
 async function getJSON(url){
   const key = "mlbcache:" + url.replace(/startDate=[^&]*&endDate=[^&]*/,"sched"); // 賽程網址每天不同，統一一個鑰匙
@@ -54,7 +55,9 @@ async function runSection(ids, fn){
   try{
     await fn();
     if(usedCache) for(const id of ids) document.getElementById("st-"+id).innerHTML = `<div class="stale">暫時抓不到最新資料，目前顯示 ${twMD(usedCache)} 的資料</div>`;
-    else if(dataAt) for(const id of ids) document.getElementById("st-"+id).innerHTML = `<div class="dtime">資料時間：${twMD(dataAt)}</div>`;
+    else for(const id of ids){ const pre = PRE_NOTE[id];
+      if(pre != null) document.getElementById("st-"+id).innerHTML = `<div class="dtime">${[pre, dataAt ? `資料時間 ${twMD(dataAt)}` : ""].filter(Boolean).join("・")}</div>`;
+      else if(dataAt) document.getElementById("st-"+id).innerHTML = `<div class="dtime">資料時間：${twMD(dataAt)}</div>`; }
     setTimeout(markNav, 0);
     return true;
   }catch(e){
@@ -405,7 +408,7 @@ function compare(A, H, ap, hp){
 // 畫出預測卡片
 function renderPredict(games, isPast){
   let html = isPast ? "<p>目前沒有即將開打的比賽，改顯示最近比賽的賽前估算：</p>" : "";
-  const DG = {last:null};
+  const DG = {last:null, cnt:dayCounts(games.filter(g => TEAM[g.teams.home.team.id] && TEAM[g.teams.away.team.id]).map(g => g.gameDate))};
   for(const g of games){
     const H = g.teams.home, A = g.teams.away;
     if(!TEAM[H.team.id] || !TEAM[A.team.id]) continue;
@@ -437,7 +440,7 @@ function renderPredict(games, isPast){
       <details class="algo"><summary>兩隊數據對比</summary>${compare(A.team, H.team, ap, hp)}</details>
       ${w ? `<div class="ref">${w}</div>` : ""}
       <div class="upd">最後更新：${tw(Date.now())}（台灣時間）</div>`;
-    html += ccCard({lg:"mlb", ser, time:hhmm(g.gameDate), tag: wait ? "等先發" : "先發已公布", A:ts(A.team), H:ts(H.team), conf:CONF[tc], tc, ap:apct, hp:hpct, favHome, reason, body});
+    html += ccCard({lg:"mlb", ser, time:cardTime(g.gameDate, DG), tag: wait ? "等先發" : "先發已公布", A:ts(A.team), H:ts(H.team), conf:CONF[tc], tc, ap:apct, hp:hpct, favHome, reason, body});
   }
   document.getElementById("predict").innerHTML = html || '<p class="note">MLB 目前休賽中</p>';
 }
@@ -637,7 +640,7 @@ function gcCount(){
     if(window.goatcounter && window.goatcounter.count) window.goatcounter.count({path:key, title:`${LG_NOW.toUpperCase()} ${name}`, event:false});
   }catch(e){}
 }
-function go(lg, tab, push){
+function go(lg, tab, push){ setTimeout(() => typeof ccFit === "function" && ccFit(), 0);
   if(tab!=="about" && !TABS.includes(tab)) tab = "predict";
   TAB_NOW = tab;
   if(lg!==LG_NOW || !NAV_READY){ NAV_READY = true; setLeague(lg); } else { try{ localStorage.setItem("aisl:league", lg); }catch(e){} }
