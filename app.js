@@ -212,7 +212,7 @@ async function loadGames(){
 // 今日先發總覽（台灣日期）：標題下 12px 灰字；當天無比賽不顯示
 function daySummary(games){
   const day = d => new Date(new Date(d).getTime() + 8*3600e3).toISOString().slice(0,10);
-  const today = day(Date.now()), g = games.filter(x => day(x.gameDate) === today);
+  const today = day(Date.now()), g = games.filter(x => day(x.gameDate) === today && x.status.abstractGameState !== "Final");   // 只算今天還沒打完的
   let el = document.getElementById("mlb-day");
   if(!el){ el = document.createElement("p"); el.id = "mlb-day"; el.className = "day-sum"; const h = document.querySelector("#sec-predict h2"); h.after(el); }
   if(!g.length){ el.hidden = true; return; }
