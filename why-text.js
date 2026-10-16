@@ -156,21 +156,49 @@ function confGroups(recs, isVer, cuts, lg){   // cuts: [中下限, 高下限]（
   for(const x of done){ const hp = x.official.homeWinProb; if(hp === 0.5) continue;
     const p = Math.max(hp, 1-hp), q = Math.round(p*100); G[q >= cuts[1] ? 2 : q >= cuts[0] ? 1 : 0].xs.push({p, ok:!!x.correct}); }
   const rows = G.map(g => { const n = g.xs.length, k = g.xs.filter(x => x.ok).length;
-    const v = n >= 50 ? `平均預測 <span class="num">${Math.round(g.xs.reduce((a,x)=>a+x.p,0)/n*100)}%</span>｜實際 <span class="num">${Math.round(k/n*100)}%</span>（<span class="num">${k}/${n}</span> 場）` : `累積中（<span class="num">${n}</span> 場）`;
+    const v = n >= 50 ? `<span class="cg-v1">平均預測 <span class="num">${Math.round(g.xs.reduce((a,x)=>a+x.p,0)/n*100)}%</span></span><span class="cg-v2">實際 <span class="num">${Math.round(k/n*100)}%</span>（<span class="num">${k}/${n}</span> 場）</span>` : `累積中（<span class="num">${n}</span> 場）`;
     return `<div class="cg-row"><span class="cg-l">信心 ${g.n}<span class="cg-r">${g.r}</span></span><span class="cg-v">${v}</span></div>`; }).join("");
   return `<div class="cg" id="cg-${lg}"><div class="cg-h">依信心分組（每組滿 <span class="num">50</span> 場才顯示命中率）</div>${rows}${half ? `<div class="cg-n">勝率剛好 <span class="num">50%</span> 的 <span class="num">${half}</span> 場不分組、不計命中率</div>` : ""}</div>`;
 }
+
+// 系列賽晉級機率（移植 analysis/series_prob.py，列出所有剩餘勝負組合的準確值，不用模擬）
+// a＝下一場主隊；pNext＝卡片顯示的下一場 a 勝率；paH/paA＝a 在主場／客場的單場勝率（先發未公布，用戰績估算）；homePat[i]＝第 i+1 戰是否在 a 主場
+function seriesProb(wa, wb, n, pNext, paH, paA, homePat){
+  const need = Math.floor(n/2) + 1, memo = {};
+  const f = (a, b) => { if(a >= need) return 1; if(b >= need) return 0; const k = a+","+b; if(k in memo) return memo[k];
+    const p = (a === wa && b === wb) ? pNext : (homePat[a+b] ? paH : paA);
+    return memo[k] = p*f(a+1, b) + (1-p)*f(a, b+1); };
+  return f(wa, wb);
+}
+// 主場表：MLB 七戰 2-3-2、五戰 2-2-1、三戰全在高種子；NBA 七戰 2-2-1-1-1（第 1、2、5、7 戰在高種子）
+function homePattern(lg, n, aHigh){
+  const hs = lg === "mlb" ? {7:[1,1,0,0,0,1,1], 5:[1,1,0,0,1], 3:[1,1,1]}[n] : {7:[1,1,0,0,1,0,1], 5:[1,1,0,0,1]}[n];
+  return hs ? hs.map(x => !!x === aHigh) : null;
+}
+const serDisp = pa => { const x = Math.min(99, Math.max(1, Math.round(pa*100))); return [x, 100-x]; };
+// o: {lg, ab(系列簡稱), n(幾戰制), gameNo(下一場是第幾戰), wH, wA(目前主／客隊勝場), pNext(下一場主隊勝率 0-1), pH, pA(主隊在主場／客場勝率), H, A(隊名)}
+function seriesBar(o){
+  const need = Math.floor(o.n/2) + 1;
+  if(!o.n || o.n < 3 || o.wH >= need || o.wA >= need || !o.gameNo) return "";
+  const std = homePattern(o.lg, o.n, true); if(!std) return "";
+  const pat = homePattern(o.lg, o.n, !!std[o.gameNo-1]);   // 下一場主隊若在「高種子主場」那一戰當主隊，就是高種子
+  const ph = seriesProb(o.wH, o.wA, o.n, o.pNext, o.pH, o.pA, pat), [h, a] = serDisp(ph);
+  const st = o.wH === o.wA ? `${o.wH}:${o.wA} 平手` : o.wH > o.wA ? `${o.H} ${o.wH}:${o.wA} 領先` : `${o.A} ${o.wA}:${o.wH} 領先`;
+  const hi = h >= a;
+  return `<div class="sbar"><div class="sb-r1"><span>${o.ab}・${st}</span><span>晉級機率</span></div><div class="sb-r2"><span class="sb-t">${o.A} <span class="num">${a}%</span></span><span class="sb-b"><span class="${hi?"o":"g"}" style="width:${a}%"></span><span class="${hi?"g":"o"}" style="width:${h}%"></span></span><span class="sb-t r">${o.H} <span class="num">${h}%</span></span></div></div>`;
+}
+const SER_ALGO = '<p class="desc">晉級機率：用每場單場勝率與目前系列比數計算，先發未公布的場次先用戰績估算，依目前單場模型推算，非投注建議</p>';
 
 // 歷史回測卡（§26）：數字一律讀 data/backtest.json，和正式紀錄分開、不合併
 let BT_P = null;
 function btCard(lg, key, sub, cuts, extra){
   const id = "bt-" + lg;
-  (BT_P ||= fetch("data/backtest.json?v=202610162600").then(r => r.ok ? r.json() : null).catch(() => null)).then(d => {
+  (BT_P ||= fetch("data/backtest.json?v=202610162610").then(r => r.ok ? r.json() : null).catch(() => null)).then(d => {
     const el = document.getElementById(id), b = d && d[key]; if(!el || !b){ if(el) el.remove(); return; }
     const N = v => `<span class="num">${v}</span>`;
     const R = {低:`未滿 ${N(cuts[0]+"%")}`, 中:`${N(cuts[0])}～未滿 ${N(cuts[1]+"%")}`, 高:`${N(cuts[1]+"%")} 以上`};
     const rows = ["低","中","高"].filter(t => b.tiers[t]).map(t => { const g = b.tiers[t];
-      return `<div class="cg-row"><span class="cg-l">信心 ${t}<span class="cg-r">${R[t]}</span></span><span class="cg-v">平均預測 ${N(g.avg_pred_pct+"%")}｜實際 ${N(g.hit_pct+"%")}（${N(g.k+"/"+g.n)} 場）</span></div>`; }).join("");
+      return `<div class="cg-row"><span class="cg-l">信心 ${t}<span class="cg-r">${R[t]}</span></span><span class="cg-v"><span class="cg-v1">平均預測 ${N(g.avg_pred_pct+"%")}</span><span class="cg-v2">實際 ${N(g.hit_pct+"%")}（${N(g.k+"/"+g.n)} 場）</span></span></div>`; }).join("");
     el.innerHTML = `<div class="cg-h bt-t">歷史回測（模型事後驗算）</div><div class="cg-h">${sub}</div><div class="cg-n bt-note">這是把模型套在過去比賽的結果，不是當時的預測，非投注建議</div>${extra ? `<div class="cg-n bt-note">${extra}</div>` : ""}`
       + (b.n ? `<div class="bt-all">整體命中 ${N(b.hit_pct+"%")}（${N(b.k+"/"+b.n)} 場）</div>` : "") + rows
       + (b.tie50 ? `<div class="cg-n">勝率剛好 ${N("50%")} 的 ${N(b.tie50)} 場不分組、不計命中率</div>` : "");

@@ -458,6 +458,10 @@ function renderPredict(games, isPast){
     const v1note = off && off.model && !off.model.startsWith(MODEL_V) ? `<div class="vnote">此場正式紀錄為舊版模型 ${off.model.slice(0,2)}</div>` : "";
     const w = g.weather && g.weather.condition ? `參考資訊：天氣 ${g.weather.condition}${g.weather.temp?`，氣溫 ${Math.round((g.weather.temp-32)*5/9)}°C`:""}（不列入勝率計算）` : "";
     const wait = !aP || !hP;
+    const ss0 = g.seriesStatus, post = ["F","D","L","W"].includes(g.gameType) && ss0 && !ss0.isOver;
+    const wH0 = !ss0 ? 0 : ss0.wins === ss0.losses ? ss0.wins : (ss0.winningTeam && ss0.winningTeam.id === H.team.id ? ss0.wins : ss0.losses), wA0 = ss0 ? ss0.wins + ss0.losses - wH0 : 0;
+    const sb = post ? seriesBar({lg:"mlb", ab:SER_AB[ss0.description] || sz(ss0.description), n:g.gamesInSeries || ss0.totalGames, gameNo:g.seriesGameNumber, wH:wH0, wA:wA0,
+      pNext:hpct/100, pH:modelV2(H.team.id, A.team.id).final, pA:1 - modelV2(A.team.id, H.team.id).final, H:ts(H.team), A:ts(A.team)}) : "";
     const ser = serTag(g).replace(/^<div class="ser-row">|<\/div>$/g,"");
     const reason = mainReason([
       {k:"戰績", t:ts(m.d1>=0?H.team:A.team), v:m.d1, sfx:"戰績較佳"},
@@ -468,11 +472,11 @@ function renderPredict(games, isPast){
       <div class="tier-row"><span class="tier ${tc}">${tl}</span><span class="upset">${upset(A.team, H.team, ap, hp, aP, hP, fav, fp)}</span></div>
       ${serShort(g.seriesStatus) ? `<div class="meta">${serShort(g.seriesStatus)}</div>` : ""}
       <details class="algo"><summary>看算法</summary>${bridge(m, st, fav)}
-        <p class="desc">戰績：兩隊實力分數（勝率與畢氏期望勝率各半）用 Log5 比較，再依回測縮回 50% 附近；主場與先發投手依 2026 例行賽回測校正。三格差值依序計算，加總等於最終勝率。模型 ${MODEL_V}。</p></details>
+        <p class="desc">戰績：兩隊實力分數（勝率與畢氏期望勝率各半）用 Log5 比較，再依回測縮回 50% 附近；主場與先發投手依 2026 例行賽回測校正。三格差值依序計算，加總等於最終勝率。模型 ${MODEL_V}。</p>${sb ? SER_ALGO : ""}</details>
       <details class="algo"><summary>兩隊數據對比</summary>${compare(A.team, H.team, ap, hp)}</details>
       ${w ? `<div class="ref">${w}</div>` : ""}
       <div class="upd">最後更新：${tw(Date.now())}（台灣時間）</div>`;
-    html += ccCard({lg:"mlb", focus: FC && g === vg[FC.i] ? FC.txt : "", ser, time:cardTime(g.gameDate, DG), tag: wait ? "等先發" : "先發已公布", A:ts(A.team), H:ts(H.team), conf:CONF[tc], tc, ap:apct, hp:hpct, favHome, reason, body});
+    html += sb + ccCard({lg:"mlb", focus: FC && g === vg[FC.i] ? FC.txt : "", ser, time:cardTime(g.gameDate, DG), tag: wait ? "等先發" : "先發已公布", A:ts(A.team), H:ts(H.team), conf:CONF[tc], tc, ap:apct, hp:hpct, favHome, reason, body});
   }
   const X = PEXTRA;
   if(!html.includes('class="pcard')) html = emptyCard(X.nextAt);

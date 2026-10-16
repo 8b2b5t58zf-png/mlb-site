@@ -130,11 +130,14 @@ function nbaCard(ev, DG){
       {k:"主場", t:nts(H.team), v:c.neutralSite?null:m.d2, sfx:"主場優勢"}]
     : [{k:"戰績", t:tm(m.d1), v:m.d1, sfx:"戰績較佳"},
       {k:"主場", t:nts(H.team), v:c.neutralSite?null:m.d2, sfx:"主場優勢"}], favHome, false, fp);
-  const body = `${why}${ref}
+  const se = c.series, sH = se && se.competitors && se.competitors.find(x => x.id === H.team.id), sA = se && se.competitors && se.competitors.find(x => x.id === A.team.id);
+  const sb = ev.season.type === 3 && se && !se.completed && sH && sA ? seriesBar({lg:"nba", ab: se.title || se.description || "季後賽", n: se.totalCompetitions, gameNo: sH.wins + sA.wins + 1, wH: sH.wins, wA: sA.wins,
+    pNext: hp/100, pH: nModel(H.team.id, A.team.id).F/100, pA: 1 - nModel(A.team.id, H.team.id).F/100, H: nts(H.team), A: nts(A.team)}) : "";
+  const body = `${why}${ref}${sb ? SER_ALGO : ""}
     ${early && fp >= 70 ? '<div class="early-note">開季數據少，保守看待</div>' : ""}
     <div class="tier-row"><span class="tier ${tc}">${tl}</span>${fp!==50?`<span class="upset">${nts(oth)}仍有 ${100-fp}% 勝率</span>`:""}</div>
     ${NST_AT && Date.now() - NST_AT > NFRESH ? `<div class="upd">依據 ${twT(NST_AT)}（台灣時間）時的戰績</div>` : `<div class="upd">戰績更新：${twT(NST_AT || Date.now())}（台灣時間）</div>`}`;
-  return ccCard({lg:"nba", focus: NFOCUS && NFOCUS.id === ev.id ? NFOCUS.txt : "", ser:"", time:cardTime(ev.date, DG), tag: small ? "樣本不足" : "", A:nts(A.team), H:nts(H.team), conf:CONF[tc], tc, ap, hp, favHome, reason, body});
+  return sb + ccCard({lg:"nba", focus: NFOCUS && NFOCUS.id === ev.id ? NFOCUS.txt : "", ser:"", time:cardTime(ev.date, DG), tag: small ? "樣本不足" : "", A:nts(A.team), H:nts(H.team), conf:CONF[tc], tc, ap, hp, favHome, reason, body});
 }
 
 async function nbaGames(){
