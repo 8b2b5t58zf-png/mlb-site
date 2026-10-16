@@ -214,7 +214,7 @@ function daySummary(games){
   const day = d => new Date(new Date(d).getTime() + 8*3600e3).toISOString().slice(0,10);
   games = games.filter(x => TEAM[x.teams.home.team.id] && TEAM[x.teams.away.team.id]);   // 與卡片同一份
   let el = document.getElementById("mlb-day");
-  if(!el){ el = document.createElement("p"); el.id = "mlb-day"; el.className = "day-sum"; document.querySelector("#sec-predict h2").after(el); }
+  if(!el){ el = document.createElement("p"); el.id = "mlb-day"; el.className = "day-sum"; (document.getElementById("mlb-acc")||document.querySelector("#sec-predict h2")).after(el); }
   if(!games.length){ el.hidden = true; return; }
   const d0 = games.map(x => day(x.gameDate)).sort()[0], g = games.filter(x => day(x.gameDate) === d0);
   const md = `${+d0.slice(5,7)}/${+d0.slice(8,10)}`;
@@ -238,6 +238,23 @@ function seriesPost(ss){      // 賽後：比賽結束後的系列戰狀態
   if(ss.isOver && lead) return ss.description==="World Series" ? `${lead}以 ${W}:${L} 拿下世界大賽` : `${lead}以 ${W}:${L} 晉級${NEXT[ss.description]||"下一輪"}`;
   if(ss.isTied || W===L) return W ? `系列賽 ${W}:${L} 戰成平手` : "";
   return lead ? `${lead}系列賽 ${W}:${L} 領先` : "";
+}
+// 系列賽標籤（卡片第一行）：「ALCS 第 4 戰・10/17（六）08:00」，第 6、7 戰加「（如有需要）」
+const SER_AB = {"World Series":"WS","AL Championship Series":"ALCS","NL Championship Series":"NLCS","AL Division Series":"ALDS","NL Division Series":"NLDS","AL Wild Card Series":"AL 外卡","NL Wild Card Series":"NL 外卡"};
+function serTag(g){
+  const ss = g.seriesStatus, n = g.seriesGameNumber;
+  if(!ss || !n || !["F","D","L","W"].includes(g.gameType)) return "";
+  const ab = SER_AB[ss.description] || sz(ss.description);
+  const p = Object.fromEntries(new Intl.DateTimeFormat("en-GB",{timeZone:"Asia/Taipei",hour12:false,month:"numeric",day:"numeric",weekday:"short",hour:"2-digit",minute:"2-digit"}).formatToParts(new Date(g.gameDate)).map(x=>[x.type,x.value]));
+  const wd = {Sun:"日",Mon:"一",Tue:"二",Wed:"三",Thu:"四",Fri:"五",Sat:"六"}[p.weekday];
+  const ifn = (n >= 6 && (g.gamesInSeries||ss.totalGames) >= 7) ? "（如有需要）" : "";
+  return `<div class="ser-row"><span class="ser-tag">${ab} 第 <span class="num">${n}</span> 戰${ifn}・<span class="num">${p.month}/${p.day}</span>（${wd}）<span class="num">${p.hour==="24"?"00":p.hour}:${p.minute}</span></span></div>`;
+}
+// 第三行縮短：「系列賽 2:1 守護者領先」／「系列賽 2:2 平手」
+function serShort(ss){
+  if(!ss || !ss.totalGames || ss.totalGames<2 || (!ss.wins && !ss.losses)) return "";
+  if(ss.isTied || ss.wins===ss.losses) return `系列賽 ${ss.wins}:${ss.losses} 平手`;
+  return `系列賽 ${ss.wins}:${ss.losses} ${ts(tById(ss.winningTeam.id))}領先`;
 }
 function seriesPre(ss){       // 賽前：目前系列戰比數
   if(!ss || !ss.totalGames || ss.totalGames<2 || (!ss.wins && !ss.losses)) return "";
@@ -405,8 +422,8 @@ function renderPredict(games, isPast){
     const off = OFFICIAL[g.gamePk];
     const v1note = off && off.model && !off.model.startsWith(MODEL_V) ? `<div class="vnote">此場正式紀錄為舊版模型 ${off.model.slice(0,2)}</div>` : "";
     const w = g.weather && g.weather.condition ? `參考資訊：天氣 ${g.weather.condition}${g.weather.temp?`，氣溫 ${Math.round((g.weather.temp-32)*5/9)}°C`:""}（不列入勝率計算）` : "";
-    html += `<div class="pcard">
-      <div class="meta"><span class="nw">客 ${ts(A.team)}</span> @ <span class="nw">主 ${ts(H.team)}</span><br>${tw(g.gameDate)}（台灣時間）${g.seriesStatus ? `<br><span class="nw ser">${[sz(g.seriesStatus.description), seriesPre(g.seriesStatus).replace("系列賽目前","系列賽").replace(/（(.+)領先）/," $1領先")].filter(Boolean).join("・")}</span>` : ""}</div>
+    html += `<div class="pcard">${serTag(g)}
+      <div class="meta"><span class="nw">客 ${ts(A.team)}</span> @ <span class="nw">主 ${ts(H.team)}</span><br>${tw(g.gameDate)}（台灣時間）${serShort(g.seriesStatus) ? `<br><span class="nw ser">${serShort(g.seriesStatus)}</span>` : ""}</div>
       <div class="headline">${fp === 50 ? `五五波：雙方各 <span class="num">50%</span>` : `${fp>=60?"明顯看好":fp>=53?"略占上風":"勢均力敵"}：${ts(fav)} <span class="num">${fp}%</span>`}</div>
       ${(!aP||!hP)?`<span class="wait-tag">等先發</span>`:""}
       <div class="tier-row"><span class="tier ${tc}">${tl}</span><span class="upset">${upset(A.team, H.team, ap, hp, aP, hP, fav, fp)}</span></div>
@@ -506,6 +523,14 @@ const resMark = c => c === null || c === undefined ? '<span class="rm wait">待�
 const fmtT = s => { const m = String(s).match(/(\d+)-(\d+)-(\d+) (\d+):(\d+)/); if(!m) return s; const h=+m[4]; return `${+m[2]}/${+m[3]} ${h<12?"上午":"下午"}${String(h%12||12).padStart(2,"0")}:${m[5]}`; };
 const FULL2SHORT = Object.fromEntries(Object.values(ZH));
 const short = n => FULL2SHORT[n] || n;
+// 首頁準度一行（規格 #2）：只算開賽前鎖定的正式紀錄、依版本分開、排除取消、勝率剛好 50% 不計
+function accLine(id, recs, isVer, label, href){
+  const el = document.getElementById(id); if(!el) return;
+  const done = recs.filter(x => x.status !== "cancelled" && x.official && isVer(x) && x.correct !== null && x.correct !== undefined && x.official.homeWinProb !== 0.5);
+  const n = done.length, k = done.filter(x => x.correct).length;
+  const t = n >= 50 ? `${label} 命中率 <span class="num">${Math.round(k/n*100)}%</span>（<span class="num">${k}/${n}</span> 場）` : `${label} 累積中（<span class="num">${n}</span> 場）`;
+  el.innerHTML = `${t}・<a href="${href}">看命中率 ›</a>`; el.hidden = false;
+}
 // 預測命中率：讀取網站上的 data/predictions.json
 async function secHit(){
   const el = document.getElementById("hit");
@@ -513,6 +538,7 @@ async function secHit(){
   const r = await fetch("data/predictions.json?t=" + Date.now());
   if(!r.ok) throw new Error("predictions");
   const d = await r.json();
+  accLine("mlb-acc", d.records, x => (x.official.model||"").startsWith(MODEL_V), "MLB v2", "#mlb-hitrate");
   d.records = d.records.filter(x => x.status !== "cancelled");   // 取消的比賽（賽程已無此場、從未開打）不列入
   // 只計算「正式預測」（開打前最後一筆快照；舊 v1 紀錄即為正式預測）
   const off = d.records.filter(x => x.official);

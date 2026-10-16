@@ -272,3 +272,8 @@ body.tab-predict header{padding-bottom:10px}
   .hrt td.dt .dd,.hrt td.dt .tt{display:block}
   .hrt td.dt .tt{font-size:11px;color:#8b949e}
 }
+
+.acc-line{margin:0 0 4px;font-size:12px;color:#8b949e;border:0}
+.acc-line .num{font-family:var(--num)} .acc-line a{color:#8b949e}
+.ser-row{margin:0 0 4px;padding-right:96px} .ser-tag{display:inline-block;font-size:11px;background:#1c232d;border-radius:4px;padding:0 6px;color:#8b949e;white-space:nowrap}
+.ser-tag .num{font-family:var(--num)}

@@ -218,6 +218,7 @@ async function nbaHit(){
   const el = document.getElementById("nba-hit");
   const r = await fetch("data/nba-predictions.json?t=" + Date.now()); if(!r.ok) throw new Error("nba-predictions");
   const d = await r.json(), GOAL = 50;
+  if(typeof accLine === "function") accLine("nba-acc", d.records, x => x.official.model === NM.ver, "NBA blend_v1", "#nba-hitrate");
   const isNew = x => (x.official||{}).model === NM.ver, old = d.records.filter(x => x.official && x.correct !== null && !isNew(x)), oOk = old.filter(x=>x.correct).length;
   const done = d.records.filter(x => x.official && x.correct !== null && isNew(x)), n = done.length, ok = done.filter(x => x.correct).length;
   let html = n >= GOAL ? `<div class="hr-big">${Math.round(ok/n*100)}%</div><div class="hr-sub">NBA 模型命中率（共 ${n} 場）</div>`
