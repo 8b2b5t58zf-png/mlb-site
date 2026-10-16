@@ -344,3 +344,10 @@ body.view-about #mlb-main,body.view-about #nba-main{display:none}
 #predict>.po-note,#nba-predict>.po-note{margin-top:-4px}  /* 列表 gap 12px − 4px = 8px */
 .tbd-note{text-wrap:balance} .tbd-note .nw{white-space:nowrap}
 .tbd-note{font-size:12px} #predict>.tbd-note,#nba-predict>.tbd-note{margin-top:-4px}
+
+.cg.bt{border:1px dashed #262e39;background:#151b23;color:#8b949e}
+.cg.bt .cg-l,.cg.bt .cg-v .num,.cg.bt .num{color:#8b949e}
+.cg.bt .bt-t{font-size:13px;margin-bottom:2px}
+.bt-note{margin:2px 0 4px}
+.bt-all{font-size:13px;padding:6px 0;border-top:1px solid #262e39}
+.cg.bt:empty{display:none}

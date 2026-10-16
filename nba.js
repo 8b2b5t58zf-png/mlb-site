@@ -249,6 +249,7 @@ async function nbaHit(){
   let html = n >= GOAL ? `<div class="hr-big">${Math.round(ok/n*100)}%</div><div class="hr-sub">NBA 模型命中率（共 ${n} 場）</div>`
     : `<div class="hr-big muted">累積中</div><div class="hr-prog"><div class="hr-bar"><div style="width:${n/GOAL*100}%"></div></div><span>${NM.ver}：${n} / ${GOAL} 場</span></div><div class="hr-ref">滿 ${GOAL} 場正式預測後顯示命中率</div>`;
   html += confGroups(d.records, x => x.official.model === NM.ver, [60, 70], "nba");
+  html += btCard("nba", "nba_blend_v1", "NBA 2025-26 全季・NBA blend_v1", [60, 70], "低、中信心兩組的實際命中比預測高約 5 個百分點，代表模型偏保守");
   if(old.length) html += `<p class="note">舊版模型 v1 另計：${old.length} 場猜對 ${oOk} 場</p>`;
   html += `<p class="hr-upd">最後更新：${fmtT(d.updated)}（台灣時間）</p>`;
   if(!d.records.length){ el.innerHTML = html + '<p class="note">2026-27 例行賽 10/21（台灣時間）開打，開打前會開始記錄。</p>'; return; }

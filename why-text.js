@@ -161,6 +161,23 @@ function confGroups(recs, isVer, cuts, lg){   // cuts: [中下限, 高下限]（
   return `<div class="cg" id="cg-${lg}"><div class="cg-h">依信心分組（每組滿 <span class="num">50</span> 場才顯示命中率）</div>${rows}${half ? `<div class="cg-n">勝率剛好 <span class="num">50%</span> 的 <span class="num">${half}</span> 場不分組、不計命中率</div>` : ""}</div>`;
 }
 
+// 歷史回測卡（§26）：數字一律讀 data/backtest.json，和正式紀錄分開、不合併
+let BT_P = null;
+function btCard(lg, key, sub, cuts, extra){
+  const id = "bt-" + lg;
+  (BT_P ||= fetch("data/backtest.json?v=202610162600").then(r => r.ok ? r.json() : null).catch(() => null)).then(d => {
+    const el = document.getElementById(id), b = d && d[key]; if(!el || !b){ if(el) el.remove(); return; }
+    const N = v => `<span class="num">${v}</span>`;
+    const R = {低:`未滿 ${N(cuts[0]+"%")}`, 中:`${N(cuts[0])}～未滿 ${N(cuts[1]+"%")}`, 高:`${N(cuts[1]+"%")} 以上`};
+    const rows = ["低","中","高"].filter(t => b.tiers[t]).map(t => { const g = b.tiers[t];
+      return `<div class="cg-row"><span class="cg-l">信心 ${t}<span class="cg-r">${R[t]}</span></span><span class="cg-v">平均預測 ${N(g.avg_pred_pct+"%")}｜實際 ${N(g.hit_pct+"%")}（${N(g.k+"/"+g.n)} 場）</span></div>`; }).join("");
+    el.innerHTML = `<div class="cg-h bt-t">歷史回測（模型事後驗算）</div><div class="cg-h">${sub}</div><div class="cg-n bt-note">這是把模型套在過去比賽的結果，不是當時的預測，非投注建議</div>${extra ? `<div class="cg-n bt-note">${extra}</div>` : ""}`
+      + (b.n ? `<div class="bt-all">整體命中 ${N(b.hit_pct+"%")}（${N(b.k+"/"+b.n)} 場）</div>` : "") + rows
+      + (b.tie50 ? `<div class="cg-n">勝率剛好 ${N("50%")} 的 ${N(b.tie50)} 場不分組、不計命中率</div>` : "");
+  });
+  return `<div class="cg bt" id="${id}"></div>`;
+}
+
 // 今日數據焦點（§25 修訂、spec-accuracy-display §3）：只看列表第一天；cands: [{i, fh(主隊勝率 0-1), key(季後賽關鍵戰), txt(系列賽句)}]
 function pickFocus(cands){
   if(!cands.length) return null;
