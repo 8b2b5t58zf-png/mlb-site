@@ -1,10 +1,11 @@
 name: NBA 資料與預測紀錄
-# 台灣時間 06:00、07:30（賽前）與 14:00（賽後）；正式預測＝開賽前最後一筆（log_nba.py 開賽後不再改）
+# 台灣時間 22:00、06:00、07:30（賽前）與 14:00（賽後）；正式預測＝開賽前最後一筆（log_nba.py 開賽後不再改）
 on:
   schedule:
     - cron: "0 22 * * *"
     - cron: "30 23 * * *"
     - cron: "0 6 * * *"
+    - cron: "0 14 * * *"
   workflow_dispatch:
 permissions:
   contents: write
