@@ -1,8 +1,8 @@
 // ===== NBA v1：資料來自 ESPN 公開 JSON（瀏覽器端抓取）=====
 const ESPN = "https://site.api.espn.com/apis/site/v2/sports/basketball/nba";
 const ESPN_ST = "https://site.api.espn.com/apis/v2/sports/basketball/nba/standings?seasontype=2";
-// 先讀排程存好的 data/nba/*.json（快、穩）；超過 2 小時才直接連 ESPN；ESPN 也抓不到就用舊檔並註明時間
-const NFRESH = 2*3600e3, NFILE = {};
+// 先讀排程存好的 data/nba/*.json（快、穩）；超過 12 小時才直接連 ESPN；ESPN 也抓不到就用舊檔並註明時間
+const NFRESH = 12*3600e3, NFILE = {};
 let NST_AT = null;   // 目前戰績資料的抓取時間
 async function nbaFile(name){
   if(!(name in NFILE)) NFILE[name] = fetch(`data/nba/${name}.json?t=${Math.floor(Date.now()/3e5)}`).then(r => r.ok ? r.json() : null).catch(() => null);
@@ -16,8 +16,8 @@ async function nbaGet(name, pick, url){
   const before = usedCache;
   try{ const d = await getJSON(url); return {data:d, at: usedCache !== before ? usedCache : Date.now()}; }
   catch(e){ if(v){ const t = Date.parse(f.fetched_at);
-    // 排程檔 6 小時內仍算正常（只顯示資料時間）；更舊才算真的抓不到
-    if(nAge(f) < 6*3600e3) markAt(t); else if(!usedCache || t < usedCache) usedCache = t; return {data:v, at:t}; } throw e; }
+    // 排程檔 24 小時內仍算正常（ESPN 也抓不到時）（只顯示資料時間）；更舊才算真的抓不到
+    if(nAge(f) < 24*3600e3) markAt(t); else if(!usedCache || t < usedCache) usedCache = t; return {data:v, at:t}; } throw e; }
 }
 // 30 隊台灣常用隊名（ESPN 縮寫 → [全名, 簡稱]），來源 /workspace/nba/teams.md
 const NZH = {ATL:["亞特蘭大老鷹","老鷹"],BOS:["波士頓塞爾提克","塞爾提克"],BKN:["布魯克林籃網","籃網"],CHA:["夏洛特黃蜂","黃蜂"],CHI:["芝加哥公牛","公牛"],
@@ -32,8 +32,8 @@ const nts = t => (NZH[t.abbreviation]||[,t.shortDisplayName||t.displayName])[1];
 // 本季實力＝勝率50%＋畢氏勝率(指數14)50%，依場數混合 w=g/(g+10)；Log5（夾 1%～99%）；主場 logit +0.221
 const NM = {exp:14, k:10, r:0.6, hca:0.221, minG:10, ver:"blend_v1"};
 const NT = {};   // 球隊 id → {w,l,pf,pa,g,abbr,...}
-let NPRIOR = {}; // 球隊 id → 上一季（2025-26 例行賽）拉回後實力，data/nba/prior_2526.json
-async function nbaPrior(){ try{ const r = await fetch("data/nba/prior_2526.json?v=1"); if(r.ok){ const d = await r.json(); for(const [id,t] of Object.entries(d.teams)) NPRIOR[id] = 0.5 + (t.prior_pyth-0.5)*NM.r; } }catch(e){} }
+let NPRIOR = {}, NPYTH = {}; // 球隊 id → 上一季（2025-26 例行賽）拉回後實力，data/nba/prior_2526.json
+async function nbaPrior(){ try{ const r = await fetch("data/nba/prior_2526.json?v=1"); if(r.ok){ const d = await r.json(); for(const [id,t] of Object.entries(d.teams)) { NPRIOR[id] = 0.5 + (t.prior_pyth-0.5)*NM.r; NPYTH[id] = t.prior_pyth; } } }catch(e){} }
 function nStrength(t, id){
   const pr = NPRIOR[id] ?? 0.5;
   if(!t || !t.g) return pr;
@@ -44,10 +44,15 @@ function nModel(hId, aId, neutral){
   const h = nStrength(NT[hId], hId), a = nStrength(NT[aId], aId);
   const q1 = Math.min(0.99, Math.max(0.01, log5(h, a))), q2 = sig(logit(q1) + (neutral ? 0 : NM.hca));
   const R1 = Math.round(q1*1000), F = Math.round(q2*1000);
-  return {d1:(R1-500)/10, d2:(F-R1)/10, F:F/10};
+  // 拆解（附錄規格）：本季戰績 p1（只看本季、w=1，0 場＝.5）→ 上一季實力 → 主場（吸收捨入）
+  const cu = t => !t || !t.g ? 0.5 : 0.5*t.w/t.g + 0.5*t.pf**NM.exp/(t.pf**NM.exp + t.pa**NM.exp);
+  const p1 = Math.min(0.99, Math.max(0.01, log5(cu(NT[hId]), cu(NT[aId]))));
+  const s1 = Math.round((p1-0.5)*1000)/10, s2 = Math.round((q1-p1)*1000)/10, Fx = Math.round(q2*1000)/10;
+  return {d1:(R1-500)/10, d2:(F-R1)/10, F:F/10, s1, s2, s3:Math.round((Fx-50-s1-s2)*10)/10};
 }
 // 美國日期 YYYYMMDD（ESPN 用美東日期）
 const usDay = off => { const d = new Date(Date.now() - 5*3600e3 + off*864e5); return d.toISOString().slice(0,10).replace(/-/g,""); };
+const usDate = d => new Date(d - 5*3600e3).toISOString().slice(0,10);
 const twT = s => new Date(s).toLocaleString("zh-TW",{timeZone:"Asia/Taipei",month:"numeric",day:"numeric",hour:"2-digit",minute:"2-digit"});
 const stv = (e, n) => { const s = e.stats.find(x=>x.name===n); return s ? s : {}; };
 
@@ -59,7 +64,7 @@ async function nbaStandings(){
       const t = {id:e.team.id, abbr:e.team.abbreviation, team:e.team, w:+stv(e,"wins").value||0, l:+stv(e,"losses").value||0,
         pf:+stv(e,"pointsFor").value||0, pa:+stv(e,"pointsAgainst").value||0, apf:stv(e,"avgPointsFor").displayValue, apa:stv(e,"avgPointsAgainst").displayValue,
         gb:stv(e,"gamesBehind").displayValue, pct:stv(e,"winPercent").displayValue, diff:stv(e,"differential").displayValue};
-      t.g = t.w + t.l; NT[t.id] = t; return t;
+      t.g = t.w + t.l; t.raw = e; NT[t.id] = t; return t;
     }).sort((x,y)=> (y.g? y.w/y.g:0) - (x.g? x.w/x.g:0) || x.team.displayName.localeCompare(y.team.displayName));
     html += `<div><h3>${conf.name.startsWith("East")?"東區":"西區"}</h3><table class="nst"><tr><th>球隊</th><th>勝</th><th>敗</th><th>勝率</th><th>勝差</th><th class="dk">場均得分</th><th class="dk">場均失分</th><th class="dk">得失分差</th></tr>`;
     for(const t of rows) html += `<tr><td class="nw">${nts(t.team)}</td><td>${t.w}</td><td>${t.l}</td><td>${t.pct||"-"}</td><td>${t.gb||"-"}</td><td class="dk">${t.g?t.apf:"-"}</td><td class="dk">${t.g?t.apa:"-"}</td><td class="dk">${t.g?t.diff:"-"}</td></tr>`;
@@ -69,13 +74,6 @@ async function nbaStandings(){
   document.getElementById("nba-standings").innerHTML = (none ? '<p class="note">2026-27 例行賽尚未開打，戰績皆為 0 勝 0 敗。</p>' : "") + html + "</div>";
 }
 
-const INJ_ZH = {"Out":"缺陣","Day-To-Day":"每日觀察","Questionable":"出賽成疑","Doubtful":"可能缺陣","Probable":"可能出賽","Suspension":"禁賽"};
-let NINJ = null;
-async function nbaInjuries(){
-  if(NINJ) return;
-  NINJ = {};
-  try{ const d = (await nbaGet("injuries", f => f.data, `${ESPN}/injuries`)).data; for(const t of d.injuries||[]) NINJ[t.id] = t.injuries||[]; }catch(e){}
-}
 
 // 信心門檻（2025-26 回測）：未滿 60% 勢均力敵、60–70% 略占上風、70% 以上明顯看好；開季到 1/14 最高只寫「看好」
 const nEarly = (dt=new Date()) => { const m = dt.getMonth(), d = dt.getDate(); return m >= 8 || (m === 0 && d <= 14); };
@@ -90,16 +88,31 @@ function nbaCard(ev){
   const early = nEarly(new Date(ev.date)), [tc, tl] = nTier(fp, early), k = favHome ? 1 : -1, s1 = k*m.d1, s2 = k*m.d2;
   const small = th.g < NM.minG || ta.g < NM.minG;
   const big = fp === 50 ? `五五波：雙方各 <span class="num">50%</span>` : `${nWord(fp, early)}：${nts(fav)} <span class="num">${fp}%</span>`;
-  const head = fp === 50 ? "兩隊勢均力敵，接近五五波" : !th.g && !ta.g ? `還沒有本季戰績，依上一季實力估算${Math.abs(m.d1)>=1?`，${nts(m.d1>0?H.team:A.team)}上季較強`:""}` : Math.abs(m.d1) >= Math.abs(m.d2) ? `${nts(m.d1>0?H.team:A.team)}整體實力較好，是看好主因` : "兩隊實力接近，主場可能是關鍵";
-  const li = (v, txt) => `<li><span class="dl ${dCls(v)}">${dTxt(v)}</span><span>${txt}</span></li>`;
-  const pyd = t => t.g ? (t.pf - t.pa) / t.g : null;
-  const t1 = !th.g && !ta.g ? (Math.abs(m.d1) < 1 ? "實力：兩隊本季未出賽，上一季實力相近" : `實力：兩隊本季未出賽，${nts(m.d1>0?H.team:A.team)}上一季較強`) : Math.abs(m.d1) < 1 ? "戰績：兩隊本季表現相近" : `戰績：${nts(m.d1>0?H.team:A.team)}本季表現較${nts(m.d1>0?A.team:H.team)}好`;
-  const c1 = (th.g || ta.g) ? chip("戰績", `${ta.w}-${ta.l}`, `${th.w}-${th.l}`, bt(ta.g?ta.w/ta.g:0, th.g?th.w/th.g:0)) + chip("場均分差", ta.g?sgn(pyd(ta).toFixed(1)):"-", th.g?sgn(pyd(th).toFixed(1)):"-", bt(pyd(ta), pyd(th))) : "";
-  const inj = side => (NINJ[side.team.id]||[]).filter(x=>x.status!=="Active").slice(0,4).map(x=>`${npn(x.athlete.displayName)}（${INJ_ZH[x.status]||x.status}）`).join("、");
-  const ia = NINJ ? inj(A) : "", ih = NINJ ? inj(H) : "";
-  const injBox = (ia || ih) ? `<div class="why-k"><div class="why-kh">傷兵名單 <span class="ref-tag">參考，不計入勝率</span></div><div class="mk-focus">${ia?`${nts(A.team)}：${ia}`:""}${ia&&ih?"<br>":""}${ih?`${nts(H.team)}：${ih}`:""}</div></div>` : "";
-  const b2b = [A, H].filter(x => { const t0 = new Date(ev.date); return NALL.some(e => e.id !== ev.id && e.competitions[0].competitors.some(c => c.team.id === x.team.id) && t0 - new Date(e.date) > 0 && t0 - new Date(e.date) < 36*3600e3); }).map(x => `${nts(x.team)}昨天剛出賽（背靠背）`).join("<br>");
-  const b2bBox = b2b ? `<div class="why-k"><div class="why-kh">賽程 <span class="ref-tag">參考，不計入勝率</span></div><div class="mk-focus">${b2b}</div></div>` : "";
+  // 為什麼這樣預測：本季戰績、上一季實力、主場（只寫計入模型的項目）
+  const pc = t => t.g ? t.w/t.g : 0;
+  let t1;
+  if(!th.g && !ta.g) t1 = WHY_TXT.preseason;
+  else { const [X, Y, xt, yt] = pc(th) >= pc(ta) ? [H, A, th, ta] : [A, H, ta, th];
+    t1 = Math.abs(pc(th)-pc(ta)) < 0.02 ? wf("recClose", {p:wpct(pc(xt)), op:wpct(pc(yt))}, ["p","op"])
+      : wf("rec", {t:nts(X.team), w:xt.w, l:xt.l, p:wpct(pc(xt)), o:nts(Y.team), op:wpct(pc(yt))}, ["w","l","p","op"]); }
+  const pX = m.s2 >= 0 ? H : A;
+  const t2 = th.g >= 30 && ta.g >= 30 ? WHY_TXT.priorLate : NPYTH[pX.team.id] != null ? wf("prior", {t:nts(pX.team), p:wpct(NPYTH[pX.team.id])}, ["p"]) : wf("prior", {t:nts(pX.team), p:""}).replace("（畢氏勝率 ）","");
+  const t3 = c.neutralSite ? WHY_TXT.neutral : wf("home", {t:nts(H.team)});
+  const why = whyBlock2([[k*m.s1, t1, "rec"], [k*m.s2, t2, "prior"], [k*m.s3, t3, "home"]], nts(fav), fp, favHome ? m.F : Math.round((100-m.F)*10)/10);
+  // 參考數據（固定四列：近 10 場、主客場、場均得失分差、休息天數）
+  const sv = (t, re) => { const e = t && t.raw && t.raw.stats.find(x => re.test(x.name||"") || re.test(x.type||"")); return e && e.displayValue && e.displayValue !== "0-0" ? e.displayValue.split("-") : null; };
+  const la = sv(ta, /last ?ten|^l10$/i), lh = sv(th, /last ?ten|^l10$/i), ra = sv(ta, /^road$/i), rh = sv(th, /^home$/i);
+  const pyd = t => t.g ? wsg((t.pf - t.pa) / t.g) : null;
+  const rest = x => { const t0 = new Date(ev.date), prev = NALL.filter(e => e.id !== ev.id && e.competitions[0].competitors.some(c => c.team.id === x.team.id) && new Date(e.date) < t0).map(e => new Date(e.date)).sort((p,q)=>q-p)[0];
+    if(!prev) return null; const dd = Math.round((new Date(usDate(t0)) - new Date(usDate(prev)))/864e5) - 1;
+    return dd <= 0 ? wf("b2b", {t:nts(x.team)}) : wf("rest", {t:nts(x.team), n:dd}, ["n"]); };
+  const rs = [rest(A), rest(H)].filter(Boolean).join("，");
+  const ref = refBlock([
+    la && lh ? wf("last10", {a:nts(A.team), aw:la[0], al:la[1], h:nts(H.team), hw:lh[0], hl:lh[1]}, ["aw","al","hw","hl"]) : "",
+    ra && rh ? wf("homeAway", {h:nts(H.team), hw:rh[0], hl:rh[1], a:nts(A.team), aw:ra[0], al:ra[1]}, ["hw","hl","aw","al"]) : "",
+    pyd(ta) && pyd(th) ? wf("diff", {a:nts(A.team), ad:pyd(ta), h:nts(H.team), hd:pyd(th)}, ["ad","hd"]) : "",
+    rs,
+  ], "nba");
   return `<div class="pcard">${small?`<span class="wait-tag">樣本不足</span>`:""}
     <div class="meta"><span class="nw">客 ${nts(A.team)}</span> @ <span class="nw">主 ${nts(H.team)}</span><br>${twT(ev.date)}（台灣時間）</div>
     <div class="headline">${big}</div>
@@ -107,9 +120,7 @@ function nbaCard(ev){
     <div class="tier-row"><span class="tier ${tc}">${tl}</span>${fp!==50?`<span class="upset">${nts(oth)}仍有 ${100-fp}% 勝率</span>`:""}</div>
     <div class="pbar-lab"><span>客 ${nts(A.team)} <span class="num">${ap}%</span></span><span>主 ${nts(H.team)} <span class="num">${hp}%</span></span></div>
     <div class="pbar" role="img" aria-label="${ntn(A.team)} ${ap}%，${ntn(H.team)} ${hp}%"><div class="${favHome?"oth":"fav"}" style="width:${ap}%"></div><div class="${favHome?"fav":"oth"}" style="width:${hp}%"></div></div>
-    <div class="why"><div class="why-h">為什麼這樣預測？</div><div class="why-c">${head}</div>
-      <ul class="why-l"><li><span class="dl ${dCls(s1)}">${dTxt(s1)}</span><span>${t1}${c1?`<span class="chips">${c1}</span>`:""}</span></li>${li(s2, `主場：${nts(H.team)}主場優勢`)}</ul></div>
-    ${b2bBox}${injBox}
+    ${why}${ref}
     ${NST_AT && Date.now() - NST_AT > NFRESH ? `<div class="upd">依據 ${twT(NST_AT)}（台灣時間）時的戰績</div>` : `<div class="upd">戰績更新：${twT(NST_AT || Date.now())}（台灣時間）</div>`}</div>`;
 }
 
@@ -130,7 +141,6 @@ async function nbaGames(){
     note = '<p class="note">例行賽 10/21（台灣時間）開打。以下為開幕賽程，兩隊都還沒有本季戰績，預測目前依上一季實力加主場優勢，開打後會逐步改看本季戰績。</p>';
   }
   NALL = all.concat(up);
-  await nbaInjuries();
   document.getElementById("nba-predict").innerHTML = note + (up.slice(0,8).map(nbaCard).join("") || nbaNoGames(all));
   const done = all.filter(e => e.status.type.completed).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,5);
   await nbaRecaps(done);

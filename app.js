@@ -252,7 +252,7 @@ function bridge(m, s, fav){
 }
 
 // 「為什麼這樣預測」：結論句＋三條（戰績、主場、先發），數字與修正過程圖相同
-let SS_NOW = null;
+let SS_NOW = null, GTYPE_NOW = null;
 const OFFICIAL = {};   // gamePk → 正式預測紀錄（判斷是否為舊版模型）
 // 數字小標籤：較佳一方加粗（客隊數字在前）
 function chip(label, av, hv, better){   // better: "a" / "h" / ""
@@ -279,41 +279,34 @@ function matchup(A, H){
   return out;
 }
 function whyBlock(A, H, m, s, ap, hp, aP, hP, fav, fp){
-  const favHome = fav.id === H.id, other = favHome ? A : H;
-  const ta = TEAM[A.id], th = TEAM[H.id];
-  const look = matchup(A, H);
-  const items = [["戰績", s.d1], ["主場", s.d2], ["先發投手", m.used ? s.d3 : 0]];
-  const big = items.reduce((x,y) => Math.abs(y[1]) > Math.abs(x[1]) ? y : x);
-  const li = (v, txt, na, chips="") => `<li><span class="dl ${na?"zero":dCls(v)}">${na?"未調整":dTxt(v)}</span><span>${txt}${chips?`<span class="chips">${chips}</span>`:""}</span></li>`;
-  // 結論句（依影響最大的一步輪替）
-  let head;
-  if(fp === 50) head = "兩隊勢均力敵，接近五五波";
-  else if(!m.used) head = "先發未公布，目前主要依主場判斷，公布後會更新";
-  else if(big[0]==="先發投手") head = `先發對決是勝負關鍵，${pn(m.d3>0?hP:aP)}這邊占優`;
-  else if(big[0]==="戰績") head = `${ts(m.d1>0?H:A)}整季實力較穩，是看好主因`;
-  else head = `兩隊實力接近，主場可能是關鍵${look[0]&&look[0].short?"；"+look[0].short:""}`;
+  const favHome = fav.id === H.id, ta = TEAM[A.id], th = TEAM[H.id];
   // ① 戰績
-  const rdA = ta.runsScored-ta.runsAllowed, rdH = th.runsScored-th.runsAllowed;
-  const t1 = Math.abs(s.d1) < 1 ? "戰績：兩隊整季實力相近，影響不大" : `戰績：${ts(m.d1>0?H:A)}整季實力較${ts(m.d1>0?A:H)}佳`;
-  const c1 = chip("戰績", `${ta.wins}-${ta.losses}`, `${th.wins}-${th.losses}`, bt(+ta.winningPercentage, +th.winningPercentage))
-           + chip("得失分差", sgn(rdA), sgn(rdH), bt(rdA, rdH));
-  // ② 主場（固定加成，不寫主場戰績）
-  const t2 = `主場：${ts(H)}主場優勢`;
+  const pa = +ta.winningPercentage, ph = +th.winningPercentage, [X, Y, xt, yt] = ph >= pa ? [H, A, th, ta] : [A, H, ta, th];
+  const t1 = Math.abs(pa - ph) < 0.02 ? wf("recClose", {p:wpct(+xt.winningPercentage), op:wpct(+yt.winningPercentage)}, ["p","op"])
+    : wf("rec", {t:ts(X), w:xt.wins, l:xt.losses, p:wpct(+xt.winningPercentage), o:ts(Y), op:wpct(+yt.winningPercentage)}, ["w","l","p","op"]);
+  // ② 主場
+  const t2 = wf("home", {t:ts(H)});
   // ③ 先發
   let t3;
-  if(!m.used) t3 = "先發：投手未公布，未調整";
-  else if(Math.abs(m.d3) < 0.05) t3 = `先發：${pn(aP)}與${pn(hP)}數據相近`;
+  if(!m.used) t3 = WHY_TXT.spWait;
+  else if(Math.abs(m.d3) < 0.05) t3 = wf("spClose", {a:pn(aP), h:pn(hP)});
   else {
     const eraH = +hp.era < +ap.era, eraA = +ap.era < +hp.era, whH = +hp.whip < +ap.whip, whA = +ap.whip < +hp.whip;
-    if((eraH && whA) || (eraA && whH)) t3 = `先發：${pn(aP)}與${pn(hP)}互有優劣`;
-    else { const homeAdv = m.d3 > 0; t3 = `先發：${pn(homeAdv?hP:aP)}數據優於${pn(homeAdv?aP:hP)}`; }
+    if((eraH && whA) || (eraA && whH)) t3 = wf("spMixed", {a:pn(aP), h:pn(hP)});
+    else { const hA = m.d3 > 0, [P, S, O, OS] = hA ? [hP, hp, aP, ap] : [aP, ap, hP, hp];
+      t3 = wf("sp", {p:pn(P), era:S.era, whip:S.whip, o:pn(O), oera:OS.era, owhip:OS.whip}, ["era","whip","oera","owhip"]); }
   }
-  const c3 = m.used ? chip("防禦率", ap.era, hp.era, bt(+ap.era, +hp.era, true)) + chip("WHIP", ap.whip, hp.whip, bt(+ap.whip, +hp.whip, true)) : "";
-  const sp = seriesPre(SS_NOW);
-  const L = look.length ? `<div class="why-k"><div class="why-kh">對戰看點 <span class="ref-tag">參考，不計入勝率</span></div><div class="mk-focus">${look[0].txt}</div>
-    ${look.length>1?`<details class="mk-more"><summary>看更多對戰看點</summary><ul>${look.slice(1).map(x=>`<li>${x.txt}</li>`).join("")}</ul></details>`:""}</div>` : "";
-  return `<div class="why"><div class="why-h">為什麼這樣預測？</div><div class="why-c">${head}</div>
-    <ul class="why-l">${li(s.d1, t1, false, c1)}${li(s.d2, t2)}${li(s.d3, t3, !m.used, c3)}</ul></div>${L}`;
+  const html = whyBlock2([[s.d1, t1, "rec"], [s.d2, t2, "home"], [m.used ? s.d3 : 0, t3, "sp"]], ts(fav), fp, s.F);
+  // 參考數據（事實，不計入勝率）
+  const spl = (t, type) => t && t.records && (t.records.splitRecords||[]).find(x=>x.type===type);
+  const la = spl(ta,"lastTen"), lh = spl(th,"lastTen"), ha = spl(ta,"away"), hh = spl(th,"home");
+  const pg = t => { const g = t.wins + t.losses; return g ? wsg((t.runsScored - t.runsAllowed)/g) : null; };
+  const ref = refBlock([
+    la && lh ? wf(GTYPE_NOW && GTYPE_NOW !== "R" ? "last10Post" : "last10", {a:ts(A), aw:la.wins, al:la.losses, h:ts(H), hw:lh.wins, hl:lh.losses}, ["aw","al","hw","hl"]) : "",
+    ha && hh ? wf("homeAway", {h:ts(H), hw:hh.wins, hl:hh.losses, a:ts(A), aw:ha.wins, al:ha.losses}, ["hw","hl","aw","al"]) : "",
+    pg(ta) && pg(th) ? wf("diff", {a:ts(A), ad:pg(ta), h:ts(H), hd:pg(th)}, ["ad","hd"]) : "",
+  ], "mlb");
+  return html + ref;
 }
 // 爆冷提醒（標籤旁小字；只用劣勢方勝率與先發 ERA／WHIP）
 function upset(A, H, ap, hp, aP, hP, fav, fp){
@@ -361,7 +354,7 @@ function renderPredict(games, isPast){
     const favHome = hpct >= apct, fp = Math.max(hpct, apct), fav = favHome ? H.team : A.team;
     const [tc, tl] = tier(fp/100);
     const st = favSteps(m, favHome);
-    SS_NOW = g.seriesStatus;
+    SS_NOW = g.seriesStatus; GTYPE_NOW = g.gameType;
     const off = OFFICIAL[g.gamePk];
     const v1note = off && off.model && !off.model.startsWith(MODEL_V) ? `<div class="vnote">此場正式紀錄為舊版模型 ${off.model.slice(0,2)}</div>` : "";
     const w = g.weather && g.weather.condition ? `參考資訊：天氣 ${g.weather.condition}${g.weather.temp?`，氣溫 ${Math.round((g.weather.temp-32)*5/9)}°C`:""}（不列入勝率計算）` : "";
@@ -537,7 +530,7 @@ function setLeague(lg){
   document.getElementById("tg-scope").textContent = lg==="nba" ? "用 2025-26 季比賽驗證過" : "用 2026 整季比賽驗證過";
   document.getElementById("tg-link").href = lg==="nba" ? "validation-nba.html" : "validation.html";
   document.getElementById("lg-sub").textContent = lg==="nba" ? "AI 運動實驗室・NBA 美國職籃勝負預測與賽後分析" : "AI 運動實驗室・美國職棒大聯盟勝負預測與賽後分析";
-  document.getElementById("foot").innerHTML = lg==="nba" ? '<p>NBA 資料來源：ESPN｜數據分析，非投注建議</p><p><a href="validation-nba.html">NBA 回測說明</a></p>' : '<p>本站為 MLB 數據分析，非投注建議。</p><p>資料來源：MLB 官方 Stats API（statsapi.mlb.com）。</p><p><a href="validation.html">回測說明</a></p>';
+  document.getElementById("foot").innerHTML = lg==="nba" ? '<p>AI Sports Lab 為個人數據分析網站，非投注建議。資料來源：MLB Stats API、ESPN。</p><p><a href="validation-nba.html">NBA 回測說明</a></p>' : '<p>AI Sports Lab 為個人數據分析網站，非投注建議。資料來源：MLB Stats API、ESPN。</p><p><a href="validation.html">回測說明</a></p>';
   document.title = `AI Sports Lab｜${lg.toUpperCase()} 勝負預測與賽後分析`;
   renderNav();
   if(lg==="nba") loadNBA();

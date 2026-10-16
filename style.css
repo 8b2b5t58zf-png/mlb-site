@@ -214,3 +214,11 @@ body.tab-predict header{padding-bottom:10px}
 .tagline{margin-top:0}
 .dtime{color:var(--text2);font-size:12px;margin:0 0 6px;background:none;padding:0;border:0}
 @media(min-width:700px){header h1.brand{font-size:18px}}
+.why-tot{border-top:1px solid var(--line);padding-top:6px;margin-top:2px;font-weight:700}
+.refd{border:1px dashed #262e39;border-radius:6px;padding:8px 10px;margin-top:var(--sp-2);color:#c9d1d9}
+.refd summary{font-size:12px;color:#8b949e;cursor:pointer;list-style:none;min-height:24px;display:flex;align-items:center}
+.refd summary::-webkit-details-marker{display:none}
+.refd[open] summary{display:none}
+.refd .ref-t{font-size:12px;color:#8b949e;margin-bottom:4px}
+.refd ul{list-style:none;margin:0;padding:0;font-size:var(--fs-sm);line-height:1.6;color:#c9d1d9}
+.refd .num{color:#c9d1d9}

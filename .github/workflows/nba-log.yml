@@ -1,0 +1,27 @@
+name: NBA 資料與預測紀錄
+# 台灣時間 06:00、07:30（賽前）與 14:00（賽後）；正式預測＝開賽前最後一筆（log_nba.py 開賽後不再改）
+on:
+  schedule:
+    - cron: "0 22 * * *"
+    - cron: "30 23 * * *"
+    - cron: "0 6 * * *"
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency: { group: data-commit, cancel-in-progress: false }
+jobs:
+  log:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: python scripts/fetch_nba.py
+        continue-on-error: true
+      - run: python scripts/log_nba.py
+      - name: 提交資料變更
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898810+github-actions[bot]@users.noreply.github.com"
+          git add data/nba-predictions.json data/nba
+          git diff --cached --quiet || (git commit -m "更新 NBA 資料與預測紀錄" && git pull --rebase && git push)
