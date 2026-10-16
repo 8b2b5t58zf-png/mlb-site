@@ -147,3 +147,16 @@ function cardTime(d, st){ const t = new Date(new Date(d).getTime() + 8*3600e3);
 function ccFit(){ document.querySelectorAll(".cc-head").forEach(h => { if(!h.offsetParent) return; const r = h.querySelector(".cc-r1"); h.classList.remove("tight"); const t = r.scrollWidth > r.clientWidth + 1; h.classList.toggle("tight", t); }); }
 addEventListener("resize", ccFit);
 new MutationObserver(() => requestAnimationFrame(ccFit)).observe(document.documentElement, {childList:true, subtree:true});
+
+// 命中率依信心分組（spec-accuracy-display §2）：只算正式紀錄、同版本、排除取消與剛好 50%
+function confGroups(recs, isVer, cuts, lg){   // cuts: [中下限, 高下限]（看好方勝率，整數 %，與卡片信心標籤相同）
+  const done = recs.filter(x => x.status !== "cancelled" && x.official && isVer(x) && x.correct !== null && x.correct !== undefined);
+  const half = done.filter(x => x.official.homeWinProb === 0.5).length;
+  const G = [["低", `未滿 ${cuts[0]}%`], ["中", `${cuts[0]}～未滿 ${cuts[1]}%`], ["高", `${cuts[1]}% 以上`]].map(([n, r]) => ({n, r, xs:[]}));
+  for(const x of done){ const hp = x.official.homeWinProb; if(hp === 0.5) continue;
+    const p = Math.max(hp, 1-hp), q = Math.round(p*100); G[q >= cuts[1] ? 2 : q >= cuts[0] ? 1 : 0].xs.push({p, ok:!!x.correct}); }
+  const rows = G.map(g => { const n = g.xs.length, k = g.xs.filter(x => x.ok).length;
+    const v = n >= 50 ? `平均預測 <span class="num">${Math.round(g.xs.reduce((a,x)=>a+x.p,0)/n*100)}%</span>｜實際 <span class="num">${Math.round(k/n*100)}%</span>（<span class="num">${k}/${n}</span> 場）` : `累積中（<span class="num">${n}</span> 場）`;
+    return `<div class="cg-row"><span class="cg-l">信心 ${g.n}<span class="cg-r">${g.r}</span></span><span class="cg-v">${v}</span></div>`; }).join("");
+  return `<div class="cg" id="cg-${lg}"><div class="cg-h">依信心分組（每組滿 <span class="num">50</span> 場才顯示命中率）</div>${rows}${half ? `<div class="cg-n">勝率剛好 <span class="num">50%</span> 的 <span class="num">${half}</span> 場不分組、不計命中率</div>` : ""}</div>`;
+}

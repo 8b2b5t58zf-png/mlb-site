@@ -559,6 +559,7 @@ async function secHit(){
   html += `<div class="hr-ref">2026 例行賽回測約 57.8%<br>季後賽場數少，正式命中率預計於 2027 例行賽累積後顯示</div>`;
   const old = vers.filter(v=>v!==MODEL_V).map(v=>`舊版 ${v}：${off.filter(x=>ver(x)===v).length} 場，不列入正式命中率`);
   if(old.length) html += `<div class="hr-vers">${old.join("<br>")}</div>`;
+  html += confGroups(d.records, x => (x.official.model||"").startsWith(MODEL_V), [53, 60], "mlb");
   html += `<p class="hr-upd">最後更新：${fmtT(d.updated)}（台灣時間）</p>`;
   html += '<div class="tblwrap" style="overflow-x:auto"><table class="hrt"><tr><th>比賽時間</th><th class="mu-h"><span class="mu-full">對戰（客 @ 主）</span><span class="mu-short">客 @ 主</span></th><th class="md">模型</th><th>預測</th><th class="dk">預測勝率</th><th class="dk">實際比分</th><th class="dk">結果</th></tr>';
   for(const x of d.records.slice().reverse().slice(0,15)){
