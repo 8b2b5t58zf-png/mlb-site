@@ -258,5 +258,11 @@ body.tab-predict header{padding-bottom:10px}
 .hrt .tent{font-size:11px;color:#8b949e;line-height:1.3;white-space:nowrap}
 
 .hrt .md{width:40px;max-width:40px}
-@media(max-width:767px){ .hrt th{white-space:normal;vertical-align:bottom} }
+.hrt .mu-short{display:none}
+@media(max-width:767px){
+  .hrt th{white-space:normal;vertical-align:bottom}
+  .hrt th.mu-h{white-space:nowrap}
+  .hrt .mu-full{display:none}
+  .hrt .mu-short{display:inline;white-space:nowrap}
+}
 @media(max-width:767px){ .hrt td.dt{font-size:12px} .hrt td,.hrt th{padding-left:3px;padding-right:3px} }

@@ -529,7 +529,7 @@ async function secHit(){
   const old = vers.filter(v=>v!==MODEL_V).map(v=>`舊版 ${v}：${off.filter(x=>ver(x)===v).length} 場，不列入正式命中率`);
   if(old.length) html += `<div class="hr-vers">${old.join("<br>")}</div>`;
   html += `<p class="hr-upd">最後更新：${fmtT(d.updated)}（台灣時間）</p>`;
-  html += '<div class="tblwrap" style="overflow-x:auto"><table class="hrt"><tr><th>比賽時間</th><th>對戰（客 @ 主）</th><th class="md">模型</th><th>預測</th><th class="dk">預測勝率</th><th class="dk">實際比分</th><th class="dk">結果</th></tr>';
+  html += '<div class="tblwrap" style="overflow-x:auto"><table class="hrt"><tr><th>比賽時間</th><th class="mu-h"><span class="mu-full">對戰（客 @ 主）</span><span class="mu-short">客 @ 主</span></th><th class="md">模型</th><th>預測</th><th class="dk">預測勝率</th><th class="dk">實際比分</th><th class="dk">結果</th></tr>';
   for(const x of d.records.slice().reverse().slice(0,15)){
     const snap = x.official || x.snapshots[x.snapshots.length-1], hp = snap.homeWinProb;
     const pw = hp >= 0.5 ? x.home : x.away, p = Math.max(hp, 1-hp);
