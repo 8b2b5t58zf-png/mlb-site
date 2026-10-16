@@ -66,13 +66,19 @@ for r in recs.values():
         snap["at"] = snap.pop("predictedAt")
         r["snapshots"] = [snap]; r["official"] = dict(snap, note="v1 舊紀錄，視為正式預測")
 
-d = get(f"/schedule?sportId=1&startDate={(now-timedelta(7)).date()}&endDate={(now+timedelta(2)).date()}&hydrate=probablePitcher")
-added = snaps = frozen = filled = 0
+d = get(f"/schedule?sportId=1&startDate={(now-timedelta(7)).date()}&endDate={(now+timedelta(7)).date()}&hydrate=probablePitcher")
+added = snaps = frozen = filled = unfrozen = 0
 for g in (x for dt in d.get("dates", []) for x in dt["games"]):
     pk, H, A = g["gamePk"], g["teams"]["home"], g["teams"]["away"]
     state = g["status"]["abstractGameState"]
     start = datetime.fromisoformat(g["gameDate"].replace("Z", "+00:00"))
     r = recs.get(pk)
+    # 0) 依 API 目前的開賽時間：還沒開打就不能鎖定（解除過早的正式紀錄，舊快照留著當歷史）；賽程改期就更新時間
+    if r is not None and state == "Preview" and now < start:
+        gt = start.astimezone(TZ).strftime("%Y-%m-%d %H:%M") + " (UTC+8)"
+        if r.get("gameTime") != gt: r["gameTime"], r["date"] = gt, start.astimezone(TZ).strftime("%Y-%m-%d")
+        if r.get("official") is not None:
+            r["official"] = None; r["predictedWinner"] = None; unfrozen += 1
     # 1) 尚未開打：記一筆快照（只往後加，不覆蓋；和上一筆相同就不重複記）
     if state == "Preview" and now < start and H["team"]["id"] in TEAM and A["team"]["id"] in TEAM:
         if r is None:
@@ -114,4 +120,4 @@ new = {"records": sorted(recs.values(), key=lambda r: r["gameTime"])}
 if json.dumps(new["records"], sort_keys=True, ensure_ascii=False) != ORIG or "updated" not in data:
     new = {"updated": nowtw(), **new}
     json.dump(new, open(OUT, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
-print(f"新比賽 {added}、新快照 {snaps}、固定正式預測 {frozen}、補上結果 {filled}；總共 {len(recs)} 場")
+print(f"新比賽 {added}、新快照 {snaps}、固定正式預測 {frozen}、補上結果 {filled}、解除過早鎖定 {unfrozen}；總共 {len(recs)} 場")

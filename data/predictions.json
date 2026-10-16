@@ -1,5 +1,5 @@
 {
- "updated": "2026-10-16 09:20 (UTC+8)",
+ "updated": "2026-10-16 13:24 (UTC+8)",
  "records": [
   {
    "gamePk": 849818,
@@ -42,9 +42,9 @@
    "predictedWinner": "洛杉磯道奇",
    "model": "v1：勝率50%+畢氏勝率50%、Log5、主場+4%",
    "predictedAt": "2026-10-15 15:56 (UTC+8)",
-   "final": null,
-   "actualWinner": null,
-   "correct": null,
+   "final": "密爾瓦基釀酒人 6 : 4 洛杉磯道奇",
+   "actualWinner": "密爾瓦基釀酒人",
+   "correct": false,
    "snapshots": [
     {
      "homeWinProb": 0.5279,
@@ -59,16 +59,18 @@
     "model": "v1：勝率50%+畢氏勝率50%、Log5、主場+4%",
     "at": "2026-10-15 15:56 (UTC+8)",
     "note": "v1 舊紀錄，視為正式預測"
-   }
+   },
+   "homeScore": 4,
+   "awayScore": 6
   },
   {
    "gamePk": 849817,
-   "gameTime": "2026-10-17 06:00 (UTC+8)",
+   "gameTime": "2026-10-17 08:00 (UTC+8)",
    "away": "坦帕灣光芒",
    "home": "克里夫蘭守護者",
    "homeWinProb": 0.4751,
    "awayWinProb": 0.5249,
-   "predictedWinner": "坦帕灣光芒",
+   "predictedWinner": null,
    "model": "v1：勝率50%+畢氏勝率50%、Log5、主場+4%",
    "predictedAt": "2026-10-15 15:56 (UTC+8)",
    "final": null,
@@ -80,15 +82,28 @@
      "awayWinProb": 0.5249,
      "model": "v1：勝率50%+畢氏勝率50%、Log5、主場+4%",
      "at": "2026-10-15 15:56 (UTC+8)"
+    },
+    {
+     "at": "2026-10-16 13:24 (UTC+8)",
+     "model": "v2：Log5縮回(0.250)、主場+0.082、先發ERA×0.137+WHIP×0.606（拉回40局）",
+     "homeWinProb": 0.5042,
+     "steps": {
+      "standings": -1.6,
+      "home": 2.0,
+      "starter": 0.0
+     },
+     "starterUsed": false,
+     "starterStatus": "partial",
+     "hasStarters": false,
+     "homeStarter": null,
+     "awayStarter": {
+      "id": 607259,
+      "name": "Nick Martinez"
+     }
     }
    ],
-   "official": {
-    "homeWinProb": 0.4751,
-    "awayWinProb": 0.5249,
-    "model": "v1：勝率50%+畢氏勝率50%、Log5、主場+4%",
-    "at": "2026-10-15 15:56 (UTC+8)",
-    "note": "v1 舊紀錄，視為正式預測"
-   }
+   "official": null,
+   "date": "2026-10-17"
   },
   {
    "gamePk": 849808,
@@ -126,7 +141,7 @@
    "home": "克里夫蘭守護者",
    "homeWinProb": 0.4751,
    "awayWinProb": 0.5249,
-   "predictedWinner": "坦帕灣光芒",
+   "predictedWinner": null,
    "model": "v1：勝率50%+畢氏勝率50%、Log5、主場+4%",
    "predictedAt": "2026-10-15 15:56 (UTC+8)",
    "final": null,
@@ -138,15 +153,24 @@
      "awayWinProb": 0.5249,
      "model": "v1：勝率50%+畢氏勝率50%、Log5、主場+4%",
      "at": "2026-10-15 15:56 (UTC+8)"
+    },
+    {
+     "at": "2026-10-16 13:24 (UTC+8)",
+     "model": "v2：Log5縮回(0.250)、主場+0.082、先發ERA×0.137+WHIP×0.606（拉回40局）",
+     "homeWinProb": 0.5042,
+     "steps": {
+      "standings": -1.6,
+      "home": 2.0,
+      "starter": 0.0
+     },
+     "starterUsed": false,
+     "starterStatus": "none",
+     "hasStarters": false,
+     "homeStarter": null,
+     "awayStarter": null
     }
    ],
-   "official": {
-    "homeWinProb": 0.4751,
-    "awayWinProb": 0.5249,
-    "model": "v1：勝率50%+畢氏勝率50%、Log5、主場+4%",
-    "at": "2026-10-15 15:56 (UTC+8)",
-    "note": "v1 舊紀錄，視為正式預測"
-   }
+   "official": null
   },
   {
    "gamePk": 849806,
@@ -165,6 +189,64 @@
       "starter": 0.0
      },
      "starterUsed": false,
+     "homeStarter": null,
+     "awayStarter": null
+    }
+   ],
+   "official": null,
+   "predictedWinner": null,
+   "final": null,
+   "actualWinner": null,
+   "correct": null
+  },
+  {
+   "gamePk": 849815,
+   "date": "2026-10-20",
+   "gameTime": "2026-10-20 08:00 (UTC+8)",
+   "away": "克里夫蘭守護者",
+   "home": "坦帕灣光芒",
+   "snapshots": [
+    {
+     "at": "2026-10-16 13:24 (UTC+8)",
+     "model": "v2：Log5縮回(0.250)、主場+0.082、先發ERA×0.137+WHIP×0.606（拉回40局）",
+     "homeWinProb": 0.5368,
+     "steps": {
+      "standings": 1.6,
+      "home": 2.1,
+      "starter": 0.0
+     },
+     "starterUsed": false,
+     "starterStatus": "none",
+     "hasStarters": false,
+     "homeStarter": null,
+     "awayStarter": null
+    }
+   ],
+   "official": null,
+   "predictedWinner": null,
+   "final": null,
+   "actualWinner": null,
+   "correct": null
+  },
+  {
+   "gamePk": 849814,
+   "date": "2026-10-21",
+   "gameTime": "2026-10-21 08:00 (UTC+8)",
+   "away": "克里夫蘭守護者",
+   "home": "坦帕灣光芒",
+   "snapshots": [
+    {
+     "at": "2026-10-16 13:24 (UTC+8)",
+     "model": "v2：Log5縮回(0.250)、主場+0.082、先發ERA×0.137+WHIP×0.606（拉回40局）",
+     "homeWinProb": 0.5368,
+     "steps": {
+      "standings": 1.6,
+      "home": 2.1,
+      "starter": 0.0
+     },
+     "starterUsed": false,
+     "starterStatus": "none",
+     "hasStarters": false,
      "homeStarter": null,
      "awayStarter": null
     }
