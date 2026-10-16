@@ -127,7 +127,7 @@ async function nbaGames(){
     // 例行賽還沒開打：顯示開幕賽程
     const o = (await Promise.all(["20261020","20261021","20261022"].map(sbd))).map(x => x || {events:[]});
     up = o.flatMap(r=>r.events||[]).filter(e => e.season.type===2 && e.status.type.state==="pre");
-    note = '<p class="note">例行賽 10/21（台灣時間）開打。以下為開幕賽程，兩隊都還沒有本季戰績，預測目前只依主場優勢，開打後會隨戰績更新。</p>';
+    note = '<p class="note">例行賽 10/21（台灣時間）開打。以下為開幕賽程，兩隊都還沒有本季戰績，預測目前依上一季實力加主場優勢，開打後會逐步改看本季戰績。</p>';
   }
   NALL = all.concat(up);
   await nbaInjuries();
