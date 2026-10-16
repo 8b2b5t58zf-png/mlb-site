@@ -343,3 +343,4 @@ body.view-about #mlb-main,body.view-about #nba-main{display:none}
 .empty-card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:24px;font-size:13px;color:#8b949e;text-align:center}
 #predict>.po-note,#nba-predict>.po-note{margin-top:-4px}  /* 列表 gap 12px − 4px = 8px */
 .tbd-note{text-wrap:balance} .tbd-note .nw{white-space:nowrap}
+.tbd-note{font-size:12px} #predict>.tbd-note,#nba-predict>.tbd-note{margin-top:-4px}
