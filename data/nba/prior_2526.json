@@ -1,0 +1,247 @@
+{
+ "season": "2025-26",
+ "source": "ESPN site.api, /workspace/analysis/nba_games.json",
+ "formula": "prior=.5+(prior_pyth-.5)*0.6, exp 14",
+ "teams": {
+  "25": {
+   "team_id": "25",
+   "pf": 9760,
+   "pa": 8846,
+   "games": 82,
+   "prior_pyth": 0.7984,
+   "prior": 0.6791
+  },
+  "10": {
+   "team_id": "10",
+   "pf": 9449,
+   "pa": 9021,
+   "games": 82,
+   "prior_pyth": 0.6568,
+   "prior": 0.5941
+  },
+  "13": {
+   "team_id": "13",
+   "pf": 9540,
+   "pa": 9396,
+   "games": 82,
+   "prior_pyth": 0.553,
+   "prior": 0.5318
+  },
+  "9": {
+   "team_id": "9",
+   "pf": 9398,
+   "pa": 9444,
+   "games": 82,
+   "prior_pyth": 0.4829,
+   "prior": 0.4898
+  },
+  "18": {
+   "team_id": "18",
+   "pf": 9673,
+   "pa": 9143,
+   "games": 83,
+   "prior_pyth": 0.6876,
+   "prior": 0.6126
+  },
+  "5": {
+   "team_id": "5",
+   "pf": 9801,
+   "pa": 9464,
+   "games": 82,
+   "prior_pyth": 0.6201,
+   "prior": 0.572
+  },
+  "30": {
+   "team_id": "30",
+   "pf": 9513,
+   "pa": 9117,
+   "games": 82,
+   "prior_pyth": 0.6446,
+   "prior": 0.5867
+  },
+  "17": {
+   "team_id": "17",
+   "pf": 8686,
+   "pa": 9505,
+   "games": 82,
+   "prior_pyth": 0.2207,
+   "prior": 0.3324
+  },
+  "19": {
+   "team_id": "19",
+   "pf": 9491,
+   "pa": 9439,
+   "games": 82,
+   "prior_pyth": 0.5192,
+   "prior": 0.5115
+  },
+  "14": {
+   "team_id": "14",
+   "pf": 9911,
+   "pa": 9720,
+   "games": 82,
+   "prior_pyth": 0.5677,
+   "prior": 0.5406
+  },
+  "1": {
+   "team_id": "1",
+   "pf": 9714,
+   "pa": 9516,
+   "games": 82,
+   "prior_pyth": 0.5716,
+   "prior": 0.5429
+  },
+  "28": {
+   "team_id": "28",
+   "pf": 9400,
+   "pa": 9168,
+   "games": 82,
+   "prior_pyth": 0.5866,
+   "prior": 0.552
+  },
+  "2": {
+   "team_id": "2",
+   "pf": 9418,
+   "pa": 8787,
+   "games": 82,
+   "prior_pyth": 0.7253,
+   "prior": 0.6352
+  },
+  "20": {
+   "team_id": "20",
+   "pf": 9502,
+   "pa": 9517,
+   "games": 82,
+   "prior_pyth": 0.4945,
+   "prior": 0.4967
+  },
+  "4": {
+   "team_id": "4",
+   "pf": 9537,
+   "pa": 9964,
+   "games": 82,
+   "prior_pyth": 0.3513,
+   "prior": 0.4108
+  },
+  "8": {
+   "team_id": "8",
+   "pf": 9657,
+   "pa": 8988,
+   "games": 82,
+   "prior_pyth": 0.7321,
+   "prior": 0.6392
+  },
+  "29": {
+   "team_id": "29",
+   "pf": 9403,
+   "pa": 9896,
+   "games": 82,
+   "prior_pyth": 0.3284,
+   "prior": 0.397
+  },
+  "3": {
+   "team_id": "3",
+   "pf": 9473,
+   "pa": 9842,
+   "games": 82,
+   "prior_pyth": 0.3694,
+   "prior": 0.4216
+  },
+  "15": {
+   "team_id": "15",
+   "pf": 9072,
+   "pa": 9581,
+   "games": 82,
+   "prior_pyth": 0.3177,
+   "prior": 0.3906
+  },
+  "27": {
+   "team_id": "27",
+   "pf": 9258,
+   "pa": 10240,
+   "games": 82,
+   "prior_pyth": 0.196,
+   "prior": 0.3176
+  },
+  "26": {
+   "team_id": "26",
+   "pf": 9642,
+   "pa": 10333,
+   "games": 82,
+   "prior_pyth": 0.2751,
+   "prior": 0.365
+  },
+  "12": {
+   "team_id": "12",
+   "pf": 9329,
+   "pa": 9236,
+   "games": 82,
+   "prior_pyth": 0.535,
+   "prior": 0.521
+  },
+  "6": {
+   "team_id": "6",
+   "pf": 9358,
+   "pa": 9810,
+   "games": 82,
+   "prior_pyth": 0.3407,
+   "prior": 0.4044
+  },
+  "24": {
+   "team_id": "24",
+   "pf": 9939,
+   "pa": 9269,
+   "games": 83,
+   "prior_pyth": 0.7265,
+   "prior": 0.6359
+  },
+  "21": {
+   "team_id": "21",
+   "pf": 9232,
+   "pa": 9112,
+   "games": 82,
+   "prior_pyth": 0.5457,
+   "prior": 0.5274
+  },
+  "23": {
+   "team_id": "23",
+   "pf": 9102,
+   "pa": 9922,
+   "games": 82,
+   "prior_pyth": 0.2301,
+   "prior": 0.3381
+  },
+  "22": {
+   "team_id": "22",
+   "pf": 9469,
+   "pa": 9493,
+   "games": 82,
+   "prior_pyth": 0.4911,
+   "prior": 0.4947
+  },
+  "16": {
+   "team_id": "16",
+   "pf": 9676,
+   "pa": 9401,
+   "games": 82,
+   "prior_pyth": 0.5996,
+   "prior": 0.5597
+  },
+  "11": {
+   "team_id": "11",
+   "pf": 9219,
+   "pa": 9874,
+   "games": 82,
+   "prior_pyth": 0.2767,
+   "prior": 0.366
+  },
+  "7": {
+   "team_id": "7",
+   "pf": 10010,
+   "pa": 9588,
+   "games": 82,
+   "prior_pyth": 0.6463,
+   "prior": 0.5878
+  }
+ }
+}

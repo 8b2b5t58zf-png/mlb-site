@@ -28,17 +28,21 @@ PHX:["鳳凰城太陽","太陽"],POR:["波特蘭拓荒者","拓荒者"],SAC:["�
 const ntn = t => (NZH[t.abbreviation]||[t.displayName])[0];
 const nts = t => (NZH[t.abbreviation]||[,t.shortDisplayName||t.displayName])[1];
 
-// 模型（見 /workspace/nba/model.md）：實力＝勝率50%＋畢氏勝率(指數14)50%，依場數往 .500 拉回 g/(g+5)；Log5；主場 logit +0.221（2025-26 例行賽主場勝率 55.5%）
-const NM = {exp:14, k:5, hca:0.221, minG:10};
+// 模型 blend_v1（見 /workspace/analysis/nba_early_report.md）：上一季畢氏(14)往 .500 拉回 ×0.6 當起點，
+// 本季實力＝勝率50%＋畢氏勝率(指數14)50%，依場數混合 w=g/(g+10)；Log5（夾 1%～99%）；主場 logit +0.221
+const NM = {exp:14, k:10, r:0.6, hca:0.221, minG:10, ver:"blend_v1"};
 const NT = {};   // 球隊 id → {w,l,pf,pa,g,abbr,...}
-function nStrength(t){
-  if(!t || !t.g) return 0.5;
-  const py = t.pf**NM.exp/(t.pf**NM.exp + t.pa**NM.exp), r = 0.5*t.w/t.g + 0.5*py;
-  return 0.5 + (r-0.5)*t.g/(t.g+NM.k);
+let NPRIOR = {}; // 球隊 id → 上一季（2025-26 例行賽）拉回後實力，data/nba/prior_2526.json
+async function nbaPrior(){ try{ const r = await fetch("data/nba/prior_2526.json?v=1"); if(r.ok){ const d = await r.json(); for(const [id,t] of Object.entries(d.teams)) NPRIOR[id] = 0.5 + (t.prior_pyth-0.5)*NM.r; } }catch(e){} }
+function nStrength(t, id){
+  const pr = NPRIOR[id] ?? 0.5;
+  if(!t || !t.g) return pr;
+  const py = t.pf**NM.exp/(t.pf**NM.exp + t.pa**NM.exp), cur = 0.5*t.w/t.g + 0.5*py, w = t.g/(t.g+NM.k);
+  return w*cur + (1-w)*pr;
 }
-function nModel(hId, aId){
-  const h = nStrength(NT[hId]), a = nStrength(NT[aId]);
-  const q1 = log5(h, a), q2 = sig(logit(q1) + NM.hca);
+function nModel(hId, aId, neutral){
+  const h = nStrength(NT[hId], hId), a = nStrength(NT[aId], aId);
+  const q1 = Math.min(0.99, Math.max(0.01, log5(h, a))), q2 = sig(logit(q1) + (neutral ? 0 : NM.hca));
   const R1 = Math.round(q1*1000), F = Math.round(q2*1000);
   return {d1:(R1-500)/10, d2:(F-R1)/10, F:F/10};
 }
@@ -81,15 +85,15 @@ let NALL = [];   // 近期所有賽程（判斷背靠背：前 36 小時內同�
 function nbaCard(ev){
   const c = ev.competitions[0], H = c.competitors.find(x=>x.homeAway==="home"), A = c.competitors.find(x=>x.homeAway==="away");
   const th = NT[H.team.id] || {g:0,w:0,l:0}, ta = NT[A.team.id] || {g:0,w:0,l:0};
-  const m = nModel(H.team.id, A.team.id), hp = Math.round(m.F), ap = 100-hp;
+  const m = nModel(H.team.id, A.team.id, c.neutralSite), hp = Math.round(m.F), ap = 100-hp;
   const favHome = hp >= ap, fp = Math.max(hp, ap), fav = favHome ? H.team : A.team, oth = favHome ? A.team : H.team;
   const early = nEarly(new Date(ev.date)), [tc, tl] = nTier(fp, early), k = favHome ? 1 : -1, s1 = k*m.d1, s2 = k*m.d2;
   const small = th.g < NM.minG || ta.g < NM.minG;
   const big = fp === 50 ? `五五波：雙方各 <span class="num">50%</span>` : `${nWord(fp, early)}：${nts(fav)} <span class="num">${fp}%</span>`;
-  const head = fp === 50 ? "兩隊勢均力敵，接近五五波" : !th.g && !ta.g ? "還沒有本季戰績，目前只依主場判斷" : Math.abs(m.d1) >= Math.abs(m.d2) ? `${nts(m.d1>0?H.team:A.team)}本季表現較好，是看好主因` : "兩隊實力接近，主場可能是關鍵";
+  const head = fp === 50 ? "兩隊勢均力敵，接近五五波" : !th.g && !ta.g ? `還沒有本季戰績，依上一季實力估算${Math.abs(m.d1)>=1?`，${nts(m.d1>0?H.team:A.team)}上季較強`:""}` : Math.abs(m.d1) >= Math.abs(m.d2) ? `${nts(m.d1>0?H.team:A.team)}整體實力較好，是看好主因` : "兩隊實力接近，主場可能是關鍵";
   const li = (v, txt) => `<li><span class="dl ${dCls(v)}">${dTxt(v)}</span><span>${txt}</span></li>`;
   const pyd = t => t.g ? (t.pf - t.pa) / t.g : null;
-  const t1 = !th.g && !ta.g ? "戰績：兩隊本季都還沒出賽，未調整" : Math.abs(m.d1) < 1 ? "戰績：兩隊本季表現相近" : `戰績：${nts(m.d1>0?H.team:A.team)}本季表現較${nts(m.d1>0?A.team:H.team)}好`;
+  const t1 = !th.g && !ta.g ? (Math.abs(m.d1) < 1 ? "實力：兩隊本季未出賽，上一季實力相近" : `實力：兩隊本季未出賽，${nts(m.d1>0?H.team:A.team)}上一季較強`) : Math.abs(m.d1) < 1 ? "戰績：兩隊本季表現相近" : `戰績：${nts(m.d1>0?H.team:A.team)}本季表現較${nts(m.d1>0?A.team:H.team)}好`;
   const c1 = (th.g || ta.g) ? chip("戰績", `${ta.w}-${ta.l}`, `${th.w}-${th.l}`, bt(ta.g?ta.w/ta.g:0, th.g?th.w/th.g:0)) + chip("場均分差", ta.g?sgn(pyd(ta).toFixed(1)):"-", th.g?sgn(pyd(th).toFixed(1)):"-", bt(pyd(ta), pyd(th))) : "";
   const inj = side => (NINJ[side.team.id]||[]).filter(x=>x.status!=="Active").slice(0,4).map(x=>`${npn(x.athlete.displayName)}（${INJ_ZH[x.status]||x.status}）`).join("、");
   const ia = NINJ ? inj(A) : "", ih = NINJ ? inj(H) : "";
@@ -203,9 +207,11 @@ async function nbaHit(){
   const el = document.getElementById("nba-hit");
   const r = await fetch("data/nba-predictions.json?t=" + Date.now()); if(!r.ok) throw new Error("nba-predictions");
   const d = await r.json(), GOAL = 50;
-  const done = d.records.filter(x => x.official && x.correct !== null), n = done.length, ok = done.filter(x => x.correct).length;
+  const isNew = x => (x.official||{}).model === NM.ver, old = d.records.filter(x => x.official && x.correct !== null && !isNew(x)), oOk = old.filter(x=>x.correct).length;
+  const done = d.records.filter(x => x.official && x.correct !== null && isNew(x)), n = done.length, ok = done.filter(x => x.correct).length;
   let html = n >= GOAL ? `<div class="hr-big">${Math.round(ok/n*100)}%</div><div class="hr-sub">NBA 模型命中率（共 ${n} 場）</div>`
-    : `<div class="hr-big muted">累積中</div><div class="hr-prog"><div class="hr-bar"><div style="width:${n/GOAL*100}%"></div></div><span>v1：${n} / ${GOAL} 場</span></div><div class="hr-ref">滿 ${GOAL} 場正式預測後顯示命中率</div>`;
+    : `<div class="hr-big muted">累積中</div><div class="hr-prog"><div class="hr-bar"><div style="width:${n/GOAL*100}%"></div></div><span>${NM.ver}：${n} / ${GOAL} 場</span></div><div class="hr-ref">滿 ${GOAL} 場正式預測後顯示命中率</div>`;
+  if(old.length) html += `<p class="note">舊版模型 v1 另計：${old.length} 場猜對 ${oOk} 場</p>`;
   html += `<p class="hr-upd">最後更新：${fmtT(d.updated)}（台灣時間）</p>`;
   if(!d.records.length){ el.innerHTML = html + '<p class="note">2026-27 例行賽 10/21（台灣時間）開打，開打前會開始記錄。</p>'; return; }
   html += '<div class="tblwrap" style="overflow-x:auto"><table class="hrt"><tr><th>比賽時間</th><th>對戰（客 @ 主）</th><th>預測</th><th>勝率</th><th class="dk">實際比分</th><th class="dk">結果</th></tr>';
@@ -216,7 +222,7 @@ async function nbaHit(){
   el.innerHTML = html + "</table></div>";
 }
 async function secNbaStand(){ await nbaStandings(); }
-async function secNbaGames(){ if(!Object.keys(NT).length) await nbaStandings(); await nbaGames(); }
+async function secNbaGames(){ if(!Object.keys(NT).length) await nbaStandings(); await nbaPrior(); await nbaGames(); }
 async function loadNBA(){
   if(nbaLoaded) return; nbaLoaded = true;
   await runSection(["nba-standings"], secNbaStand);

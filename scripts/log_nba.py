@@ -8,7 +8,7 @@ ST = "https://site.api.espn.com/apis/v2/sports/basketball/nba/standings?seasonty
 TZ = timezone(timedelta(hours=8))
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT = os.path.join(ROOT, "data", "nba-predictions.json")
-MODEL = "n1：勝率50%+畢氏(14)50%、拉回g/(g+5)、Log5、主場logit+0.221"
+MODEL = "blend_v1"   # 上季畢氏(14)拉回×0.6 混本季（勝率50%+畢氏50%），w=g/(g+10)；Log5 夾1~99%；主場logit+0.221
 UA = {"User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148"}
 def get(u): return json.load(urllib.request.urlopen(urllib.request.Request(u, headers=UA), timeout=30))
 
@@ -33,13 +33,15 @@ for conf in ST_DATA["children"]:
         s = {x["name"]: x.get("value") for x in e["stats"]}
         w, l = int(s.get("wins") or 0), int(s.get("losses") or 0)
         T[e["team"]["id"]] = dict(w=w, l=l, g=w + l, pf=s.get("pointsFor") or 0, pa=s.get("pointsAgainst") or 0)
-def strength(t):
-    if not t or not t["g"]: return 0.5
-    py = t["pf"]**14 / (t["pf"]**14 + t["pa"]**14); r = 0.5*t["w"]/t["g"] + 0.5*py
-    return 0.5 + (r - 0.5) * t["g"] / (t["g"] + 5)
-def model(h, a):
-    h, a = strength(T.get(h)), strength(T.get(a))
-    q = (h - h*a) / (h + a - 2*h*a); q2 = 1/(1 + math.exp(-(math.log(q/(1-q)) + 0.221)))
+PRIOR = {k: 0.5 + (v["prior_pyth"] - 0.5) * 0.6 for k, v in saved("prior_2526.json")["teams"].items()}
+def strength(t, tid):
+    pr = PRIOR.get(tid, 0.5)
+    if not t or not t["g"]: return pr
+    py = t["pf"]**14 / (t["pf"]**14 + t["pa"]**14); cur = 0.5*t["w"]/t["g"] + 0.5*py; w = t["g"] / (t["g"] + 10)
+    return w*cur + (1 - w)*pr
+def model(h, a, neutral=False):
+    h, a = strength(T.get(h), h), strength(T.get(a), a)
+    q = min(0.99, max(0.01, (h - h*a) / (h + a - 2*h*a))); q2 = 1/(1 + math.exp(-(math.log(q/(1-q)) + (0 if neutral else 0.221))))
     return round(q2, 4)
 
 now = datetime.now(timezone.utc)
@@ -63,7 +65,7 @@ for e in evs.values():
                 "away": tn(A["team"]), "home": tn(H["team"]), "snapshots": [], "official": None,
                 "predictedWinner": None, "final": None, "actualWinner": None, "correct": None}
         if r["official"] is None:
-            p = model(H["team"]["id"], A["team"]["id"])
+            p = model(H["team"]["id"], A["team"]["id"], c.get("neutralSite", False))
             r["latestStandingsAt"] = ST_AT   # 開打前最後一次所用戰績的抓取時間
             if not r["snapshots"] or r["snapshots"][-1]["homeWinProb"] != p:
                 r["snapshots"].append({"at": nowtw(), "model": MODEL, "homeWinProb": p, "standingsFetchedAt": ST_AT,
