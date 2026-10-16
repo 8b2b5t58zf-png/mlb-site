@@ -529,13 +529,13 @@ async function secHit(){
   const old = vers.filter(v=>v!==MODEL_V).map(v=>`舊版 ${v}：${off.filter(x=>ver(x)===v).length} 場，不列入正式命中率`);
   if(old.length) html += `<div class="hr-vers">${old.join("<br>")}</div>`;
   html += `<p class="hr-upd">最後更新：${fmtT(d.updated)}（台灣時間）</p>`;
-  html += '<div class="tblwrap" style="overflow-x:auto"><table class="hrt"><tr><th>比賽時間</th><th>對戰（客 @ 主）</th><th>模型</th><th>預測</th><th class="dk">預測勝率</th><th class="dk">實際比分</th><th class="dk">結果</th></tr>';
+  html += '<div class="tblwrap" style="overflow-x:auto"><table class="hrt"><tr><th>比賽時間</th><th>對戰（客 @ 主）</th><th class="md">模型</th><th>預測</th><th class="dk">預測勝率</th><th class="dk">實際比分</th><th class="dk">結果</th></tr>';
   for(const x of d.records.slice().reverse().slice(0,15)){
     const snap = x.official || x.snapshots[x.snapshots.length-1], hp = snap.homeWinProb;
     const pw = hp >= 0.5 ? x.home : x.away, p = Math.max(hp, 1-hp);
     const tag = x.official ? "" : `<div class="tent">未開賽・預測會更新</div>`;
     const v = (snap.model||"").slice(0,2);
-    html += `<tr><td class="nw">${fmtD(x.gameTime)}</td><td class="nw mu">${short(x.away)} @ ${short(x.home)}</td><td><span class="vp ${v}">${v}</span></td><td class="nw">${short(pw)}${x.correct==null?"":" "+resMark(x.correct)}${tag}${noSp(x.official) ? `<div class="nosp">${WHY_TXT.noSp}</div>` : ""}</td><td class="dk">${Math.round(p*100)}%</td><td class="dk">${x.final || "尚未開打／進行中"}</td><td class="dk">${x.correct === null ? "待賽" : x.correct ? "猜對" : "猜錯"}</td></tr>`;
+    html += `<tr><td class="nw">${fmtD(x.gameTime)}</td><td class="nw mu">${short(x.away)} @ ${short(x.home)}</td><td class="md"><span class="vp ${v}">${v}</span></td><td class="nw">${short(pw)}${x.correct==null?"":" "+resMark(x.correct)}${tag}${noSp(x.official) ? `<div class="nosp">${WHY_TXT.noSp}</div>` : ""}</td><td class="dk">${Math.round(p*100)}%</td><td class="dk">${x.final || "尚未開打／進行中"}</td><td class="dk">${x.correct === null ? "待賽" : x.correct ? "猜對" : "猜錯"}</td></tr>`;
   }
   el.innerHTML = html + "</table></div>";
 }

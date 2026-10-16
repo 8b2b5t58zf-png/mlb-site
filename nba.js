@@ -228,7 +228,7 @@ async function nbaHit(){
   html += '<div class="tblwrap" style="overflow-x:auto"><table class="hrt"><tr><th>比賽時間</th><th>對戰（客 @ 主）</th><th>預測</th><th>勝率</th><th class="dk">實際比分</th><th class="dk">結果</th></tr>';
   for(const x of d.records.slice().reverse().slice(0,15)){
     const sn = x.official || x.snapshots[x.snapshots.length-1], hp = sn.homeWinProb, pw = hp >= .5 ? x.home : x.away;
-    html += `<tr><td class="nw">${fmtD(x.gameTime)}</td><td class="nw">${x.away} @ ${x.home}</td><td class="nw">${pw}${x.correct==null?"":" "+resMark(x.correct)}${x.official?"":`<div class="tent">未開賽・預測會更新</div>`}</td><td class="num">${Math.round(Math.max(hp,1-hp)*100)}%</td><td class="dk">${x.final||"尚未開打／進行中"}</td><td class="dk">${x.correct===null?"待賽":x.correct?"猜對":"猜錯"}</td></tr>`;
+    html += `<tr><td class="nw">${fmtD(x.gameTime)}</td><td class="nw mu">${x.away} @ ${x.home}</td><td class="nw">${pw}${x.correct==null?"":" "+resMark(x.correct)}${x.official?"":`<div class="tent">未開賽・預測會更新</div>`}</td><td class="num">${Math.round(Math.max(hp,1-hp)*100)}%</td><td class="dk">${x.final||"尚未開打／進行中"}</td><td class="dk">${x.correct===null?"待賽":x.correct?"猜對":"猜錯"}</td></tr>`;
   }
   el.innerHTML = html + "</table></div>";
 }
