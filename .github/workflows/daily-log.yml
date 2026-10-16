@@ -1,7 +1,8 @@
-name: 每小時 MLB 預測紀錄
+name: MLB 預測紀錄（每 15 分鐘）
+concurrency: { group: mlb-log, cancel-in-progress: false }
 on:
   schedule:
-    - cron: "15 * * * *"
+    - cron: "7,22,37,52 * * * *"
   workflow_dispatch:
 permissions:
   contents: write
