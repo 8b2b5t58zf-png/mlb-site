@@ -1,5 +1,5 @@
 {
- "updated": "2026-10-16 13:24 (UTC+8)",
+ "updated": "2026-10-16 13:29 (UTC+8)",
  "records": [
   {
    "gamePk": 849818,
@@ -132,7 +132,8 @@
     "model": "v1：勝率50%+畢氏勝率50%、Log5、主場+4%",
     "at": "2026-10-15 15:56 (UTC+8)",
     "note": "v1 舊紀錄，視為正式預測"
-   }
+   },
+   "status": "cancelled"
   },
   {
    "gamePk": 849816,
@@ -197,7 +198,8 @@
    "predictedWinner": null,
    "final": null,
    "actualWinner": null,
-   "correct": null
+   "correct": null,
+   "status": "cancelled"
   },
   {
    "gamePk": 849815,

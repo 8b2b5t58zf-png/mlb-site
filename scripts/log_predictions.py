@@ -69,6 +69,15 @@ for r in recs.values():
 ONLY = os.environ.get("ONLY_PKS", "").strip()   # 15 分鐘輕量檢查發現先發有變時，只更新這幾場
 d = get(f"/schedule?sportId=1&gamePks={ONLY}&hydrate=probablePitcher") if ONLY else get(f"/schedule?sportId=1&startDate={(now-timedelta(7)).date()}&endDate={(now+timedelta(7)).date()}&hydrate=probablePitcher")
 added = snaps = frozen = filled = unfrozen = 0
+# 取消：完整模式下，排程範圍內、從未開打（沒有結果）的紀錄，賽程查不到這場 → 再單場確認一次，查不到就標 cancelled（快照保留）
+SEEN = {x["gamePk"] for dt in d.get("dates", []) for x in dt["games"]}
+cancelled = 0
+if not ONLY:
+    lo, hi = (now-timedelta(7)).astimezone(TZ).strftime("%Y-%m-%d"), (now+timedelta(7)).astimezone(TZ).strftime("%Y-%m-%d")
+    for r in recs.values():
+        if r["gamePk"] in SEEN or r.get("final") or r.get("status") == "cancelled" or not (lo <= r["gameTime"][:10] <= hi): continue
+        if not get(f"/schedule?sportId=1&gamePk={r['gamePk']}").get("dates"):
+            r["status"] = "cancelled"; cancelled += 1
 for g in (x for dt in d.get("dates", []) for x in dt["games"]):
     pk, H, A = g["gamePk"], g["teams"]["home"], g["teams"]["away"]
     state = g["status"]["abstractGameState"]
@@ -123,4 +132,4 @@ new = {"records": sorted(recs.values(), key=lambda r: r["gameTime"])}
 if json.dumps(new["records"], sort_keys=True, ensure_ascii=False) != ORIG or "updated" not in data:
     new = {"updated": nowtw(), **new}
     json.dump(new, open(OUT, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
-print(f"新比賽 {added}、新快照 {snaps}、固定正式預測 {frozen}、補上結果 {filled}、解除過早鎖定 {unfrozen}；總共 {len(recs)} 場")
+print(f"新比賽 {added}、新快照 {snaps}、固定正式預測 {frozen}、補上結果 {filled}、解除過早鎖定 {unfrozen}、取消 {cancelled}；總共 {len(recs)} 場")

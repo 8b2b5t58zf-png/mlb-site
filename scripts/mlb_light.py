@@ -12,7 +12,7 @@ def emit(pks):
 recs = json.load(open(os.path.join(ROOT, "data", "predictions.json"), encoding="utf-8"))["records"]
 cand = {}
 for r in recs:
-    if r.get("official") or not r.get("snapshots"): continue
+    if r.get("official") or not r.get("snapshots") or r.get("status") == "cancelled": continue
     t = datetime.strptime(r["gameTime"][:16], "%Y-%m-%d %H:%M").replace(tzinfo=TZ)
     last = r["snapshots"][-1]
     if now < t <= now + timedelta(hours=4) and last.get("starterStatus") != "both": cand[r["gamePk"]] = last
