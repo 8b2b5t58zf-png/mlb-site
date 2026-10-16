@@ -1,5 +1,5 @@
 {
- "updated": "2026-10-16 06:18 (UTC+8)",
+ "updated": "2026-10-16 09:20 (UTC+8)",
  "records": [
   {
    "gamePk": 849818,
@@ -147,6 +147,33 @@
     "at": "2026-10-15 15:56 (UTC+8)",
     "note": "v1 舊紀錄，視為正式預測"
    }
+  },
+  {
+   "gamePk": 849806,
+   "date": "2026-10-19",
+   "gameTime": "2026-10-19 08:00 (UTC+8)",
+   "away": "洛杉磯道奇",
+   "home": "密爾瓦基釀酒人",
+   "snapshots": [
+    {
+     "at": "2026-10-16 09:20 (UTC+8)",
+     "model": "v2：Log5縮回(0.250)、主場+0.082、先發ERA×0.137+WHIP×0.606（拉回40局）",
+     "homeWinProb": 0.5235,
+     "steps": {
+      "standings": 0.3,
+      "home": 2.1,
+      "starter": 0.0
+     },
+     "starterUsed": false,
+     "homeStarter": null,
+     "awayStarter": null
+    }
+   ],
+   "official": null,
+   "predictedWinner": null,
+   "final": null,
+   "actualWinner": null,
+   "correct": null
   }
  ]
 }
