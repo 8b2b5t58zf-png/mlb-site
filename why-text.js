@@ -93,7 +93,8 @@ const hhmm = d => new Intl.DateTimeFormat("en-GB",{timeZone:"Asia/Taipei",hour12
 const CONF = {strong:"高", lean:"中", toss:"低"};
 let CC_N = 0;
 // items: [{k:名稱, t:隊名, v:對主隊的百分點, sfx:句型}]，fav: 看好方是否主隊
-function mainReason(items, favHome, wait){
+function mainReason(items, favHome, wait, fp){
+  if(fp != null && fp < 51) return "兩隊勝率接近" + (wait ? "（先發公布後會重算）" : "");
   const k = favHome ? 1 : -1, xs = items.filter(x => x.v != null).map(x => ({...x, f:k*x.v}));
   let c = xs.filter(x => x.f > 0).sort((a,b) => b.f - a.f);
   if(!c.length) c = xs.slice().sort((a,b) => Math.abs(b.v) - Math.abs(a.v));
@@ -101,22 +102,37 @@ function mainReason(items, favHome, wait){
   let s = c.length > 1 && Math.abs(Math.abs(c[0].f) - Math.abs(c[1].f)) < 0.5 ? `${c[0].k}與${c[1].k}影響相近` : `主因：${c[0].t}${c[0].sfx}`;
   return s + (wait ? "（先發公布後會重算）" : "");
 }
-function ccCard(o){   // o: {lg, ser, time, tag, A, H, conf, ap, hp, favHome, reason, body, extraCls}
-  const id = `cc-${++CC_N}`;
+function ccCard(o){   // spec-compact v1
+  const id = `cc-${++CC_N}`, cf = `<span class="tier ${o.tc} cc-conf">信心 ${o.conf}</span>`;
   return `<div class="pcard cc">
   <button type="button" class="cc-head" aria-expanded="false" aria-controls="${id}" data-lg="${o.lg}">
-    <span class="cc-r1"><span class="cc-ser">${o.ser||""}</span><span class="cc-rt"><span class="cc-time num">${o.time}</span>${o.tag?`<span class="cc-tag">${o.tag}</span>`:""}</span></span>
-    <span class="cc-r2"><span class="cc-tm">${o.A}</span><span class="cc-conf">信心 ${o.conf}</span><span class="cc-tm r">${o.H}</span></span>
-    <span class="cc-r3"><span class="num cc-p">${o.ap}%</span><span class="cc-bar"><span class="${o.favHome?"oth":"fav"}" style="width:${o.ap}%"></span><span class="${o.favHome?"fav":"oth"}" style="width:${o.hp}%"></span></span><span class="num cc-p">${o.hp}%</span></span>
-    <span class="cc-r4"><span class="cc-why">${o.reason}</span><span class="cc-more">看分析 ›</span></span>
+    <span class="cc-r1"><span class="cc-ser">${o.ser||""}</span><span class="cc-rt">${o.tag?`<span class="cc-tag">${o.tag}</span>`:""}<span class="cc-c1">${cf}</span></span></span>
+    <span class="cc-r2"><span class="cc-tm">${o.A}</span><span class="cc-at">@</span><span class="cc-tm r">${o.H}</span><span class="cc-c2">${cf}</span></span>
+    <span class="cc-r3"><span class="num cc-p">${o.ap}%</span><span class="cc-bar"><span class="${o.favHome?"oth":"fav"}" style="width:${o.ap}%"></span><span class="${o.favHome?"fav":"oth"}" style="width:${o.hp}%"></span></span><span class="num cc-p r">${o.hp}%</span></span>
+    ${o.reason?`<span class="cc-why">${o.reason}</span>`:""}
+    <span class="cc-r5"><span class="cc-time"><span class="num">${o.time}</span> 台灣時間</span><span class="cc-more">看分析 ›</span></span>
   </button>
-  <div class="cc-body" id="${id}" hidden>${o.body}</div></div>`;
+  <div class="cc-body" id="${id}" inert><div class="cc-in">${o.body}</div></div></div>`;
+}
+function ccSet(b, open){
+  const p = document.getElementById(b.getAttribute("aria-controls"));
+  b.setAttribute("aria-expanded", open); b.querySelector(".cc-more").textContent = open ? "收起 ‹" : "看分析 ›";
+  p.inert = !open; p.style.maxHeight = p.scrollHeight + "px";
+  if(open){ p.classList.add("open"); setTimeout(() => { if(b.getAttribute("aria-expanded")==="true") p.style.maxHeight = "none"; }, 220); }
+  else { p.offsetHeight; p.classList.remove("open"); p.style.maxHeight = "0px"; }
 }
 document.addEventListener("click", e => {
   const b = e.target.closest && e.target.closest(".cc-head"); if(!b) return;
   const open = b.getAttribute("aria-expanded") !== "true";
-  document.querySelectorAll('.cc-head[aria-expanded="true"]').forEach(x => { if(x !== b){ x.setAttribute("aria-expanded","false"); x.querySelector(".cc-more").textContent = "看分析 ›"; document.getElementById(x.getAttribute("aria-controls")).hidden = true; } });
-  b.setAttribute("aria-expanded", open); b.querySelector(".cc-more").textContent = open ? "收起 ‹" : "看分析 ›";
-  document.getElementById(b.getAttribute("aria-controls")).hidden = !open;
-  if(open) try{ if(window.goatcounter && window.goatcounter.count) window.goatcounter.count({path:`expand-${b.dataset.lg}`, title:"看分析展開", event:true}); }catch(_){}
+  document.querySelectorAll('.cc-head[aria-expanded="true"]').forEach(x => { if(x !== b) ccSet(x, false); });
+  ccSet(b, open);
+  if(open){ setTimeout(() => { if(b.getBoundingClientRect().top < 0) b.scrollIntoView({block:"nearest"}); }, 230);
+    try{ if(window.goatcounter && window.goatcounter.count) window.goatcounter.count({path:`expand-${b.dataset.lg}`, title:"看分析展開", event:true}); }catch(_){} }
+});
+
+// 說明列尾端的「看算法 ▾」：開關下方的算法說明
+document.addEventListener("click", e => {
+  const b = e.target.closest && e.target.closest(".algo-tog"); if(!b) return;
+  const d = document.getElementById(b.getAttribute("aria-controls")); d.open = !d.open;
+  b.setAttribute("aria-expanded", d.open); b.textContent = d.open ? "看算法 ▴" : "看算法 ▾";
 });

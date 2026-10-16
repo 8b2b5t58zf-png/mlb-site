@@ -118,12 +118,12 @@ function nbaCard(ev){
       {k:"上季實力", t:tm(m.d1), v:m.d1, sfx:"上季較強"},
       {k:"主場", t:nts(H.team), v:c.neutralSite?null:m.d2, sfx:"主場優勢"}]
     : [{k:"戰績", t:tm(m.d1), v:m.d1, sfx:"戰績較佳"},
-      {k:"主場", t:nts(H.team), v:c.neutralSite?null:m.d2, sfx:"主場優勢"}], favHome, false);
+      {k:"主場", t:nts(H.team), v:c.neutralSite?null:m.d2, sfx:"主場優勢"}], favHome, false, fp);
   const body = `${why}${ref}
     ${early && fp >= 70 ? '<div class="early-note">開季數據少，保守看待</div>' : ""}
     <div class="tier-row"><span class="tier ${tc}">${tl}</span>${fp!==50?`<span class="upset">${nts(oth)}仍有 ${100-fp}% 勝率</span>`:""}</div>
     ${NST_AT && Date.now() - NST_AT > NFRESH ? `<div class="upd">依據 ${twT(NST_AT)}（台灣時間）時的戰績</div>` : `<div class="upd">戰績更新：${twT(NST_AT || Date.now())}（台灣時間）</div>`}`;
-  return ccCard({lg:"nba", ser:"", time:hhmm(ev.date), tag: small ? "樣本不足" : "", A:nts(A.team), H:nts(H.team), conf:CONF[tc], ap, hp, favHome, reason, body});
+  return ccCard({lg:"nba", ser:"", time:hhmm(ev.date), tag: small ? "樣本不足" : "", A:nts(A.team), H:nts(H.team), conf:CONF[tc], tc, ap, hp, favHome, reason, body});
 }
 
 async function nbaGames(){

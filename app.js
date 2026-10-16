@@ -427,7 +427,7 @@ function renderPredict(games, isPast){
     const reason = mainReason([
       {k:"戰績", t:ts(m.d1>=0?H.team:A.team), v:m.d1, sfx:"戰績較佳"},
       {k:"主場", t:ts(H.team), v:m.d2, sfx:"主場優勢"},
-      m.used ? {k:"先發投手", t:ts(m.d3>=0?H.team:A.team), v:m.d3, sfx:"先發較佳"} : {v:null}], favHome, wait);
+      m.used ? {k:"先發投手", t:ts(m.d3>=0?H.team:A.team), v:m.d3, sfx:"先發較佳"} : {v:null}], favHome, wait, fp);
     const body = `${pitchRow(aP, hP, ap, hp, SPCHG)}
       ${v1note}${whyBlock(A.team, H.team, m, st, ap, hp, aP, hP, fav, fp)}
       <div class="tier-row"><span class="tier ${tc}">${tl}</span><span class="upset">${upset(A.team, H.team, ap, hp, aP, hP, fav, fp)}</span></div>
@@ -437,7 +437,7 @@ function renderPredict(games, isPast){
       <details class="algo"><summary>兩隊數據對比</summary>${compare(A.team, H.team, ap, hp)}</details>
       ${w ? `<div class="ref">${w}</div>` : ""}
       <div class="upd">最後更新：${tw(Date.now())}（台灣時間）</div>`;
-    html += ccCard({lg:"mlb", ser, time:hhmm(g.gameDate), tag: wait ? "等先發" : "先發已公布", A:ts(A.team), H:ts(H.team), conf:CONF[tc], ap:apct, hp:hpct, favHome, reason, body});
+    html += ccCard({lg:"mlb", ser, time:hhmm(g.gameDate), tag: wait ? "等先發" : "先發已公布", A:ts(A.team), H:ts(H.team), conf:CONF[tc], tc, ap:apct, hp:hpct, favHome, reason, body});
   }
   document.getElementById("predict").innerHTML = html || '<p class="note">MLB 目前休賽中</p>';
 }

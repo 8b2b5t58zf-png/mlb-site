@@ -209,7 +209,7 @@ article h3 .ah-s{display:block;white-space:nowrap}
 header .brand,header h1.brand{height:48px;margin:0;font-size:18px;gap:8px;line-height:48px}
 .brand .logo{width:24px;height:24px;padding:1px}
 .tagline,.tagline-sub,.tagline-link{display:none}
-body.tab-predict .tagline,body.tab-predict .tagline-sub,body.tab-predict .tagline-link{display:block}
+
 body.tab-predict header{padding-bottom:10px}
 .tagline{margin-top:0}
 .dtime{color:var(--text2);font-size:12px;margin:0 0 6px;background:none;padding:0;border:0}
@@ -228,7 +228,7 @@ body.tab-predict header{padding-bottom:10px}
 .pcard .why,article .hl{background:#1c232d;border:0}
 .pcard .why-k{border-top:0}
 .pcard th,.pcard td,article th,article td{border-bottom:0}
-.dgrp{grid-column:1/-1;font-size:12px;color:#8b949e;margin:4px 0 -4px;padding:0 2px}
+.dgrp{grid-column:1/-1;font-size:12px;line-height:18px;color:#8b949e;margin:0 0 -6px;padding:0 2px}
 .dgrp:first-child{margin-top:0}
 /* 信心標籤（10/16）：高＝金底黑字、中＝淡金底金字、低／五五波＝深灰底灰字，皆無框 */
 .tier.strong,.tier.lean,.tier.toss{border:0}
@@ -286,26 +286,39 @@ body.view-about #mlb-main,body.view-about #nba-main{display:none}
 .about-page b{color:#e6edf3}
 .about-back a{color:#d4af37;display:inline-block;padding:12px 0;min-height:44px}
 
-/* 精簡卡片（§24） */
+/* 精簡卡片（spec-compact v1） */
 .pcard.cc{padding:0;gap:0}
-.cc-head{all:unset;box-sizing:border-box;display:flex;flex-direction:column;gap:6px;width:100%;min-height:44px;padding:12px 14px;cursor:pointer;color:#e6edf3;-webkit-tap-highlight-color:transparent}
+.cc-head{all:unset;box-sizing:border-box;display:flex;flex-direction:column;gap:8px;width:100%;padding:12px 12px 0;cursor:pointer;color:#e6edf3;-webkit-tap-highlight-color:transparent}
 .cc-head:focus-visible{outline:2px solid #d4af37;outline-offset:-2px;border-radius:12px}
 .cc-head>span{display:flex;align-items:center;gap:8px;min-width:0}
-.cc-r1{justify-content:space-between;min-height:18px}
+.cc-r1{justify-content:space-between;min-height:20px}
 .cc-rt{display:flex;align-items:center;gap:6px;margin-left:auto;white-space:nowrap}
-.cc-time{font-size:12px;color:#8b949e}
-.cc-tag{font-size:11px;background:#1c232d;border-radius:4px;padding:0 6px;color:#8b949e}
-.cc-ser .ser-tag{margin:0}
+.cc-tag{font-size:11px;background:#1c232d;border-radius:4px;padding:0 6px;color:#8b949e;line-height:18px}
+.cc-conf.tier{font-size:11px;padding:0 8px;line-height:18px;white-space:nowrap}
+.cc-c2{display:none}
+@media(max-width:360px){ .cc-c1{display:none} .cc-c2{display:inline-flex;margin-left:8px} }
 .cc-r2{justify-content:space-between}
-.cc-tm{font-size:15px;font-weight:700;white-space:nowrap;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.cc-tm{font-size:15px;font-weight:700;color:#e6edf3;white-space:nowrap;flex:1;min-width:0}
 .cc-tm.r{text-align:right}
-.cc-conf{font-size:12px;color:#8b949e;white-space:nowrap;border:1px solid #262e39;border-radius:999px;padding:0 8px}
-.cc-p{font-size:13px;color:#c9d1d9;min-width:34px}
-.cc-r3 .cc-p:last-child{text-align:right}
+.cc-at{font-size:13px;color:#8b949e}
+.cc-r3{gap:6px!important}
+.cc-p{font-size:13px;color:#c9d1d9;width:40px;flex:none}
+.cc-p.r{text-align:right}
 .cc-bar{flex:1;display:flex;height:8px;border-radius:4px;overflow:hidden;gap:2px;background:var(--bar-oth)}
 .cc-bar .fav{background:#d4af37} .cc-bar .oth{background:var(--bar-oth)}
-.cc-r4{justify-content:space-between;font-size:12px;color:#8b949e}
-.cc-why{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.cc-more{white-space:nowrap;margin-left:auto}
-.cc-body{display:flex;flex-direction:column;gap:var(--sp-2);padding:0 14px 14px;border-top:1px solid #262e39;padding-top:12px}
-.cc-body[hidden]{display:none}
+.cc-head>.cc-why{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-size:13px;color:#8b949e;line-height:1.45}
+.cc-r5{justify-content:space-between;min-height:44px}
+.cc-time{font-size:12px;color:#8b949e;white-space:nowrap}
+.cc-more{font-size:13px;color:#e6edf3;white-space:nowrap;margin-left:auto;min-height:44px;display:flex;align-items:center}
+.cc-body{max-height:0;opacity:0;overflow:hidden;transition:max-height .2s ease,opacity .2s ease}
+.cc-body.open{opacity:1}
+.cc-in{display:flex;flex-direction:column;gap:var(--sp-2);padding:12px 12px 12px;border-top:1px solid #262e39}
+
+/* 預測分頁標題區縮短 */
+#sec-predict>h2,#nsec-predict>h2{font-size:18px;line-height:1.3;margin-bottom:4px}
+#sec-predict>.acc-line,#nsec-predict>.acc-line,#sec-predict>.day-sum,#sec-predict>.pnote,#nsec-predict>.pnote{font-size:12px;line-height:18px;margin:0 0 4px}
+.algo-tog{all:unset;cursor:pointer;color:var(--link);font-size:12px;margin-left:6px;white-space:nowrap}
+.algo-tog:focus-visible{outline:2px solid #d4af37}
+.algo-top>summary{display:none}
+.algo-top:not([open]){margin:0}
+.about-tag{color:#e6edf3}
