@@ -113,15 +113,17 @@ function nbaCard(ev){
     pyd(ta) && pyd(th) ? wf("diff", {a:nts(A.team), ad:pyd(ta), h:nts(H.team), hd:pyd(th)}, ["ad","hd"]) : "",
     rs,
   ], "nba");
-  return `<div class="pcard">${small?`<span class="wait-tag">樣本不足</span>`:""}
-    <div class="meta"><span class="nw">客 ${nts(A.team)}</span> @ <span class="nw">主 ${nts(H.team)}</span><br>${twT(ev.date)}（台灣時間）</div>
-    <div class="headline">${big}</div>
+  const lastSzn = (th.g + ta.g)/2 < 10, tm = v => nts((v>=0?H:A).team);
+  const reason = mainReason(lastSzn ? [
+      {k:"上季實力", t:tm(m.d1), v:m.d1, sfx:"上季較強"},
+      {k:"主場", t:nts(H.team), v:c.neutralSite?null:m.d2, sfx:"主場優勢"}]
+    : [{k:"戰績", t:tm(m.d1), v:m.d1, sfx:"戰績較佳"},
+      {k:"主場", t:nts(H.team), v:c.neutralSite?null:m.d2, sfx:"主場優勢"}], favHome, false);
+  const body = `${why}${ref}
     ${early && fp >= 70 ? '<div class="early-note">開季數據少，保守看待</div>' : ""}
     <div class="tier-row"><span class="tier ${tc}">${tl}</span>${fp!==50?`<span class="upset">${nts(oth)}仍有 ${100-fp}% 勝率</span>`:""}</div>
-    <div class="pbar-lab"><span>客 ${nts(A.team)} <span class="num">${ap}%</span></span><span>主 ${nts(H.team)} <span class="num">${hp}%</span></span></div>
-    <div class="pbar" role="img" aria-label="${ntn(A.team)} ${ap}%，${ntn(H.team)} ${hp}%"><div class="${favHome?"oth":"fav"}" style="width:${ap}%"></div><div class="${favHome?"fav":"oth"}" style="width:${hp}%"></div></div>
-    ${why}${ref}
-    ${NST_AT && Date.now() - NST_AT > NFRESH ? `<div class="upd">依據 ${twT(NST_AT)}（台灣時間）時的戰績</div>` : `<div class="upd">戰績更新：${twT(NST_AT || Date.now())}（台灣時間）</div>`}</div>`;
+    ${NST_AT && Date.now() - NST_AT > NFRESH ? `<div class="upd">依據 ${twT(NST_AT)}（台灣時間）時的戰績</div>` : `<div class="upd">戰績更新：${twT(NST_AT || Date.now())}（台灣時間）</div>`}`;
+  return ccCard({lg:"nba", ser:"", time:hhmm(ev.date), tag: small ? "樣本不足" : "", A:nts(A.team), H:nts(H.team), conf:CONF[tc], ap, hp, favHome, reason, body});
 }
 
 async function nbaGames(){

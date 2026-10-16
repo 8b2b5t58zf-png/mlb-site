@@ -85,5 +85,38 @@ const WD = "日一二三四五六";
 function dayHdr(d, st){
   const t = new Date(new Date(d).getTime() + 8*3600e3), k = t.toISOString().slice(0,10);
   if(st.last === k) return ""; st.last = k;
-  return `<div class="dgrp">${t.getUTCMonth()+1}/${t.getUTCDate()}（${WD[t.getUTCDay()]}）</div>`;
+  return `<div class="dgrp">${t.getUTCMonth()+1}/${t.getUTCDate()}（${WD[t.getUTCDay()]}）・台灣時間</div>`;
 }
+
+// 精簡卡片（§24）：預設收合，點一下原地展開；一次只開一張
+const hhmm = d => new Intl.DateTimeFormat("en-GB",{timeZone:"Asia/Taipei",hour12:false,hour:"2-digit",minute:"2-digit"}).format(new Date(d)).replace(/^24/,"00");
+const CONF = {strong:"高", lean:"中", toss:"低"};
+let CC_N = 0;
+// items: [{k:名稱, t:隊名, v:對主隊的百分點, sfx:句型}]，fav: 看好方是否主隊
+function mainReason(items, favHome, wait){
+  const k = favHome ? 1 : -1, xs = items.filter(x => x.v != null).map(x => ({...x, f:k*x.v}));
+  let c = xs.filter(x => x.f > 0).sort((a,b) => b.f - a.f);
+  if(!c.length) c = xs.slice().sort((a,b) => Math.abs(b.v) - Math.abs(a.v));
+  if(!c.length) return "";
+  let s = c.length > 1 && Math.abs(Math.abs(c[0].f) - Math.abs(c[1].f)) < 0.5 ? `${c[0].k}與${c[1].k}影響相近` : `主因：${c[0].t}${c[0].sfx}`;
+  return s + (wait ? "（先發公布後會重算）" : "");
+}
+function ccCard(o){   // o: {lg, ser, time, tag, A, H, conf, ap, hp, favHome, reason, body, extraCls}
+  const id = `cc-${++CC_N}`;
+  return `<div class="pcard cc">
+  <button type="button" class="cc-head" aria-expanded="false" aria-controls="${id}" data-lg="${o.lg}">
+    <span class="cc-r1"><span class="cc-ser">${o.ser||""}</span><span class="cc-rt"><span class="cc-time num">${o.time}</span>${o.tag?`<span class="cc-tag">${o.tag}</span>`:""}</span></span>
+    <span class="cc-r2"><span class="cc-tm">${o.A}</span><span class="cc-conf">信心 ${o.conf}</span><span class="cc-tm r">${o.H}</span></span>
+    <span class="cc-r3"><span class="num cc-p">${o.ap}%</span><span class="cc-bar"><span class="${o.favHome?"oth":"fav"}" style="width:${o.ap}%"></span><span class="${o.favHome?"fav":"oth"}" style="width:${o.hp}%"></span></span><span class="num cc-p">${o.hp}%</span></span>
+    <span class="cc-r4"><span class="cc-why">${o.reason}</span><span class="cc-more">看分析 ›</span></span>
+  </button>
+  <div class="cc-body" id="${id}" hidden>${o.body}</div></div>`;
+}
+document.addEventListener("click", e => {
+  const b = e.target.closest && e.target.closest(".cc-head"); if(!b) return;
+  const open = b.getAttribute("aria-expanded") !== "true";
+  document.querySelectorAll('.cc-head[aria-expanded="true"]').forEach(x => { if(x !== b){ x.setAttribute("aria-expanded","false"); x.querySelector(".cc-more").textContent = "看分析 ›"; document.getElementById(x.getAttribute("aria-controls")).hidden = true; } });
+  b.setAttribute("aria-expanded", open); b.querySelector(".cc-more").textContent = open ? "收起 ‹" : "看分析 ›";
+  document.getElementById(b.getAttribute("aria-controls")).hidden = !open;
+  if(open) try{ if(window.goatcounter && window.goatcounter.count) window.goatcounter.count({path:`expand-${b.dataset.lg}`, title:"看分析展開", event:true}); }catch(_){}
+});

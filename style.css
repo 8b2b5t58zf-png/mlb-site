@@ -285,3 +285,27 @@ body.view-about #mlb-main,body.view-about #nba-main{display:none}
 .about-page h3{font-size:16px;color:#e6edf3;margin:20px 0 6px}
 .about-page b{color:#e6edf3}
 .about-back a{color:#d4af37;display:inline-block;padding:12px 0;min-height:44px}
+
+/* 精簡卡片（§24） */
+.pcard.cc{padding:0;gap:0}
+.cc-head{all:unset;box-sizing:border-box;display:flex;flex-direction:column;gap:6px;width:100%;min-height:44px;padding:12px 14px;cursor:pointer;color:#e6edf3;-webkit-tap-highlight-color:transparent}
+.cc-head:focus-visible{outline:2px solid #d4af37;outline-offset:-2px;border-radius:12px}
+.cc-head>span{display:flex;align-items:center;gap:8px;min-width:0}
+.cc-r1{justify-content:space-between;min-height:18px}
+.cc-rt{display:flex;align-items:center;gap:6px;margin-left:auto;white-space:nowrap}
+.cc-time{font-size:12px;color:#8b949e}
+.cc-tag{font-size:11px;background:#1c232d;border-radius:4px;padding:0 6px;color:#8b949e}
+.cc-ser .ser-tag{margin:0}
+.cc-r2{justify-content:space-between}
+.cc-tm{font-size:15px;font-weight:700;white-space:nowrap;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.cc-tm.r{text-align:right}
+.cc-conf{font-size:12px;color:#8b949e;white-space:nowrap;border:1px solid #262e39;border-radius:999px;padding:0 8px}
+.cc-p{font-size:13px;color:#c9d1d9;min-width:34px}
+.cc-r3 .cc-p:last-child{text-align:right}
+.cc-bar{flex:1;display:flex;height:8px;border-radius:4px;overflow:hidden;gap:2px;background:var(--bar-oth)}
+.cc-bar .fav{background:#d4af37} .cc-bar .oth{background:var(--bar-oth)}
+.cc-r4{justify-content:space-between;font-size:12px;color:#8b949e}
+.cc-why{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cc-more{white-space:nowrap;margin-left:auto}
+.cc-body{display:flex;flex-direction:column;gap:var(--sp-2);padding:0 14px 14px;border-top:1px solid #262e39;padding-top:12px}
+.cc-body[hidden]{display:none}

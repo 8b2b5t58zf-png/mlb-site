@@ -422,22 +422,22 @@ function renderPredict(games, isPast){
     const off = OFFICIAL[g.gamePk];
     const v1note = off && off.model && !off.model.startsWith(MODEL_V) ? `<div class="vnote">此場正式紀錄為舊版模型 ${off.model.slice(0,2)}</div>` : "";
     const w = g.weather && g.weather.condition ? `參考資訊：天氣 ${g.weather.condition}${g.weather.temp?`，氣溫 ${Math.round((g.weather.temp-32)*5/9)}°C`:""}（不列入勝率計算）` : "";
-    html += `<div class="pcard">${serTag(g)}
-      <div class="meta"><span class="nw">客 ${ts(A.team)}</span> @ <span class="nw">主 ${ts(H.team)}</span><br>${tw(g.gameDate)}（台灣時間）${serShort(g.seriesStatus) ? `<br><span class="nw ser">${serShort(g.seriesStatus)}</span>` : ""}</div>
-      <div class="headline">${fp === 50 ? `五五波：雙方各 <span class="num">50%</span>` : `${fp>=60?"明顯看好":fp>=53?"略占上風":"勢均力敵"}：${ts(fav)} <span class="num">${fp}%</span>`}</div>
-      ${(!aP||!hP)?`<span class="wait-tag">等先發</span>`:""}
-      <div class="tier-row"><span class="tier ${tc}">${tl}</span><span class="upset">${upset(A.team, H.team, ap, hp, aP, hP, fav, fp)}</span></div>
-      <div class="pbar-lab"><span>客 ${ts(A.team)} <span class="num">${apct}%</span></span><span>主 ${ts(H.team)} <span class="num">${hpct}%</span></span></div>
-      <div class="pbar" role="img" aria-label="${tn(A.team)} ${apct}%，${tn(H.team)} ${hpct}%">
-        <div class="${favHome?"oth":"fav"}" style="width:${apct}%"></div><div class="${favHome?"fav":"oth"}" style="width:${hpct}%"></div></div>
-      ${pitchRow(aP, hP, ap, hp, SPCHG)}
+    const wait = !aP || !hP;
+    const ser = serTag(g).replace(/^<div class="ser-row">|<\/div>$/g,"");
+    const reason = mainReason([
+      {k:"戰績", t:ts(m.d1>=0?H.team:A.team), v:m.d1, sfx:"戰績較佳"},
+      {k:"主場", t:ts(H.team), v:m.d2, sfx:"主場優勢"},
+      m.used ? {k:"先發投手", t:ts(m.d3>=0?H.team:A.team), v:m.d3, sfx:"先發較佳"} : {v:null}], favHome, wait);
+    const body = `${pitchRow(aP, hP, ap, hp, SPCHG)}
       ${v1note}${whyBlock(A.team, H.team, m, st, ap, hp, aP, hP, fav, fp)}
+      <div class="tier-row"><span class="tier ${tc}">${tl}</span><span class="upset">${upset(A.team, H.team, ap, hp, aP, hP, fav, fp)}</span></div>
+      ${serShort(g.seriesStatus) ? `<div class="meta">${serShort(g.seriesStatus)}</div>` : ""}
       <details class="algo"><summary>看算法</summary>${bridge(m, st, fav)}
         <p class="desc">戰績：兩隊實力分數（勝率與畢氏期望勝率各半）用 Log5 比較，再依回測縮回 50% 附近；主場與先發投手依 2026 例行賽回測校正。三格差值依序計算，加總等於最終勝率。模型 ${MODEL_V}。</p></details>
       <details class="algo"><summary>兩隊數據對比</summary>${compare(A.team, H.team, ap, hp)}</details>
       ${w ? `<div class="ref">${w}</div>` : ""}
-      <div class="upd">最後更新：${tw(Date.now())}（台灣時間）</div>
-    </div>`;
+      <div class="upd">最後更新：${tw(Date.now())}（台灣時間）</div>`;
+    html += ccCard({lg:"mlb", ser, time:hhmm(g.gameDate), tag: wait ? "等先發" : "先發已公布", A:ts(A.team), H:ts(H.team), conf:CONF[tc], ap:apct, hp:hpct, favHome, reason, body});
   }
   document.getElementById("predict").innerHTML = html || '<p class="note">MLB 目前休賽中</p>';
 }
