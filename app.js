@@ -202,7 +202,11 @@ async function loadGames(){
   const d = await getJSON(`${API}/schedule?sportId=1&startDate=${s}&endDate=${e}&hydrate=linescore,probablePitcher,decisions,team,seriesStatus,weather`);
   const games = (d.dates||[]).flatMap(x=>x.games);
   const done = games.filter(g=>g.status.abstractGameState==="Final").reverse().slice(0,5); // 最近 5 場已完賽
-  const next = games.filter(g=>g.status.abstractGameState==="Preview").slice(0,4);         // 接下來 4 場
+  // 季後賽：同一系列只顯示下一場還沒打完的比賽（前一戰打完才出現下一戰；預測紀錄不受影響）
+  const POST = ["F","D","L","W"], skey = g => g.gameType + ":" + [g.teams.home.team.id, g.teams.away.team.id].sort().join("-");
+  const firstOpen = {};
+  for(const g of games.filter(g=>POST.includes(g.gameType) && g.status.abstractGameState!=="Final").sort((a,b)=>new Date(a.gameDate)-new Date(b.gameDate))) if(!(skey(g) in firstOpen)) firstOpen[skey(g)] = g;
+  const next = games.filter(g=>g.status.abstractGameState==="Preview" && (!POST.includes(g.gameType) || firstOpen[skey(g)] === g)).slice(0,4);         // 接下來 4 場
   const show = next.length ? next : done;
   if(location.protocol !== "file:"){ try{ const r = await fetch("data/predictions.json?t="+Date.now()); if(r.ok) for(const x of (await r.json()).records){ if(x.status === "cancelled") continue; if(x.official) OFFICIAL[x.gamePk] = x.official; if(x.snapshots) SNAPS[x.gamePk] = x.snapshots; } }catch(e){} }
   // 先抓先發投手成績與 FIP 常數，再畫預測卡

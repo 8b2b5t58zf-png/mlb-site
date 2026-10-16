@@ -154,6 +154,11 @@ async function nbaGames(){
     PRE_NOTE["nba-predict"] = "例行賽 10/21 開打";
   }
   NALL = all.concat(up);
+  { // 季後賽：同一系列只顯示下一場還沒打完的比賽
+    const sk = e => e.competitions[0].competitors.map(c => c.team.id).sort().join("-"), fo = {};
+    all.concat(up).filter(e => e.season.type===3 && !e.status.type.completed).sort((a,b) => new Date(a.date) - new Date(b.date)).forEach(e => { if(!(sk(e) in fo)) fo[sk(e)] = e.id; });
+    up = up.filter(e => e.season.type!==3 || fo[sk(e)] === e.id);
+  }
   up.sort((a,b) => new Date(a.date) - new Date(b.date));   // 依開賽時間排序
   document.getElementById("nba-predict").innerHTML = note + ((DG => nFocusList(up.slice(0,8)).map(e => dayHdr(e.date, DG) + nbaCard(e, DG)).join(""))({last:null, cnt:dayCounts(up.slice(0,8).map(e => e.date))}) || nbaNoGames(all));
   const done = all.filter(e => e.status.type.completed).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,5);
