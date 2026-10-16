@@ -238,3 +238,4 @@ body.tab-predict header{padding-bottom:10px}
 .refd .ref-o{display:none} .refd[open] .ref-o{display:inline} .refd[open] .ref-c{display:none}
 .pcard .cmpt th,.pcard .cmpt td,article .ls th,article .ls td,article table th,article table td{border-bottom:1px solid #262e39}
 .pcard .cmpt tr:last-child td,article table tr:last-child td{border-bottom:0}
+.refd summary::after,.refd summary::before{content:none!important;display:none!important} .refd summary{gap:4px}
