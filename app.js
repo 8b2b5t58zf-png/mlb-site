@@ -210,7 +210,7 @@ async function loadGames(){
   const next = games.filter(g=>g.status.abstractGameState==="Preview" && real(g) && (!POST.includes(g.gameType) || firstOpen[skey(g)] === g)).slice(0,4);
   // 對戰組合未定的季後賽系列：不出卡片，只顯示一行開打日期
   const SNAME = {W:"世界大賽", L:"聯盟冠軍賽", D:"分區系列賽", F:"外卡系列賽"}, tbdSeen = {};
-  const tbd = games.filter(g=>POST.includes(g.gameType) && g.status.abstractGameState==="Preview" && !real(g)).sort((a,b)=>new Date(a.gameDate)-new Date(b.gameDate)).filter(g => !tbdSeen[g.gameType] && (tbdSeen[g.gameType] = 1)).map(g => `${SNAME[g.gameType]} ${twWD(g.gameDate)}開打，對戰組合待${g.gameType==="W" ? "聯盟冠軍賽" : "前一輪"}結束後確定`);
+  const tbd = games.filter(g=>POST.includes(g.gameType) && g.status.abstractGameState==="Preview" && !real(g)).sort((a,b)=>new Date(a.gameDate)-new Date(b.gameDate)).filter(g => !tbdSeen[g.gameType] && (tbdSeen[g.gameType] = 1)).map(g => `${SNAME[g.gameType]} ${twWD(g.gameDate)}開打，對戰組合待${g.gameType==="W" ? "聯盟冠軍賽" : "前一輪"}結束<span class="nw">後確定</span>`);
   const nr = games.filter(g=>g.status.abstractGameState==="Preview" && real(g))[0];
   PEXTRA = {post: next.some(g => POST.includes(g.gameType)), tbd, nextAt: nr ? nr.gameDate : null};         // 接下來 4 場
   const show = next.length ? next : done;
