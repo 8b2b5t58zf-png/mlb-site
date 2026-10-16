@@ -20,6 +20,7 @@ const WHY_TXT = {
   spMixed: "{a}與{h}互有優劣",
   spClose: "{a}與{h}數據相近",
   spWait: "先發未公布，未調整",
+  spOne: "{t}先發尚未公布，暫不調整",   // 模型規則：兩隊都公布才調整，只公布一邊時不調整
   // 先發投手對比（style-guide 第二十一節）
   pLabel: "先發",
   pLine: "ERA {era}・WHIP {whip}・{ip} 局",

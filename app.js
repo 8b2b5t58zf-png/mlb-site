@@ -219,7 +219,7 @@ function daySummary(games){
   const a = g.filter(x => x.teams.home.probablePitcher && x.teams.away.probablePitcher).length;
   el.hidden = false; el.innerHTML = a === g.length ? wf("dayAll", {n:g.length}, ["n"]) : wf("dayPart", {n:g.length, a, b:g.length-a}, ["n","a","b"]);
 }
-const noSp = o => o && (o.hasStarters === false || ("homeStarter" in o && (!o.homeStarter || !o.awayStarter)));
+const noSp = o => o && (o.starterStatus ? o.starterStatus !== "both" : o.hasStarters === false || ("homeStarter" in o && (!o.homeStarter || !o.awayStarter)));
 // 畫出預測卡片
 // 信心分級（看好方的機率）
 function tier(p){
@@ -301,7 +301,8 @@ function whyBlock(A, H, m, s, ap, hp, aP, hP, fav, fp){
   const t2 = wf("home", {t:ts(H)});
   // ③ 先發
   let t3;
-  if(!m.used) t3 = WHY_TXT.spWait;
+  if(!m.used && (aP ? 1 : 0) + (hP ? 1 : 0) === 1) t3 = wf("spOne", {t:ts(aP ? H : A)});
+  else if(!m.used) t3 = WHY_TXT.spWait;
   else if(Math.abs(m.d3) < 0.05) t3 = wf("spClose", {a:pn(aP), h:pn(hP)});
   else {
     const eraH = +hp.era < +ap.era, eraA = +ap.era < +hp.era, whH = +hp.whip < +ap.whip, whA = +ap.whip < +hp.whip;
@@ -331,9 +332,10 @@ function spChange(pk, aP, hP){
     if(!cur) continue;
     for(let i = sn.length-1; i >= 0; i--){ const k = side+"Starter"; if(!(k in sn[i])) continue; const o = sn[i][k];
       if(o && o.id !== cur.id){ out.chg[side] = pn({id:o.id, fullName:o.name}); out.p0c ??= sn[i].homeWinProb; break; } }
-    if(!out.chg[side]){ const j = sn.map(x => (side+"Starter") in x && !x[side+"Starter"]).lastIndexOf(true);
-      if(j >= 0){ out.ann[side] = true; out.p0a ??= sn[j].homeWinProb; } }
   }
+  // 公布：只在「轉為兩隊都公布」時顯示；找最近一筆不是兩隊都有先發的快照
+  if(aP && hP){ const j = sn.map(x => "homeStarter" in x && (!x.homeStarter || !x.awayStarter)).lastIndexOf(true);
+    if(j >= 0){ for(const side of ["away","home"]) if(!sn[j][side+"Starter"] && !out.chg[side]) out.ann[side] = true; if(out.ann.away || out.ann.home) out.p0a = sn[j].homeWinProb; } }
   const any = o => o.away || o.home;
   return any(out.chg) || any(out.ann) ? out : null;
 }
