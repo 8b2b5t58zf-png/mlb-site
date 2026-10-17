@@ -51,8 +51,8 @@ const twShort = t => new Date(t).toLocaleString("zh-TW",{timeZone:"Asia/Taipei",
 // 執行一個區塊：先顯示骨架，成功顯示資料；失敗顯示錯誤＋重試按鈕
 async function runSection(ids, fn){
   const SKC = '<div class="skc" aria-hidden="true"></div>'.repeat(3);   // 預測卡用 3 塊同高骨架卡
-  for(const id of ids){ const st = document.getElementById("st-"+id); st.innerHTML = ""; if(id==="nba-predict") st.dataset.wait = "";
-    const el = document.getElementById(id); if(id==="chart") el.innerHTML = '<canvas id="winChart"></canvas>'; else if(id==="predict" || id==="nba-predict"){ if(!el.querySelector(".skc")) el.innerHTML = SKC; } else el.innerHTML = skeleton(5); }
+  for(const id of ids){ const st = document.getElementById("st-"+id); st.innerHTML = ""; if(id==="nba-predict-list") st.dataset.wait = "";
+    const el = document.getElementById(id); if(id==="chart") el.innerHTML = '<canvas id="winChart"></canvas>'; else if(id==="predict" || id==="nba-predict-list"){ if(!el.querySelector(".skc")) el.innerHTML = SKC; } else el.innerHTML = skeleton(5); }
   const unwait = () => ids.forEach(id => delete document.getElementById("st-"+id).dataset.wait);
   usedCache = null; dataAt = null;
   try{

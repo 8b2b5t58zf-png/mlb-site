@@ -66,8 +66,8 @@ h3,.sub{margin:8px 0;color:var(--text);font-size:var(--fs-md);font-weight:600}
 .grid,.divs{display:grid;grid-template-columns:1fr;gap:var(--sp-3)}
 .grid>div,.divs>div,article{overflow-x:auto;-webkit-overflow-scrolling:touch}
 /* 戰績、排行榜等清單：一層 --card 底色 */
-#standings>.divs>div,#batting>div,#pitching>div,#nba-standings>.divs>div,#nba-standings>div>div,#nba-leaders .ntabp,#hit,#nba-hit{background:var(--card);border-radius:var(--radius);padding:var(--sp-3) var(--sp-4)}
-#batting>div h3,#pitching>div h3,#standings h3,#nba-standings h3,#nba-leaders h3{margin-top:0}
+#standings>.divs>div,#batting>div,#pitching>div,#nba-standings-box>.divs>div,#nba-standings-box>div>div,#nba-leaders-box .ntabp,#hit,#nba-hit{background:var(--card);border-radius:var(--radius);padding:var(--sp-3) var(--sp-4)}
+#batting>div h3,#pitching>div h3,#standings h3,#nba-standings-box h3,#nba-leaders-box h3{margin-top:0}
 @media(min-width:768px){
   .grid,.divs{grid-template-columns:repeat(auto-fit,minmax(320px,1fr))}
   header h1{font-size:28px} main{padding:16px}
@@ -223,7 +223,7 @@ body.tab-predict header{padding-bottom:10px}
 .refd .num{color:#c9d1d9}
 .site-foot .foot-src{font-size:12px;color:#8b949e;text-align:center;border:0;background:none;padding:0}
 /* 卡片規格（UI 設計師 10/16）：一場一卡、卡內不再套框 */
-#predict,#nba-predict{gap:12px} #analysis,#nba-analysis{display:flex;flex-direction:column;gap:12px}
+#predict,#nba-predict-list{gap:12px} #analysis,#nba-analysis{display:flex;flex-direction:column;gap:12px}
 .pcard,#analysis article,#nba-analysis article{background:#151b23;border:1px solid #262e39;border-radius:12px;padding:16px;margin:0;box-shadow:none}
 .pcard .why,article .hl{background:#1c232d;border:0}
 .pcard .why-k{border-top:0}
@@ -342,9 +342,9 @@ body.view-about #mlb-main,body.view-about #nba-main{display:none}
 .po-note{font-size:12px;color:#8b949e;text-align:center;margin:8px 0 0}
 .tbd-note{font-size:13px;color:#8b949e;text-align:center;margin:8px 0 0}
 .empty-card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:24px;font-size:13px;color:#8b949e;text-align:center}
-#predict>.po-note,#nba-predict>.po-note{margin-top:-4px}  /* 列表 gap 12px − 4px = 8px */
+#predict>.po-note,#nba-predict-list>.po-note{margin-top:-4px}  /* 列表 gap 12px − 4px = 8px */
 .tbd-note{text-wrap:balance} .tbd-note .nw{white-space:nowrap}
-.tbd-note{font-size:12px} #predict>.tbd-note,#nba-predict>.tbd-note{margin-top:-4px}
+.tbd-note{font-size:12px} #predict>.tbd-note,#nba-predict-list>.tbd-note{margin-top:-4px}
 
 .cg.bt{border:1px dashed #262e39;background:#151b23;color:#8b949e}
 .cg.bt .cg-l,.cg.bt .cg-v .num,.cg.bt .num{color:#8b949e}
@@ -366,14 +366,14 @@ body.view-about #mlb-main,body.view-about #nba-main{display:none}
 .cc-pp{font-size:12px;color:#8b949e;border:1px solid #8b949e;border-radius:4px;padding:0 6px;line-height:16px;white-space:nowrap}
 .cc-head>.cc-ppt{display:block;font-size:12px;color:#8b949e;white-space:nowrap}
 /* NBA 排行用上季資料時，小標旁註明季別（數據分析師 10/17） */
-#nba-leaders h3 .h-sea{margin-left:8px;font-size:12px;font-weight:400;color:#8b949e}
+#nba-leaders-box h3 .h-sea{margin-left:8px;font-size:12px;font-weight:400;color:#8b949e}
 /* 頁尾第一行：資料更新時間（UI 設計師 10/17） */
 .site-foot .foot-upd{font-size:12px;color:#8b949e;text-align:center;margin:0 0 4px;white-space:nowrap}
 .site-foot .foot-upd .num{font-family:var(--num);font-variant-numeric:tabular-nums}
 /* 預測卡載入骨架（UI 設計師 10/17）：3 塊與真卡同高同寬同圓角，資料到了就換成真卡 */
 .skc{height:129px;background:#151b23;border-radius:var(--radius)}
 /* 載入中先保留「資料時間」那一行的高度，避免卡片被往下推 */
-#st-nba-predict[data-wait]{display:block;height:25px}
+#st-nba-predict-list[data-wait]{display:block;height:25px}
 /* JS 載入前（body[data-pre]）只顯示要開的那個分頁 */
 body[data-pre] main section{display:none}
 body[data-pre="mlb-predict"] #sec-predict,body[data-pre="mlb-recap"] #sec-analysis,body[data-pre="mlb-hitrate"] #sec-hit,body[data-pre="mlb-standings"] #sec-standings,body[data-pre="mlb-leaders"] #sec-batting,

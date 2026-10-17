@@ -71,7 +71,7 @@ async function nbaStandings(){
     html += "</table></div>";
   }
   const none = Object.values(NT).every(t=>!t.g);
-  document.getElementById("nba-standings").innerHTML = (none ? '<p class="note">2026-27 例行賽尚未開打，戰績皆為 0 勝 0 敗。</p>' : "") + html + "</div>";
+  document.getElementById("nba-standings-box").innerHTML = (none ? '<p class="note">2026-27 例行賽尚未開打，戰績皆為 0 勝 0 敗。</p>' : "") + html + "</div>";
 }
 
 
@@ -150,12 +150,12 @@ async function nbaGames(){
   const evs = res.flatMap(r=>r.events||[]);
   const seen = new Set(), all = evs.filter(e => !seen.has(e.id) && seen.add(e.id));
   let up = all.filter(e => e.status.type.state==="pre" && (e.season.type===2 || e.season.type===3));
-  let note = ""; PRE_NOTE["nba-predict"] = "";
+  let note = ""; PRE_NOTE["nba-predict-list"] = "";
   if(!up.length){
     // 例行賽還沒開打：顯示開幕賽程
     const o = (await Promise.all(["20261020","20261021","20261022"].map(sbd))).map(x => x || {events:[]});
     up = o.flatMap(r=>r.events||[]).filter(e => e.season.type===2 && e.status.type.state==="pre");
-    PRE_NOTE["nba-predict"] = "例行賽 10/21 開打";
+    PRE_NOTE["nba-predict-list"] = "例行賽 10/21 開打";
   }
   NALL = all.concat(up);
   { // 季後賽：同一系列只顯示下一場還沒打完的比賽
@@ -170,7 +170,7 @@ async function nbaGames(){
   up.sort((a,b) => new Date(a.date) - new Date(b.date));   // 依開賽時間排序
   const nCards = (DG => nFocusList(up.slice(0,8)).map(e => dayHdr(e.date, DG) + nbaCard(e, DG)).join(""))({last:null, cnt:dayCounts(up.slice(0,8).map(e => e.date))});
   const nNext = (all.filter(e => e.status.type.state === "pre" && !isTbd(e)).sort((a,b) => a.date.localeCompare(b.date))[0] || {}).date;
-  document.getElementById("nba-predict").innerHTML = note + (nCards || emptyCard(nNext)) + (nCards && nPost ? '<p class="po-note">下一戰在本戰結束後顯示</p>' : "") + (tbdE ? `<p class="tbd-note">季後賽下一輪 ${twWD(tbdE.date)}開打<br>對戰組合待前一輪結束後確定</p>` : "");
+  document.getElementById("nba-predict-list").innerHTML = note + (nCards || emptyCard(nNext)) + (nCards && nPost ? '<p class="po-note">下一戰在本戰結束後顯示</p>' : "") + (tbdE ? `<p class="tbd-note">季後賽下一輪 ${twWD(tbdE.date)}開打<br>對戰組合待前一輪結束後確定</p>` : "");
   const done = all.filter(e => e.status.type.completed).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,5);
   await nbaRecaps(done);
 }
@@ -240,7 +240,7 @@ async function nbaLeaders(){
     c.leaders.slice(0,10).forEach((l,i) => { html += `<tr><td>${i+1}. ${npn(l.athlete.displayName)}</td><td>${l.team ? nts(l.team) : "-"}</td><td class="num">${l.displayValue}</td></tr>`; });
     html += "</table></div>";
   }
-  const box = document.getElementById("nba-leaders"); box.innerHTML = html;
+  const box = document.getElementById("nba-leaders-box"); box.innerHTML = html;
   box.querySelectorAll("button[data-ntab]").forEach(b => b.onclick = () => {
     box.querySelectorAll("button[data-ntab]").forEach(x => x.setAttribute("aria-selected", x === b));
     box.querySelectorAll(".ntabp").forEach(p => p.hidden = p.dataset.ntab !== b.dataset.ntab); });
@@ -271,8 +271,8 @@ async function secNbaStand(){ await nbaStandings(); }
 async function secNbaGames(){ if(!Object.keys(NT).length) await nbaStandings(); await nbaPrior(); await nbaGames(); }
 async function loadNBA(){
   if(nbaLoaded) return; nbaLoaded = true;
-  await runSection(["nba-standings"], secNbaStand);
-  await runSection(["nba-predict","nba-analysis"], secNbaGames);
+  await runSection(["nba-standings-box"], secNbaStand);
+  await runSection(["nba-predict-list","nba-analysis"], secNbaGames);
   await runSection(["nba-hit"], nbaHit);
-  await runSection(["nba-leaders"], nbaLeaders);
+  await runSection(["nba-leaders-box"], nbaLeaders);
 }
