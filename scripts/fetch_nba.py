@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # 每小時把 ESPN NBA 公開資料存成網站內的檔案（data/nba/*.json），網頁先讀這些檔案，抓不到才直接連 ESPN。
 # 每個檔案都有 fetched_at（ISO 8601，UTC）。某一項抓失敗就保留上一次的檔案，不覆蓋。
-import json, os, urllib.request
+import json, os, urllib.request, urllib.error
 from datetime import datetime, timedelta, timezone
 
 ESPN = "https://site.api.espn.com/apis/site/v2/sports/basketball/nba"
@@ -64,6 +64,10 @@ def summaries():
 def leaders():
     yr = now.year + 1 if now.month >= 9 else now.year
     out = {}
+    # 某一季暫時抓不到（例如 ESPN 回 500）就沿用上一份存檔的那一季，不讓整個檔案停在舊時間；
+    # 本季還沒開打時 ESPN 回 404，檔案照樣更新時間，網頁就知道「剛確認過、本季還沒有排行」，不必再連 ESPN
+    try: old = json.load(open(os.path.join(OUT, "leaders.json"), encoding="utf-8")).get("seasons", {})
+    except Exception: old = {}
     for y in (yr, yr - 1):
         try:
             d = get(NLB + str(y)); L = d.get("leaders") or {}
@@ -72,7 +76,9 @@ def leaders():
                      for l in c.get("leaders", [])[:10]]}
                     for c in L.get("categories", []) if c["name"] in ("pointsPerGame", "reboundsPerGame", "assistsPerGame")]
             out[str(y)] = {"requestedSeason": d.get("requestedSeason"), "leaders": {"categories": cats}}
-        except Exception as e: print("leaders", y, e)
+        except Exception as e:
+            print("leaders", y, e)
+            if str(y) in old and not (isinstance(e, urllib.error.HTTPError) and e.code == 404): out[str(y)] = old[str(y)]; print("leaders", y, "沿用舊檔")
     if not out: raise RuntimeError("no leaders")
     return {"seasons": out}
 

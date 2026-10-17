@@ -224,16 +224,19 @@ async function nbaLeaders(){
   let d = null, cur = true;
   const has = x => x && x.leaders && (x.leaders.categories||[]).length;
   const lf = await nbaFile("leaders");
-  if(lf && nAge(lf) < NFRESH && !has((lf.seasons||{})[yr])) d = null;   // 排程剛確認本季還沒有排行，不必再連 ESPN
+  // 本季例行賽還沒有任何一場打完（看排程存的賽程）時，ESPN 一定沒有本季排行（會回 404），直接用上季，不連 ESPN
+  const sb = await nbaFile("scoreboard");
+  const started = !sb || Object.values(sb.days||{}).some(v => (v.events||[]).some(e => e.season.type === 2 && e.status.type.completed));
+  if(!has(((lf||{}).seasons||{})[yr]) && (!started || (lf && nAge(lf) < NFRESH))) d = null;   // 排程剛確認本季還沒有排行，或本季還沒開打
   else try{ d = (await nbaGet("leaders", f => has(f.seasons && f.seasons[yr]) ? f.seasons[yr] : null, NLB + yr)).data; }catch(e){}
   if(!has(d)){ cur = false; d = (await nbaGet("leaders", f => f.seasons && f.seasons[yr-1], NLB + (yr-1))).data; }
   const sname = (d.requestedSeason||{}).displayName || "";
   const cats = {pointsPerGame:"場均得分", reboundsPerGame:"場均籃板", assistsPerGame:"場均助攻"};
-  let html = cur ? `<p class="note">${sname} 例行賽。開季初期出賽場數少，排名變動會比較大。</p>` : `<p class="note">${yr-1}-${String(yr).slice(2)} 例行賽尚未開打，以下為上季（${sname}）例行賽排行，開打後自動換成本季。</p>`;
+  let html = cur ? `<p class="note">${sname} 例行賽。開季初期出賽場數少，排名變動會比較大。</p>` : `<p class="note">${yr-1}-${String(yr).slice(2)} 季尚未開打，以下是 ${sname} 季例行賽排行，開打後自動換成本季。</p>`;
   const cs = Object.keys(cats).map(k => d.leaders.categories.find(c => c.name === k)).filter(Boolean);
   html += `<div class="tabs" role="tablist">${cs.map((c,i)=>`<button role="tab" aria-selected="${i===0}" data-ntab="${c.name}">${cats[c.name].slice(2)}</button>`).join("")}</div>`;
   for(const [ci, c] of cs.entries()){
-    html += `<div class="ntabp" data-ntab="${c.name}" ${ci?"hidden":""}><h3>${cats[c.name]}</h3><table><tr><th>球員</th><th>球隊</th><th>數據</th></tr>`;
+    html += `<div class="ntabp" data-ntab="${c.name}" ${ci?"hidden":""}><h3>${cats[c.name]}${cur ? "" : `<span class="h-sea">${sname} 季</span>`}</h3><table><tr><th>球員</th><th>球隊</th><th>數據</th></tr>`;
     c.leaders.slice(0,10).forEach((l,i) => { html += `<tr><td>${i+1}. ${npn(l.athlete.displayName)}</td><td>${l.team ? nts(l.team) : "-"}</td><td class="num">${l.displayValue}</td></tr>`; });
     html += "</table></div>";
   }

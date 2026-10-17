@@ -655,6 +655,26 @@ function showTab(){
   // 圖表在隱藏時畫出來會是 0 大小，顯示後重新量尺寸
   if(TAB_NOW==="standings" && LG_NOW==="mlb") requestAnimationFrame(()=>{ try{ const c = window.Chart && Chart.getChart("winChart"); if(c){ c.resize(); c.update("none"); } }catch(e){} });
 }
+// 頁尾第一行「資料更新：10/17 14:00（台灣時間）」：MLB 用 data/predictions.json 的 updated，NBA 用 data/nba/scoreboard.json 的 fetched_at（UTC 轉台灣時間）
+const FOOT_AT = {};
+async function footAt(lg){
+  if(!(lg in FOOT_AT)) FOOT_AT[lg] = (async () => { try{
+    if(lg === "mlb"){ const r = await fetch("data/predictions.json?t=" + Math.floor(Date.now()/3e5)); if(!r.ok) return null;
+      const m = ((await r.json()).updated || "").match(/^\d{4}-(\d{2})-(\d{2}) (\d{2}:\d{2})/); return m ? `${+m[1]}/${+m[2]} ${m[3]}` : null; }
+    const f = await nbaFile("scoreboard"); if(!f || !f.fetched_at) return null;
+    const d = new Date(Date.parse(f.fetched_at) + 8*3600e3);
+    return `${d.getUTCMonth()+1}/${d.getUTCDate()} ${String(d.getUTCHours()).padStart(2,"0")}:${String(d.getUTCMinutes()).padStart(2,"0")}`;
+  }catch(e){ return null; } })();
+  return FOOT_AT[lg];
+}
+async function footUpd(lg){
+  const t = await footAt(lg), foot = document.getElementById("foot");
+  if(LG_NOW !== lg || !foot) return;
+  let p = foot.querySelector(".foot-upd");
+  if(!t){ if(p) p.remove(); return; }
+  if(!p){ p = document.createElement("p"); p.className = "foot-upd"; foot.prepend(p); }
+  p.innerHTML = `資料更新：<span class="num">${t}</span>（台灣時間）`;
+}
 function setLeague(lg){
   LG_NOW = lg; try{ localStorage.setItem("aisl:league", lg); }catch(e){}
   document.body.classList.toggle("lg-nba", lg==="nba");
@@ -664,6 +684,7 @@ function setLeague(lg){
   document.getElementById("tg-link").href = lg==="nba" ? "validation-nba.html" : "validation.html";
   document.getElementById("lg-sub").textContent = lg==="nba" ? "AI 運動實驗室・NBA 美國職籃勝負預測與賽後分析" : "AI 運動實驗室・美國職棒大聯盟勝負預測與賽後分析";
   document.getElementById("foot").innerHTML = lg==="nba" ? '<p class="foot-src">AI Sports Lab 為個人數據分析網站，非投注建議。資料來源：MLB Stats API、ESPN。</p><p><a href="#about" data-go="about" class="foot-about">關於與免責</a>・<a href="validation-nba.html">NBA 回測說明</a></p>' : '<p class="foot-src">AI Sports Lab 為個人數據分析網站，非投注建議。資料來源：MLB Stats API、ESPN。</p><p><a href="#about" data-go="about" class="foot-about">關於與免責</a>・<a href="validation.html">回測說明</a></p>';
+  footUpd(lg);
   document.title = `AI Sports Lab｜${lg.toUpperCase()} 勝負預測與賽後分析`;
   renderNav();
   if(lg==="nba") loadNBA();
