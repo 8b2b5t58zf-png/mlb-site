@@ -12,7 +12,7 @@ const WHY_TXT = {
   rec: "{t}本季 {w} 勝 {l} 敗，勝率 {p} 高於{o}的 {op}，戰績面占優",
   recClose: "兩隊戰績相近（{p} 對 {op}），這項影響不大",
   preseason: "新球季尚未開打，依上一季實力估算",
-  prior: "開季場次還少，參考上季得失分表現（畢氏勝率：{t} {p}、{o} {q}）",
+  prior: "開季場次還少，參考上季得失分表現（畢氏勝率：<span class=\"nw\">{t} {p}</span>、<span class=\"nw\">{o} {q}</span>）",
   priorLate: "本季樣本已足，上季實力只占小幅比重",
   home: "{t}坐鎮主場，主場優勢",
   neutral: "中立場地，不計主場優勢",
