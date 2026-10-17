@@ -52,8 +52,8 @@ const twShort = t => new Date(t).toLocaleString("zh-TW",{timeZone:"Asia/Taipei",
 async function runSection(ids, fn){
   const SKC = '<div class="skc" aria-hidden="true"></div>'.repeat(3);   // 預測卡用 3 塊同高骨架卡
   for(const id of ids){ const st = document.getElementById("st-"+id); st.innerHTML = ""; if(id==="nba-predict-list") st.dataset.wait = "";
-    const el = document.getElementById(id); if(id==="chart") el.innerHTML = '<canvas id="winChart"></canvas>'; else if(id==="predict" || id==="nba-predict-list"){ if(!el.querySelector(".skc")) el.innerHTML = SKC; } else el.innerHTML = skeleton(5); }
-  const unwait = () => ids.forEach(id => delete document.getElementById("st-"+id).dataset.wait);
+    const el = document.getElementById(id); if(id==="chart") el.innerHTML = '<canvas id="winChart"></canvas>'; else if(id==="predict" || id==="nba-predict-list"){ if(!el.querySelector(".skc")) el.innerHTML = SKC; } else { el.innerHTML = skeleton(5); el.classList.add("sk-wait"); } }
+  const unwait = () => ids.forEach(id => { delete document.getElementById("st-"+id).dataset.wait; document.getElementById(id).classList.remove("sk-wait"); });
   usedCache = null; dataAt = null;
   try{
     try{ await fn(); } finally { unwait(); }

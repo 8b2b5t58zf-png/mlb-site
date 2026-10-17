@@ -383,3 +383,5 @@ html.pre-nba .lgsw button[data-lg="mlb"]{background:#1c232d;border-color:var(--l
 html.pre-nba .lgsw button[data-lg="nba"]{background:#d4af37;border-color:#d4af37;color:#0d1117;font-weight:700}
 html.pre-nba #lg-tag{font-size:0}
 html.pre-nba #lg-tag::after{content:"｜NBA";font-size:18px}
+/* 其他分頁載入中：內容區先撐一個螢幕高，資料到了才收回，避免後面的圖表、頁尾在畫面裡被推來推去 */
+.sk-wait{min-height:100vh}

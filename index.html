@@ -16,15 +16,15 @@ if(T.indexOf(t)<0)t="predict";lg=lg==="nba"?"nba":"mlb";var e=document.documentE
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="AI Sports Lab｜MLB、NBA 中文數據分析">
 <meta name="twitter:description" content="每場預測都附理由，看懂勝負背後的數字。數據分析，非投注建議。">
-<meta name="twitter:image" content="https://8b2b5t58zf-png.github.io/mlb-site/img/og-home.png?v=202610171600">
+<meta name="twitter:image" content="https://8b2b5t58zf-png.github.io/mlb-site/img/og-home.png?v=202610171615">
 <meta property="og:type" content="website">
-<meta property="og:image" content="https://8b2b5t58zf-png.github.io/mlb-site/img/og-home.png?v=202610171600">
+<meta property="og:image" content="https://8b2b5t58zf-png.github.io/mlb-site/img/og-home.png?v=202610171615">
 <meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
-<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png?v=202610171600">
-<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png?v=202610171600">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png?v=202610171615">
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png?v=202610171615">
 <meta property="og:url" content="https://8b2b5t58zf-png.github.io/mlb-site/">
 <!-- 引入樣式檔，負責網頁外觀 -->
-<link rel="stylesheet" href="style.css?v=202610171600">
+<link rel="stylesheet" href="style.css?v=202610171615">
 <!-- 從 CDN 載入 Chart.js，用來畫圖表 -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
 </head>
@@ -59,20 +59,20 @@ if(T.indexOf(t)<0)t="predict";lg=lg==="nba"?"nba":"mlb";var e=document.documentE
   <!-- 重點二：賽後分析文章（依真實比賽數據自動產生） -->
   <section id="sec-analysis"><h2>賽後分析</h2>
     <p class="note">以下文字由程式根據官方比分、安打、失誤、先發投手與打者數據自動整理，不加入任何臆測。</p>
-    <div class="status" id="st-analysis"></div><div id="analysis">載入中…</div></section>
+    <div class="status" id="st-analysis"></div><div id="analysis" class="sk-wait">載入中…</div></section>
   <!-- 預測命中率：每天自動記錄的賽前預測與實際結果 -->
   <section id="sec-hit"><h2>預測命中率</h2>
     <p class="note">每小時自動記錄賽前預測，開打前最後一筆為正式預測，賽後補上結果；正式預測不再修改。</p>
-    <div class="status" id="st-hit"></div><div id="hit">載入中…</div></section>
+    <div class="status" id="st-hit"></div><div id="hit" class="sk-wait">載入中…</div></section>
   <!-- 第一區：聯盟戰績表 -->
-  <section id="sec-standings"><h2>聯盟戰績</h2><div class="status" id="st-standings"></div><div id="standings">載入中…</div><h3 class="sub">各隊勝率</h3><div class="status" id="st-chart"></div><div class="chartbox" id="chart"><canvas id="winChart"></canvas></div></section>
+  <section id="sec-standings"><h2>聯盟戰績</h2><div class="status" id="st-standings"></div><div id="standings" class="sk-wait">載入中…</div><h3 class="sub">各隊勝率</h3><div class="status" id="st-chart"></div><div class="chartbox" id="chart"><canvas id="winChart"></canvas></div></section>
   <!-- 第二區：各隊勝率圖表 -->
   
   <!-- 第三區：打擊與投手排行榜 -->
   <section id="sec-batting"><h2>排行榜</h2>
     <div class="tabs" role="tablist"><button role="tab" aria-selected="true" data-tab="bat">打擊</button><button role="tab" aria-selected="false" data-tab="pit">投手</button></div>
-    <div class="tabp" id="tab-bat"><div class="status" id="st-batting"></div><div id="batting" class="grid">載入中…</div></div>
-    <div class="tabp" id="tab-pit" hidden><div class="status" id="st-pitching"></div><div id="pitching" class="grid">載入中…</div></div></section>
+    <div class="tabp" id="tab-bat"><div class="status" id="st-batting"></div><div id="batting" class="grid sk-wait">載入中…</div></div>
+    <div class="tabp" id="tab-pit" hidden><div class="status" id="st-pitching"></div><div id="pitching" class="grid sk-wait">載入中…</div></div></section>
 </main>
 <main id="nba-main" class="nba-only">
   <section id="nsec-predict"><h2>NBA 勝負預測</h2>
@@ -87,12 +87,12 @@ if(T.indexOf(t)<0)t="predict";lg=lg==="nba"?"nba":"mlb";var e=document.documentE
     <div class="status" id="st-nba-predict-list" data-wait></div><div id="nba-predict-list" class="grid"><div class="skc" aria-hidden="true"></div><div class="skc" aria-hidden="true"></div><div class="skc" aria-hidden="true"></div></div></section>
   <section id="nsec-analysis"><h2>NBA 賽後分析</h2>
     <p class="note">以下文字由程式根據 ESPN 公開比分與球員數據自動整理，不加入任何臆測。</p>
-    <div class="status" id="st-nba-analysis"></div><div id="nba-analysis">載入中…</div></section>
+    <div class="status" id="st-nba-analysis"></div><div id="nba-analysis" class="sk-wait">載入中…</div></section>
   <section id="nsec-hit"><h2>NBA 預測命中率</h2>
     <p class="note">每小時自動記錄例行賽賽前預測，開打前最後一筆為正式預測，賽後補上結果；正式預測不再修改。</p>
-    <div class="status" id="st-nba-hit"></div><div id="nba-hit">載入中…</div></section>
-  <section id="nsec-standings"><h2>NBA 戰績</h2><div class="status" id="st-nba-standings-box"></div><div id="nba-standings-box">載入中…</div></section>
-  <section id="nsec-leaders"><h2>NBA 排行榜</h2><div class="status" id="st-nba-leaders-box"></div><div id="nba-leaders-box" class="grid">載入中…</div></section>
+    <div class="status" id="st-nba-hit"></div><div id="nba-hit" class="sk-wait">載入中…</div></section>
+  <section id="nsec-standings"><h2>NBA 戰績</h2><div class="status" id="st-nba-standings-box"></div><div id="nba-standings-box" class="sk-wait">載入中…</div></section>
+  <section id="nsec-leaders"><h2>NBA 排行榜</h2><div class="status" id="st-nba-leaders-box"></div><div id="nba-leaders-box" class="grid sk-wait">載入中…</div></section>
 </main>
 
 <main id="about" class="about-page" hidden>
@@ -115,11 +115,11 @@ if(T.indexOf(t)<0)t="predict";lg=lg==="nba"?"nba":"mlb";var e=document.documentE
 <!-- 手機底部固定導覽列（寬度小於 768px 才顯示） -->
 <nav id="bottomnav" aria-label="主選單"><a href="#sec-predict" data-sec="sec-predict"><span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l5-5 4 4 8-8"/><path d="M14 8h6v6"/></svg></span><span>預測</span></a><a href="#sec-analysis" data-sec="sec-analysis"><span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h10l4 4v12H5z"/><path d="M8 12h8M8 16h6"/></svg></span><span>賽後</span></a><a href="#sec-hit" data-sec="sec-hit"><span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><path d="M8 12l3 3 5-6"/></svg></span><span>命中率</span></a><a href="#sec-standings" data-sec="sec-standings"><span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 4h8v5a4 4 0 01-8 0z"/><path d="M12 13v4M8 20h8"/></svg></span><span>戰績</span></a><a href="#sec-batting" data-sec="sec-batting"><span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 20V12M12 20V5M19 20v-8"/></svg></span><span>排行</span></a></nav>
 <footer class="site-foot" id="foot"><p class="foot-src">AI Sports Lab 為個人數據分析網站，非投注建議。資料來源：MLB Stats API、ESPN。</p><p><a href="#about" data-go="about" class="foot-about">關於與免責</a>・<a href="validation.html">回測說明</a></p></footer>
-<script src="players.js?v=202610171600"></script>
-<script src="players-nba.js?v=202610171600"></script>
-<script src="why-text.js?v=202610171600"></script>
-<script src="nba.js?v=202610171600"></script>
-<script src="app.js?v=202610171600"></script>
+<script src="players.js?v=202610171615"></script>
+<script src="players-nba.js?v=202610171615"></script>
+<script src="why-text.js?v=202610171615"></script>
+<script src="nba.js?v=202610171615"></script>
+<script src="app.js?v=202610171615"></script>
 <script>window.goatcounter={path:function(p){return location.pathname+location.hash}};</script>
 <script data-goatcounter="https://aisportslab.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
 </body>
