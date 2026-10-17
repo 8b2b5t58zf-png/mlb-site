@@ -1,5 +1,5 @@
 {
- "updated": "2026-10-17 09:28 (UTC+8)",
+ "updated": "2026-10-17 23:30 (UTC+8)",
  "records": [
   {
    "gamePk": 849818,
@@ -95,7 +95,7 @@
   },
   {
    "gamePk": 849816,
-   "gameTime": "2026-10-18 08:00 (UTC+8)",
+   "gameTime": "2026-10-18 08:08 (UTC+8)",
    "away": "坦帕灣光芒",
    "home": "克里夫蘭守護者",
    "homeWinProb": 0.4751,
@@ -150,11 +150,12 @@
      }
     }
    ],
-   "official": null
+   "official": null,
+   "date": "2026-10-18"
   },
   {
    "gamePk": 849817,
-   "gameTime": "2026-10-19 05:00 (UTC+8)",
+   "gameTime": "2026-10-19 05:08 (UTC+8)",
    "away": "坦帕灣光芒",
    "home": "克里夫蘭守護者",
    "homeWinProb": 0.4751,
@@ -261,7 +262,7 @@
   {
    "gamePk": 849815,
    "date": "2026-10-20",
-   "gameTime": "2026-10-20 08:00 (UTC+8)",
+   "gameTime": "2026-10-20 08:08 (UTC+8)",
    "away": "克里夫蘭守護者",
    "home": "坦帕灣光芒",
    "snapshots": [
@@ -290,7 +291,7 @@
   {
    "gamePk": 849814,
    "date": "2026-10-21",
-   "gameTime": "2026-10-21 08:00 (UTC+8)",
+   "gameTime": "2026-10-21 08:08 (UTC+8)",
    "away": "克里夫蘭守護者",
    "home": "坦帕灣光芒",
    "snapshots": [
