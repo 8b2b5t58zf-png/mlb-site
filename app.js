@@ -681,6 +681,7 @@ async function footUpd(lg){
 }
 function setLeague(lg){
   LG_NOW = lg; try{ localStorage.setItem("aisl:league", lg); }catch(e){}
+  document.documentElement.classList.remove("pre-nba"); delete document.documentElement.dataset.pre;   // index.html <head> 的開頁暫時標記，交回這裡管理
   document.body.classList.toggle("lg-nba", lg==="nba");
   document.querySelectorAll(".lgsw button").forEach(b => b.setAttribute("aria-selected", b.dataset.lg===lg));
   document.getElementById("lg-tag").textContent = "｜" + lg.toUpperCase();

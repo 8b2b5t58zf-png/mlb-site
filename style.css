@@ -378,3 +378,8 @@ body.view-about #mlb-main,body.view-about #nba-main{display:none}
 body[data-pre] main section{display:none}
 body[data-pre="mlb-predict"] #sec-predict,body[data-pre="mlb-recap"] #sec-analysis,body[data-pre="mlb-hitrate"] #sec-hit,body[data-pre="mlb-standings"] #sec-standings,body[data-pre="mlb-leaders"] #sec-batting,
 body[data-pre="nba-predict"] #nsec-predict,body[data-pre="nba-recap"] #nsec-analysis,body[data-pre="nba-hitrate"] #nsec-hit,body[data-pre="nba-standings"] #nsec-standings,body[data-pre="nba-leaders"] #nsec-leaders{display:block}
+/* 直接開 NBA 時（<html class="pre-nba">，app.js 接手前）：切換鈕與頁首標籤從第一個畫面就是 NBA */
+html.pre-nba .lgsw button[data-lg="mlb"]{background:#1c232d;border-color:var(--line);color:#8b949e;font-weight:600}
+html.pre-nba .lgsw button[data-lg="nba"]{background:#d4af37;border-color:#d4af37;color:#0d1117;font-weight:700}
+html.pre-nba #lg-tag{font-size:0}
+html.pre-nba #lg-tag::after{content:"｜NBA";font-size:18px}
