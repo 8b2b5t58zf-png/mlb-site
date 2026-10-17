@@ -50,10 +50,13 @@ const twMD = t => { const p = Object.fromEntries(new Intl.DateTimeFormat("en-GB"
 const twShort = t => new Date(t).toLocaleString("zh-TW",{timeZone:"Asia/Taipei",hour12:false,month:"numeric",day:"numeric",hour:"2-digit",minute:"2-digit"});
 // 執行一個區塊：先顯示骨架，成功顯示資料；失敗顯示錯誤＋重試按鈕
 async function runSection(ids, fn){
-  for(const id of ids){ document.getElementById("st-"+id).innerHTML = ""; document.getElementById(id).innerHTML = id==="chart" ? '<canvas id="winChart"></canvas>' : skeleton(5); }
+  const SKC = '<div class="skc" aria-hidden="true"></div>'.repeat(3);   // 預測卡用 3 塊同高骨架卡
+  for(const id of ids){ const st = document.getElementById("st-"+id); st.innerHTML = ""; if(id==="nba-predict") st.dataset.wait = "";
+    const el = document.getElementById(id); if(id==="chart") el.innerHTML = '<canvas id="winChart"></canvas>'; else if(id==="predict" || id==="nba-predict"){ if(!el.querySelector(".skc")) el.innerHTML = SKC; } else el.innerHTML = skeleton(5); }
+  const unwait = () => ids.forEach(id => delete document.getElementById("st-"+id).dataset.wait);
   usedCache = null; dataAt = null;
   try{
-    await fn();
+    try{ await fn(); } finally { unwait(); }
     if(usedCache) for(const id of ids) document.getElementById("st-"+id).innerHTML = `<div class="stale">暫時抓不到最新資料，目前顯示 ${twMD(usedCache)} 的資料</div>`;
     else for(const id of ids){ const pre = PRE_NOTE[id];
       if(pre != null) document.getElementById("st-"+id).innerHTML = `<div class="dtime">${[pre, dataAt ? `資料時間 ${twMD(dataAt)}` : ""].filter(Boolean).join("・")}</div>`;
@@ -645,6 +648,7 @@ function markNav(){
   document.querySelectorAll("#topnav a, #bottomnav a").forEach(a => a.dataset.tab===TAB_NOW ? a.setAttribute("aria-current","page") : a.removeAttribute("aria-current"));
 }
 function showTab(){
+  delete document.body.dataset.pre;   // index.html 開頁前的暫時分頁設定，交回這裡管理
   const i = TABS.indexOf(TAB_NOW);
   for(const lg of ["mlb","nba"]) NAVS[lg].forEach(([id],k)=>{ const el=document.getElementById(id); if(!el) return; const on = lg===LG_NOW && k===i; el.classList.toggle("tab-off", !on); el.classList.toggle("tab-on", on); });
   document.body.classList.toggle("tab-predict", TAB_NOW===TABS[0]);

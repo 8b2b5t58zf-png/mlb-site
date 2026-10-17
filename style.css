@@ -370,3 +370,11 @@ body.view-about #mlb-main,body.view-about #nba-main{display:none}
 /* 頁尾第一行：資料更新時間（UI 設計師 10/17） */
 .site-foot .foot-upd{font-size:12px;color:#8b949e;text-align:center;margin:0 0 4px;white-space:nowrap}
 .site-foot .foot-upd .num{font-family:var(--num);font-variant-numeric:tabular-nums}
+/* 預測卡載入骨架（UI 設計師 10/17）：3 塊與真卡同高同寬同圓角，資料到了就換成真卡 */
+.skc{height:129px;background:#151b23;border-radius:var(--radius)}
+/* 載入中先保留「資料時間」那一行的高度，避免卡片被往下推 */
+#st-nba-predict[data-wait]{display:block;height:25px}
+/* JS 載入前（body[data-pre]）只顯示要開的那個分頁 */
+body[data-pre] main section{display:none}
+body[data-pre="mlb-predict"] #sec-predict,body[data-pre="mlb-recap"] #sec-analysis,body[data-pre="mlb-hitrate"] #sec-hit,body[data-pre="mlb-standings"] #sec-standings,body[data-pre="mlb-leaders"] #sec-batting,
+body[data-pre="nba-predict"] #nsec-predict,body[data-pre="nba-recap"] #nsec-analysis,body[data-pre="nba-hitrate"] #nsec-hit,body[data-pre="nba-standings"] #nsec-standings,body[data-pre="nba-leaders"] #nsec-leaders{display:block}
