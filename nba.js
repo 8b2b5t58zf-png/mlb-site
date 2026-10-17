@@ -77,8 +77,8 @@ async function nbaStandings(){
 
 // 信心門檻（2025-26 回測）：未滿 60% 勢均力敵、60–70% 略占上風、70% 以上明顯看好；開季到 1/14 最高只寫「看好」
 const nEarly = (dt=new Date()) => { const m = dt.getMonth(), d = dt.getDate(); return m >= 8 || (m === 0 && d <= 14); };
-const nTier = (p, early) => p >= 70 ? (early ? ["lean","看好"] : ["strong","明顯看好"]) : p >= 60 ? ["lean","略占上風"] : ["toss","接近五五波"];
-const nWord = (p, early) => p >= 70 ? (early ? "看好" : "明顯看好") : p >= 60 ? "略占上風" : "勢均力敵";
+const nTier = (p, early) => p >= 70 ? (early ? ["lean","勝率較高"] : ["strong","勝率明顯較高"]) : p >= 60 ? ["lean","略占上風"] : ["toss","接近五五波"];
+const nWord = (p, early) => p >= 70 ? (early ? "勝率較高" : "勝率明顯較高") : p >= 60 ? "略占上風" : "勢均力敵";
 let NALL = [];   // 近期所有賽程（判斷背靠背：前 36 小時內同隊有比賽）
 // 今日數據焦點（NBA）：列表第一天勝率最接近五成的一場，排第一張
 let NFOCUS = null;

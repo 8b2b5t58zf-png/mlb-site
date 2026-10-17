@@ -238,7 +238,7 @@ const noSp = o => o && (o.starterStatus ? o.starterStatus !== "both" : o.hasStar
 // 畫出預測卡片
 // 信心分級（看好方的機率）
 function tier(p){
-  if(p >= 0.60) return ["strong","明顯看好"];
+  if(p >= 0.60) return ["strong","勝率明顯較高"];
   if(p >= 0.53) return ["lean","略占上風"];
   return ["toss","接近五五波"];
 }
@@ -287,7 +287,7 @@ function bridge(m, s, fav){
   const seg = (from, to, cls) => `<span class="br-seg ${cls}" style="left:${X(Math.min(from,to))}%;width:${Math.max(X(Math.max(from,to))-X(Math.min(from,to)),0.8)}%"></span>`;
   const row = (label, from, to, cls, val, extra="") => `<div class="br-row ${extra}"><span class="br-l">${label}</span><span class="br-track">${seg(from,to,cls)}</span><span class="br-v">${val}</span></div>`;
   const p1 = 50+s.d1, p2 = p1+s.d2;
-  return `<div class="bridge"><div class="br-cap">${ts(fav)}（看好方）勝率的計算過程</div>
+  return `<div class="bridge"><div class="br-cap">${ts(fav)}（勝率較高一方）勝率的計算過程</div>
     ${row("起點", 35, 50, "start", "50.0%", "muted")}
     ${row("戰績", 50, p1, dCls(s.d1), dTxt(s.d1))}
     ${row("主場", p1, p2, dCls(s.d2), dTxt(s.d2))}
