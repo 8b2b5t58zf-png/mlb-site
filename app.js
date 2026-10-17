@@ -204,8 +204,8 @@ async function loadGames(){
   const done = games.filter(g=>g.status.abstractGameState==="Final" && g.linescore && g.linescore.innings && !["Postponed","Cancelled"].includes(g.status.detailedState)).reverse().slice(0,5); // 最近 5 場已完賽
   // 季後賽：同一系列只顯示下一場還沒打完的比賽（前一戰打完才出現下一戰；預測紀錄不受影響）
   const POST = ["F","D","L","W"], skey = g => g.gameType + ":" + [g.teams.home.team.id, g.teams.away.team.id].sort().join("-");
-  const firstOpen = {};
-  for(const g of games.filter(g=>POST.includes(g.gameType) && g.status.abstractGameState!=="Final").sort((a,b)=>new Date(a.gameDate)-new Date(b.gameDate))) if(!(skey(g) in firstOpen)) firstOpen[skey(g)] = g;
+  const firstOpen = {};   // 依第幾戰排序（延賽時官方日期可能前後顛倒）
+  for(const g of games.filter(g=>POST.includes(g.gameType) && g.status.abstractGameState!=="Final").sort((a,b)=>(a.seriesGameNumber||0)-(b.seriesGameNumber||0) || new Date(a.gameDate)-new Date(b.gameDate))) if(!(skey(g) in firstOpen)) firstOpen[skey(g)] = g;
   const real = g => !!(TEAM[g.teams.home.team.id] && TEAM[g.teams.away.team.id]);   // 兩隊都確定才算
   const next = games.filter(g=>g.status.abstractGameState==="Preview" && real(g) && (!POST.includes(g.gameType) || firstOpen[skey(g)] === g)).slice(0,4);
   // 對戰組合未定的季後賽系列：不出卡片，只顯示一行開打日期
