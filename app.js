@@ -201,7 +201,7 @@ async function loadGames(){
   const s = fmt(new Date(now - 14*864e5)), e = fmt(new Date(+now + 7*864e5));
   const d = await getJSON(`${API}/schedule?sportId=1&startDate=${s}&endDate=${e}&hydrate=linescore,probablePitcher,decisions,team,seriesStatus,weather`);
   const games = (d.dates||[]).flatMap(x=>x.games);
-  const done = games.filter(g=>g.status.abstractGameState==="Final").reverse().slice(0,5); // 最近 5 場已完賽
+  const done = games.filter(g=>g.status.abstractGameState==="Final" && g.linescore && g.linescore.innings && !["Postponed","Cancelled"].includes(g.status.detailedState)).reverse().slice(0,5); // 最近 5 場已完賽
   // 季後賽：同一系列只顯示下一場還沒打完的比賽（前一戰打完才出現下一戰；預測紀錄不受影響）
   const POST = ["F","D","L","W"], skey = g => g.gameType + ":" + [g.teams.home.team.id, g.teams.away.team.id].sort().join("-");
   const firstOpen = {};
@@ -225,7 +225,7 @@ async function loadGames(){
 // 先發總覽：依目前列出的預測卡；卡片跨多天時只算最早那天（台灣日期）；沒有卡片才隱藏
 function daySummary(games){
   const day = d => new Date(new Date(d).getTime() + 8*3600e3).toISOString().slice(0,10);
-  games = games.filter(x => TEAM[x.teams.home.team.id] && TEAM[x.teams.away.team.id]);   // 與卡片同一份
+  games = games.filter(x => TEAM[x.teams.home.team.id] && TEAM[x.teams.away.team.id] && !x.rescheduledFrom);   // 與卡片同一份；延賽場次不列入今日摘要（§21）
   let el = document.getElementById("mlb-day");
   if(!el){ el = document.createElement("p"); el.id = "mlb-day"; el.className = "day-sum"; (document.getElementById("mlb-acc")||document.querySelector("#sec-predict h2")).after(el); }
   if(!games.length){ el.hidden = true; return; }
