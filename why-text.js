@@ -12,7 +12,7 @@ const WHY_TXT = {
   rec: "{t}本季 {w} 勝 {l} 敗，勝率 {p} 高於{o}的 {op}，戰績面占優",
   recClose: "兩隊戰績相近（{p} 對 {op}），這項影響不大",
   preseason: "新球季尚未開打，依上一季實力估算",
-  prior: "開季場次還少，參考{t}上季得失分表現（畢氏勝率 {p}）",
+  prior: "開季場次還少，參考上季得失分表現（畢氏勝率：{t} {p}、{o} {q}）",
   priorLate: "本季樣本已足，上季實力只占小幅比重",
   home: "{t}坐鎮主場，主場優勢",
   neutral: "中立場地，不計主場優勢",
@@ -107,7 +107,7 @@ function ccCard(o){   // spec-compact v1
   const id = `cc-${++CC_N}`, ft = o.focus ? `<span class="cc-focus">數據焦點</span>` : "", cf = `<span class="tier ${o.tc} cc-conf">信心 ${o.conf}</span>`;
   return `<div class="pcard cc${o.focus?" focus":""}">
   <button type="button" class="cc-head" aria-expanded="false" aria-controls="${id}" data-lg="${o.focus?"focus":o.lg}">
-    <span class="cc-r1"><span class="cc-ser">${ft}${o.ser||""}</span><span class="cc-rt"><span class="cc-time num">${o.time}</span>${o.tag?`<span class="cc-tag">${o.tag}</span>`:""}<span class="cc-c1">${cf}</span></span></span>
+    ${o.pp ? `<span class="cc-r1"><span class="cc-ser">${o.ser||""}<span class="cc-pp">延賽</span></span></span><span class="cc-ppt num">${o.pp}</span>` : `<span class="cc-r1"><span class="cc-ser">${ft}${o.ser||""}</span><span class="cc-rt"><span class="cc-time num">${o.time}</span>${o.tag?`<span class="cc-tag">${o.tag}</span>`:""}<span class="cc-c1">${cf}</span></span></span>`}
     <span class="cc-r2"><span class="cc-tm">${o.A}</span><span class="cc-c2">${cf}</span><span class="cc-tm r">${o.H}</span></span>
     <span class="cc-r3"><span class="num cc-p">${o.ap}%</span><span class="cc-bar"><span class="${o.favHome?"oth":"fav"}" style="width:${o.ap}%"></span><span class="${o.favHome?"fav":"oth"}" style="width:${o.hp}%"></span></span><span class="num cc-p r">${o.hp}%</span></span>
     <span class="cc-r4"><span class="cc-why">${o.focus || o.reason || ""}</span><span class="cc-more">看分析 ›</span></span>
@@ -144,7 +144,7 @@ function cardTime(d, st){ const t = new Date(new Date(d).getTime() + 8*3600e3);
   return st && st.cnt && st.cnt[twKey(d)] === 1 ? `${t.getUTCMonth()+1}/${t.getUTCDate()}（${WD[t.getUTCDay()]}）${hhmm(d)}` : hhmm(d); }
 
 // 第一行放不下時，信心標籤移到第二行中間
-function ccFit(){ document.querySelectorAll(".cc-head").forEach(h => { if(!h.offsetParent) return; const r = h.querySelector(".cc-r1"); h.classList.remove("tight"); const t = r.scrollWidth > r.clientWidth + 1; h.classList.toggle("tight", t); }); }
+function ccFit(){ document.querySelectorAll(".cc-head").forEach(h => { if(!h.offsetParent) return; const r = h.querySelector(".cc-r1"); h.classList.remove("tight"); const t = !!h.querySelector(".cc-focus,.cc-pp") || r.scrollWidth > r.clientWidth + 1; h.classList.toggle("tight", t); }); }
 addEventListener("resize", ccFit);
 new MutationObserver(() => requestAnimationFrame(ccFit)).observe(document.documentElement, {childList:true, subtree:true});
 

@@ -427,10 +427,11 @@ function renderPredict(games, isPast){
   let html = isPast ? "<p>目前沒有即將開打的比賽，改顯示最近比賽的賽前估算：</p>" : "";
   const DG = {last:null, cnt:dayCounts(games.filter(g => TEAM[g.teams.home.team.id] && TEAM[g.teams.away.team.id]).map(g => g.gameDate))};
   // 今日數據焦點：列表第一天、兩隊先發都公布的場次
-  games = games.slice().sort((a,b) => new Date(a.gameDate) - new Date(b.gameDate));   // 依開賽時間排序
+  games = games.filter(g => !(g.status && g.status.detailedState === "Postponed")).sort((a,b) => new Date(a.gameDate) - new Date(b.gameDate));   // 依開賽時間排序；延賽的原日期場次不顯示（§21）
+  const isPP = g => !!g.rescheduledFrom;   // 延賽改期後的場次
   const vg = games.filter(g => TEAM[g.teams.home.team.id] && TEAM[g.teams.away.team.id]);
   const day0 = vg.length ? twKey(vg[0].gameDate) : null;
-  const FC = pickFocus(vg.map((g,i) => ({g,i})).filter(({g}) => !isPast && twKey(g.gameDate) === day0 && g.teams.home.probablePitcher && g.teams.away.probablePitcher).map(({g,i}) => {
+  const FC = pickFocus(vg.map((g,i) => ({g,i})).filter(({g}) => !isPast && !isPP(g) && twKey(g.gameDate) === day0 && g.teams.home.probablePitcher && g.teams.away.probablePitcher).map(({g,i}) => {
     const hp = PSTAT[g.teams.home.probablePitcher.id], ap = PSTAT[g.teams.away.probablePitcher.id], m = modelV2(g.teams.home.team.id, g.teams.away.team.id, hp, ap);
     const ss = g.seriesStatus, need = ss && ss.totalGames ? Math.ceil(ss.totalGames/2) : 0;
     const key = !!(need && (ss.wins === need-1 || ss.losses === need-1 || g.seriesGameNumber === ss.totalGames));
@@ -441,6 +442,8 @@ function renderPredict(games, isPast){
     return {i, fh:m.final, key, txt};
   }));
   if(FC){ const f = vg[FC.i]; games = [f, ...games.filter(g => g !== f)]; }
+  const todayK = twKey(new Date().toISOString()), live = vg.filter(g => !isPP(g));
+  if(!isPast && vg.length && !live.some(g => twKey(g.gameDate) === todayK)) html += emptyCard((live[0] || vg[0]).gameDate);
   for(const g of games){
     const H = g.teams.home, A = g.teams.away;
     if(!TEAM[H.team.id] || !TEAM[A.team.id]) continue;
@@ -476,7 +479,7 @@ function renderPredict(games, isPast){
       <details class="algo"><summary>兩隊數據對比</summary>${compare(A.team, H.team, ap, hp)}</details>
       ${w ? `<div class="ref">${w}</div>` : ""}
       <div class="upd">最後更新：${tw(Date.now())}（台灣時間）</div>`;
-    html += sb + ccCard({lg:"mlb", focus: FC && g === vg[FC.i] ? FC.txt : "", ser, time:cardTime(g.gameDate, DG), tag: wait ? "等先發" : "先發已公布", A:ts(A.team), H:ts(H.team), conf:CONF[tc], tc, ap:apct, hp:hpct, favHome, reason, body});
+    html += sb + ccCard({lg:"mlb", pp: isPP(g) ? `延賽至 ${twWD(g.gameDate, true)}（勝率將重算）` : "", focus: FC && g === vg[FC.i] && !isPP(g) ? FC.txt : "", ser, time:cardTime(g.gameDate, DG), tag: wait ? "等先發" : "先發已公布", A:ts(A.team), H:ts(H.team), conf:CONF[tc], tc, ap:apct, hp:hpct, favHome, reason, body});
   }
   const X = PEXTRA;
   if(!html.includes('class="pcard')) html = emptyCard(X.nextAt);

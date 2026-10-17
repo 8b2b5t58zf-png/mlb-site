@@ -66,7 +66,7 @@ async function nbaStandings(){
         gb:stv(e,"gamesBehind").displayValue, pct:stv(e,"winPercent").displayValue, diff:stv(e,"differential").displayValue};
       t.g = t.w + t.l; t.raw = e; NT[t.id] = t; return t;
     }).sort((x,y)=> (y.g? y.w/y.g:0) - (x.g? x.w/x.g:0) || x.team.displayName.localeCompare(y.team.displayName));
-    html += `<div><h3>${conf.name.startsWith("East")?"東區":"西區"}</h3><table class="nst"><tr><th>球隊</th><th>勝</th><th>敗</th><th class="dk">勝率</th><th>勝差</th><th class="dk">場均得分</th><th class="dk">場均失分</th><th class="dk">得失分差</th></tr>`;
+    html += `<div><h3>${conf.name.startsWith("East")?"東區":"西區"}</h3><table class="nst"><tr><th>球隊</th><th>勝</th><th>敗</th><th>勝率</th><th>勝差</th><th class="dk">場均得分</th><th class="dk">場均失分</th><th class="dk">得失分差</th></tr>`;
     for(const t of rows) html += `<tr><td class="nw">${nts(t.team)}</td><td>${t.w}</td><td>${t.l}</td><td>${t.pct||"-"}</td><td>${t.gb||"-"}</td><td class="dk">${t.g?t.apf:"-"}</td><td class="dk">${t.g?t.apa:"-"}</td><td class="dk">${t.g?t.diff:"-"}</td></tr>`;
     html += "</table></div>";
   }
@@ -107,7 +107,8 @@ function nbaCard(ev, DG){
     t1 = Math.abs(pc(th)-pc(ta)) < 0.02 ? wf("recClose", {p:wpct(pc(xt)), op:wpct(pc(yt))}, ["p","op"])
       : wf("rec", {t:nts(X.team), w:xt.w, l:xt.l, p:wpct(pc(xt)), o:nts(Y.team), op:wpct(pc(yt))}, ["w","l","p","op"]); }
   const pX = m.s2 >= 0 ? H : A;
-  const t2 = th.g >= 30 && ta.g >= 30 ? WHY_TXT.priorLate : NPYTH[pX.team.id] != null ? wf("prior", {t:nts(pX.team), p:wpct(NPYTH[pX.team.id])}, ["p"]) : wf("prior", {t:nts(pX.team), p:""}).replace("（畢氏勝率 ）","");
+  const pY = pX === H ? A : H;
+  const t2 = th.g >= 30 && ta.g >= 30 ? WHY_TXT.priorLate : NPYTH[pX.team.id] != null && NPYTH[pY.team.id] != null ? wf("prior", {t:nts(pX.team), p:wpct(NPYTH[pX.team.id]), o:nts(pY.team), q:wpct(NPYTH[pY.team.id])}, ["p","q"]) : "開季場次還少，參考上季得失分表現";
   const t3 = c.neutralSite ? WHY_TXT.neutral : wf("home", {t:nts(H.team)});
   const why = whyBlock2([[k*m.s1, t1, "rec"], [k*m.s2, t2, "prior"], [k*m.s3, t3, "home"]], nts(fav), fp, favHome ? m.F : Math.round((100-m.F)*10)/10);
   // 參考數據（固定四列：近 10 場、主客場、場均得失分差、休息天數）
