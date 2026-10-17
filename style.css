@@ -304,6 +304,7 @@ body.view-about #mlb-main,body.view-about #nba-main{display:none}
 .cc-r3{gap:6px!important}
 .cc-p{font-size:13px;color:#c9d1d9;width:36px;flex:none}
 .cc-p.r{text-align:right}
+.cc-lab{font-size:12px;color:#8b949e;flex:none;white-space:nowrap;margin-right:-2px}
 .cc-bar{flex:1;display:flex;height:8px;border-radius:4px;overflow:hidden;gap:2px;background:var(--bar-oth)}
 .cc-bar .fav{background:#d4af37} .cc-bar .oth{background:var(--bar-oth)}
 .cc-r4{justify-content:space-between;align-items:flex-start!important;font-size:12px;line-height:18px;color:#8b949e}
@@ -354,12 +355,13 @@ body.view-about #mlb-main,body.view-about #nba-main{display:none}
 
 .cg-v1,.cg-v2{display:block;white-space:nowrap;text-align:right}
 .cg.bt .cg-v{font-size:13px;color:#8b949e}
-.sbar{margin:16px 0 8px;height:40px;display:flex;flex-direction:column;justify-content:center;gap:4px}
+.sbar{margin:16px 0 -4px;/* 外層 grid gap 12px，-4px 後到卡片實際 8px */ display:flex;flex-direction:column;justify-content:center;gap:4px}
+.sbar .sb-note{margin:2px 0 0;font-size:12px;color:#8b949e;text-align:left;line-height:1.5;word-break:keep-all;overflow-wrap:anywhere}
 .sb-r1{display:flex;justify-content:space-between;font-size:12px;color:#8b949e;white-space:nowrap}
 .sb-r2{display:flex;align-items:center;gap:8px}
 .sb-t{font-size:12px;color:#8b949e;white-space:nowrap;flex:none}
 .sb-b{flex:1;display:flex;height:4px;border-radius:2px;overflow:hidden;background:#262e39}
-.sb-b .g{background:#d4af37} .sb-b .o{background:#262e39}
+.sb-b .g{background:#58677a} .sb-b .o{background:#262e39}
 
 .cc-pp{font-size:12px;color:#8b949e;border:1px solid #8b949e;border-radius:4px;padding:0 6px;line-height:16px;white-space:nowrap}
 .cc-head>.cc-ppt{display:block;font-size:12px;color:#8b949e;white-space:nowrap}

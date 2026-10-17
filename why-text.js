@@ -4,18 +4,18 @@ const WHY_TXT = {
   title: "為什麼這樣預測？",
   // 總結句（依信心分級，不帶數字）
   sum: {
-    strong: "各項指標都站在{t}這邊，模型給出明顯優勢",
+    strong: "各項指標都站在{t}這邊，差距明顯",
     lean: "{t}靠{item}拉開些微差距，但還不到穩定領先",
     toss: "兩隊條件接近，這場要看臨場表現",
   },
-  item: {rec:"戰績", home:"主場優勢", sp:"先發投手", prior:"上一季實力"},
+  item: {rec:"戰績", home:"主場因素", sp:"先發投手", prior:"上一季實力"},
   rec: "{t}本季 {w} 勝 {l} 敗，勝率 {p} 高於{o}的 {op}，戰績面占優",
   recClose: "兩隊戰績相近（{p} 對 {op}），這項影響不大",
   preseason: "新球季尚未開打，依上一季實力估算",
   prior: "開季場次還少，參考上季得失分表現（畢氏勝率：<span class=\"nw\">{t} {p}</span>、<span class=\"nw\">{o} {q}</span>）",
   priorLate: "本季樣本已足，上季實力只占小幅比重",
-  home: "{t}坐鎮主場，主場優勢",
-  neutral: "中立場地，不計主場優勢",
+  home: "{t}在主場出賽",
+  neutral: "中立場地，不計主場因素",
   sp: "{p} 本季 ERA {era}、WHIP {whip}，數據優於{o}的 {oera}／{owhip}",
   spMixed: "{a}與{h}互有優劣",
   spClose: "{a}與{h}數據相近",
@@ -109,7 +109,7 @@ function ccCard(o){   // spec-compact v1
   <button type="button" class="cc-head" aria-expanded="false" aria-controls="${id}" data-lg="${o.focus?"focus":o.lg}">
     ${o.pp ? `<span class="cc-r1"><span class="cc-ser">${o.ser||""}<span class="cc-pp">延賽</span></span></span><span class="cc-ppt num">${o.pp}</span>` : `<span class="cc-r1"><span class="cc-ser">${ft}${o.ser||""}</span><span class="cc-rt"><span class="cc-time num">${o.time}</span>${o.tag?`<span class="cc-tag">${o.tag}</span>`:""}<span class="cc-c1">${cf}</span></span></span>`}
     <span class="cc-r2"><span class="cc-tm">${o.A}</span><span class="cc-c2">${cf}</span><span class="cc-tm r">${o.H}</span></span>
-    <span class="cc-r3"><span class="num cc-p">${o.ap}%</span><span class="cc-bar"><span class="${o.favHome?"oth":"fav"}" style="width:${o.ap}%"></span><span class="${o.favHome?"fav":"oth"}" style="width:${o.hp}%"></span></span><span class="num cc-p r">${o.hp}%</span></span>
+    <span class="cc-r3"><span class="cc-lab">本場</span><span class="num cc-p">${o.ap}%</span><span class="cc-bar"><span class="${o.favHome?"oth":"fav"}" style="width:${o.ap}%"></span><span class="${o.favHome?"fav":"oth"}" style="width:${o.hp}%"></span></span><span class="num cc-p r">${o.hp}%</span></span>
     <span class="cc-r4"><span class="cc-why">${o.focus || o.reason || ""}</span><span class="cc-more">看分析 ›</span></span>
   </button>
   <div class="cc-body" id="${id}" inert><div class="cc-in">${o.body}</div></div></div>`;
@@ -185,7 +185,7 @@ function seriesBar(o){
   const ph = seriesProb(o.wH, o.wA, o.n, o.pNext, o.pH, o.pA, pat), [h, a] = serDisp(ph);
   const st = o.wH === o.wA ? `${o.wH}:${o.wA} 平手` : o.wH > o.wA ? `${o.H} ${o.wH}:${o.wA} 領先` : `${o.A} ${o.wA}:${o.wH} 領先`;
   const hi = h >= a;
-  return `<div class="sbar"><div class="sb-r1"><span>${o.ab}・${st}</span><span>晉級機率</span></div><div class="sb-r2"><span class="sb-t">${o.A} <span class="num">${a}%</span></span><span class="sb-b"><span class="${hi?"o":"g"}" style="width:${a}%"></span><span class="${hi?"g":"o"}" style="width:${h}%"></span></span><span class="sb-t r">${o.H} <span class="num">${h}%</span></span></div></div>`;
+  return `<div class="sbar"><div class="sb-r1"><span>${o.ab}・${st}</span><span>系列晉級機率</span></div><div class="sb-r2"><span class="sb-t">${o.A} <span class="num">${a}%</span></span><span class="sb-b"><span class="${hi?"o":"g"}" style="width:${a}%"></span><span class="${hi?"g":"o"}" style="width:${h}%"></span></span><span class="sb-t r">${o.H} <span class="num">${h}%</span></span></div><p class="sb-note">晉級機率含已贏場次，單場勝率只看下一戰</p></div>`;
 }
 const SER_ALGO = '<p class="desc">晉級機率：用每場單場勝率與目前系列比數計算，先發未公布的場次先用戰績估算，依目前單場模型推算，非投注建議</p>';
 

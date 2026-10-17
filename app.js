@@ -468,7 +468,7 @@ function renderPredict(games, isPast){
     const ser = serTag(g).replace(/^<div class="ser-row">|<\/div>$/g,"");
     const reason = mainReason([
       {k:"戰績", t:ts(m.d1>=0?H.team:A.team), v:m.d1, sfx:"戰績較佳"},
-      {k:"主場", t:ts(H.team), v:m.d2, sfx:"主場優勢"},
+      {k:"主場", t:ts(H.team), v:m.d2, sfx:"主場出賽"},
       m.used ? {k:"先發投手", t:ts(m.d3>=0?H.team:A.team), v:m.d3, sfx:"先發較佳"} : {v:null}], favHome, wait, fp);
     const body = `${pitchRow(aP, hP, ap, hp, SPCHG)}
       ${v1note}${whyBlock(A.team, H.team, m, st, ap, hp, aP, hP, fav, fp)}

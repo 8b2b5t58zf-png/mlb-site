@@ -128,9 +128,9 @@ function nbaCard(ev, DG){
   const lastSzn = (th.g + ta.g)/2 < 10, tm = v => nts((v>=0?H:A).team);
   const reason = mainReason(lastSzn ? [
       {k:"上季實力", t:tm(m.d1), v:m.d1, sfx:"上季較強"},
-      {k:"主場", t:nts(H.team), v:c.neutralSite?null:m.d2, sfx:"主場優勢"}]
+      {k:"主場", t:nts(H.team), v:c.neutralSite?null:m.d2, sfx:"主場出賽"}]
     : [{k:"戰績", t:tm(m.d1), v:m.d1, sfx:"戰績較佳"},
-      {k:"主場", t:nts(H.team), v:c.neutralSite?null:m.d2, sfx:"主場優勢"}], favHome, false, fp);
+      {k:"主場", t:nts(H.team), v:c.neutralSite?null:m.d2, sfx:"主場出賽"}], favHome, false, fp);
   const se = c.series, sH = se && se.competitors && se.competitors.find(x => x.id === H.team.id), sA = se && se.competitors && se.competitors.find(x => x.id === A.team.id);
   const sb = ev.season.type === 3 && se && !se.completed && sH && sA ? seriesBar({lg:"nba", ab: se.title || se.description || "季後賽", n: se.totalCompetitions, gameNo: sH.wins + sA.wins + 1, wH: sH.wins, wA: sA.wins,
     pNext: hp/100, pH: nModel(H.team.id, A.team.id).F/100, pA: 1 - nModel(A.team.id, H.team.id).F/100, H: nts(H.team), A: nts(A.team)}) : "";
