@@ -218,21 +218,26 @@ async function loadGames(){
   // 先抓先發投手成績與 FIP 常數，再畫預測卡
   await Promise.all([loadFIPC(), loadTeamHit(), ...show.map(g=>loadH2H(g.teams.away.team.id, g.teams.home.team.id)), loadPitchers(show.flatMap(g=>[g.teams.home.probablePitcher, g.teams.away.probablePitcher]).filter(Boolean).map(p=>p.id))]);
   renderPredict(show, !next.length);
-  daySummary(show);
+  daySummary(show, !next.length);
   await renderAnalysis(done);
 }
 
 // 先發總覽：依目前列出的預測卡；卡片跨多天時只算最早那天（台灣日期）；沒有卡片才隱藏
-function daySummary(games){
+function daySummary(games, isPast){
   const day = d => new Date(new Date(d).getTime() + 8*3600e3).toISOString().slice(0,10);
-  games = games.filter(x => TEAM[x.teams.home.team.id] && TEAM[x.teams.away.team.id] && !x.rescheduledFrom);   // 與卡片同一份；延賽場次不列入今日摘要（§21）
+  const real = games.filter(x => TEAM[x.teams.home.team.id] && TEAM[x.teams.away.team.id] && !(x.status && x.status.detailedState === "Postponed"));
+  const pp = real.filter(x => x.rescheduledFrom).sort((a,b) => new Date(a.gameDate) - new Date(b.gameDate));
+  games = real.filter(x => !x.rescheduledFrom);   // 與卡片同一份；延賽場次不列入今日摘要（§21）
   let el = document.getElementById("mlb-day");
   if(!el){ el = document.createElement("p"); el.id = "mlb-day"; el.className = "day-sum"; (document.getElementById("mlb-acc")||document.querySelector("#sec-predict h2")).after(el); }
-  if(!games.length){ el.hidden = true; return; }
+  // 今天沒有比賽：只有延賽卡時寫「今天沒有比賽・下一戰 {延賽日期時間}」（§21）；有後續卡片時日期只寫在這行（卡片只寫時間）
+  if(!games.length){ if(!isPast && pp.length){ el.hidden = false; el.innerHTML = `今天沒有比賽・下一戰 ${twWD(pp[0].gameDate, true)}`; } else el.hidden = true; return; }
   const d0 = games.map(x => day(x.gameDate)).sort()[0], g = games.filter(x => day(x.gameDate) === d0);
-  const md = `${+d0.slice(5,7)}/${+d0.slice(8,10)}`;
+  const noToday = !isPast && d0 !== day(new Date().toISOString());
+  const md = noToday ? "今天沒有比賽・下一戰 " + twWD(g[0].gameDate) : `${+d0.slice(5,7)}/${+d0.slice(8,10)}`;
   const a = g.filter(x => x.teams.home.probablePitcher && x.teams.away.probablePitcher).length;
   el.hidden = false; el.innerHTML = a === g.length ? wf("dayAll", {d:md, n:g.length}, ["n"]) : [wf("dayHead", {d:md, n:g.length}, ["n"]), a ? wf("dayA", {a}, ["a"]) : "", wf("dayB", {b:g.length-a}, ["b"])].filter(Boolean).join("・");
+  if(noToday) el.innerHTML = el.innerHTML.replace("） 共", "）共");
 }
 const noSp = o => o && (o.starterStatus ? o.starterStatus !== "both" : o.hasStarters === false || ("homeStarter" in o && (!o.homeStarter || !o.awayStarter)));
 // 畫出預測卡片
@@ -426,6 +431,7 @@ let PEXTRA = {post:false, tbd:[], nextAt:null};
 function renderPredict(games, isPast){
   let html = isPast ? "<p>目前沒有即將開打的比賽，改顯示最近比賽的賽前估算：</p>" : "";
   const DG = {last:null, cnt:dayCounts(games.filter(g => TEAM[g.teams.home.team.id] && TEAM[g.teams.away.team.id]).map(g => g.gameDate))};
+  { const ok = games.filter(g => TEAM[g.teams.home.team.id] && TEAM[g.teams.away.team.id] && !g.rescheduledFrom && !(g.status && g.status.detailedState === "Postponed")).map(g => twKey(g.gameDate)).sort(); DG.sumDay = isPast ? null : ok[0]; }   // 總覽那行已寫日期的那一天：卡片只寫時間
   // 今日數據焦點：列表第一天、兩隊先發都公布的場次
   games = games.filter(g => !(g.status && g.status.detailedState === "Postponed")).sort((a,b) => new Date(a.gameDate) - new Date(b.gameDate));   // 依開賽時間排序；延賽的原日期場次不顯示（§21）
   const isPP = g => !!g.rescheduledFrom;   // 延賽改期後的場次
@@ -442,8 +448,7 @@ function renderPredict(games, isPast){
     return {i, fh:m.final, key, txt};
   }));
   if(FC){ const f = vg[FC.i]; games = [f, ...games.filter(g => g !== f)]; }
-  const todayK = twKey(new Date().toISOString()), live = vg.filter(g => !isPP(g));
-  if(!isPast && vg.length && !live.some(g => twKey(g.gameDate) === todayK)) html += emptyCard((live[0] || vg[0]).gameDate);
+  // 「今天沒有比賽」改寫在總覽那行；大框只在下方完全沒有卡片時顯示（見函式結尾）
   for(const g of games){
     const H = g.teams.home, A = g.teams.away;
     if(!TEAM[H.team.id] || !TEAM[A.team.id]) continue;

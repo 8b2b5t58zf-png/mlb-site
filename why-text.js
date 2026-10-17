@@ -141,7 +141,7 @@ document.addEventListener("click", e => {
 const twKey = d => new Date(new Date(d).getTime() + 8*3600e3).toISOString().slice(0,10);
 function dayCounts(ds){ const m = {}; for(const d of ds){ const k = twKey(d); m[k] = (m[k]||0) + 1; } return m; }
 function cardTime(d, st){ const t = new Date(new Date(d).getTime() + 8*3600e3);
-  return st && st.cnt && st.cnt[twKey(d)] === 1 ? `${t.getUTCMonth()+1}/${t.getUTCDate()}（${WD[t.getUTCDay()]}）${hhmm(d)}` : hhmm(d); }
+  return st && st.cnt && st.cnt[twKey(d)] === 1 && st.sumDay !== twKey(d) ? `${t.getUTCMonth()+1}/${t.getUTCDate()}（${WD[t.getUTCDay()]}）${hhmm(d)}` : hhmm(d); }
 
 // 第一行放不下時，信心標籤移到第二行中間
 function ccFit(){ document.querySelectorAll(".cc-head").forEach(h => { if(!h.offsetParent) return; const r = h.querySelector(".cc-r1"); h.classList.remove("tight"); const t = !!h.querySelector(".cc-focus,.cc-pp") || r.scrollWidth > r.clientWidth + 1; h.classList.toggle("tight", t); }); }
