@@ -1,5 +1,5 @@
 {
- "updated": "2026-10-17 09:16 (UTC+8)",
+ "updated": "2026-10-17 09:28 (UTC+8)",
  "records": [
   {
    "gamePk": 849818,
@@ -127,13 +127,34 @@
      "hasStarters": false,
      "homeStarter": null,
      "awayStarter": null
+    },
+    {
+     "at": "2026-10-17 09:28 (UTC+8)",
+     "model": "v2：Log5縮回(0.250)、主場+0.082、先發ERA×0.137+WHIP×0.606（拉回40局）",
+     "homeWinProb": 0.4359,
+     "steps": {
+      "standings": -1.6,
+      "home": 2.0,
+      "starter": -6.8
+     },
+     "starterUsed": true,
+     "starterStatus": "both",
+     "hasStarters": true,
+     "homeStarter": {
+      "id": 542888,
+      "name": "Shawn Armstrong"
+     },
+     "awayStarter": {
+      "id": 607259,
+      "name": "Nick Martinez"
+     }
     }
    ],
    "official": null
   },
   {
    "gamePk": 849817,
-   "gameTime": "2026-10-19 08:00 (UTC+8)",
+   "gameTime": "2026-10-19 05:00 (UTC+8)",
    "away": "坦帕灣光芒",
    "home": "克里夫蘭守護者",
    "homeWinProb": 0.4751,
