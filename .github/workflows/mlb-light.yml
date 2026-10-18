@@ -1,26 +1,29 @@
-name: MLB 先發輕量檢查（每 15 分鐘）
-# 只有 4 小時內開打、先發還沒都公布的比賽才連 1 次 API；先發有變才跑完整紀錄（只更新那幾場）並提交
+name: MLB 先發守候（每 12 分鐘檢查）
+# GitHub 定時排程常延遲數小時，所以啟動後會一直守著：24 小時內有比賽要開打，就每 12 分鐘查一次先發；
+# 6 小時內開打的場次先發或時間有變，才跑完整紀錄（只更新那幾場）並提交。單次最多 5 小時 40 分，之後自動開下一輪接手。
+# 下面的排程只是「叫醒」用：已經有一輪在守就馬上結束。
 on:
   schedule:
-    - cron: "7,22,37,52 * * * *"
+    - cron: "9,31,53 * * * *"
   workflow_dispatch:
+    inputs:
+      chain: { description: "上一輪交棒（自動用）", required: false, default: "0" }
 permissions:
   contents: write
-concurrency: { group: mlb-log, cancel-in-progress: false }
+  actions: write
 jobs:
-  check:
+  watch:
     runs-on: ubuntu-latest
+    timeout-minutes: 355
     steps:
       - uses: actions/checkout@v4
-      - id: chk
-        run: python3 scripts/mlb_light.py
-      - if: steps.chk.outputs.pks != ''
-        env: { ONLY_PKS: "${{ steps.chk.outputs.pks }}" }
-        run: python3 scripts/log_predictions.py
-      - if: steps.chk.outputs.pks != ''
-        name: 提交資料變更
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - name: 守候先發並更新
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CHAIN: ${{ inputs.chain || '0' }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898810+github-actions[bot]@users.noreply.github.com"
-          git add data/predictions.json
-          git diff --cached --quiet || (git commit -m "先發更新：MLB 預測紀錄" && git pull --rebase && git push)
+          python3 scripts/starter_watch.py
