@@ -1,5 +1,5 @@
 {
- "updated": "2026-10-18 08:01 (UTC+8)",
+ "updated": "2026-10-18 11:25 (UTC+8)",
  "records": [
   {
    "gamePk": 849818,
@@ -103,9 +103,9 @@
    "predictedWinner": "坦帕灣光芒",
    "model": "v1：勝率50%+畢氏勝率50%、Log5、主場+4%",
    "predictedAt": "2026-10-15 15:56 (UTC+8)",
-   "final": null,
-   "actualWinner": null,
-   "correct": null,
+   "final": "坦帕灣光芒 7 : 3 克里夫蘭守護者",
+   "actualWinner": "坦帕灣光芒",
+   "correct": true,
    "snapshots": [
     {
      "homeWinProb": 0.4751,
@@ -171,7 +171,9 @@
      "name": "Nick Martinez"
     }
    },
-   "date": "2026-10-18"
+   "date": "2026-10-18",
+   "homeScore": 3,
+   "awayScore": 7
   },
   {
    "gamePk": 849817,
