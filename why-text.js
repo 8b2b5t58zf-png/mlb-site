@@ -16,8 +16,8 @@ const WHY_TXT = {
   priorLate: "本季樣本已足，上季實力只占小幅比重",
   home: "{t}在主場出賽",
   neutral: "中立場地，不計主場因素",
-  sp: "{p} 本季 ERA {era}、WHIP {whip}，數據優於{o}的 {oera}／{owhip}",
-  spMixed: "{a}與{h}互有優劣",
+  sp: "{p} 本季 ERA {era}、WHIP {whip}，數據比{o}的 {oera}／{owhip} 好",
+  spMixed: "{a}與{h}互有長短",
   spClose: "{a}與{h}數據相近",
   spWait: "先發未公布，未調整",
   spOne: "{t}先發尚未公布，暫不調整",   // 模型規則：兩隊都公布才調整，只公布一邊時不調整
