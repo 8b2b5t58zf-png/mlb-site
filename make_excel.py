@@ -100,8 +100,8 @@ for g in (nxt or done):
     ap = pitcher(A["probablePitcher"]["id"]) if A.get("probablePitcher") else None
     p, st = model_v2(H["team"]["id"], A["team"]["id"], hp, ap)
     hpct = round(st["final"]); fp = max(hpct, 100-hpct)
-    fav = "五五波：雙方各 50%" if hpct == 50 else f'看好：{tn(H["team"]) if hpct > 50 else tn(A["team"])} {fp}%'
-    tier = "很有把握" if fp >= 60 else "勝率略高" if fp >= 55 else "五五波"
+    fav = "五五波：雙方各 50%" if hpct == 50 else f'勝率較高：{tn(H["team"]) if hpct > 50 else tn(A["team"])} {fp}%'
+    tier = "信心 高" if fp >= 60 else "信心 中" if fp >= 53 else "信心 低"
     sp = lambda x, s: f'{pn(x["probablePitcher"])}（ERA {s["era"]}、WHIP {s["whip"]}）' if x.get("probablePitcher") else "未公布"
     sg = lambda v: "±0.0%" if abs(v) < 0.05 else f"{v:+.1f}%"
     rows.append([tw(g["gameDate"]), SERIES.get(g.get("seriesStatus", {}).get("description", ""), g.get("seriesStatus", {}).get("description", "")),
