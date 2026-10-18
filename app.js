@@ -229,8 +229,8 @@ async function loadGames(){
 function daySummary(games, isPast){
   const day = d => new Date(new Date(d).getTime() + 8*3600e3).toISOString().slice(0,10);
   const real = games.filter(x => TEAM[x.teams.home.team.id] && TEAM[x.teams.away.team.id] && !(x.status && x.status.detailedState === "Postponed"));
-  const pp = real.filter(x => x.rescheduledFrom).sort((a,b) => new Date(a.gameDate) - new Date(b.gameDate));
-  games = real.filter(x => !x.rescheduledFrom);   // 與卡片同一份；延賽場次不列入今日摘要（§21）
+  const pp = real.filter(ppPending).sort((a,b) => new Date(a.gameDate) - new Date(b.gameDate));
+  games = real.filter(x => !ppPending(x));   // 與卡片同一份；延賽場次不列入今日摘要（§21）
   let el = document.getElementById("mlb-day");
   if(!el){ el = document.createElement("p"); el.id = "mlb-day"; el.className = "day-sum"; (document.getElementById("mlb-acc")||document.querySelector("#sec-predict h2")).after(el); }
   // 今天沒有比賽：只有延賽卡時寫「今天沒有比賽・下一戰 {延賽日期時間}」（§21）；有後續卡片時日期只寫在這行（卡片只寫時間）
@@ -306,6 +306,10 @@ function bridge(m, s, fav){
 // 「為什麼這樣預測」：結論句＋三條（戰績、主場、先發），數字與修正過程圖相同
 let SS_NOW = null, GTYPE_NOW = null;
 const OFFICIAL = {}, SNAPS = {};   // SNAPS：gamePk → 排程快照（含當時先發）
+// 快照時間 "2026-10-18 12:27 (UTC+8)" → 毫秒
+const snapT = s => Date.parse(String((s && s.at) || "").slice(0,16).replace(" ", "T") + ":00+08:00");
+// 延賽卡（§21）：改期後的場次，且原定開賽時間之後還沒有新的快照（勝率還沒重算）才算；重算過就當一般卡片
+const ppPending = g => !!(g && g.rescheduledFrom) && !(SNAPS[g.gamePk] || []).some(x => snapT(x) >= Date.parse(g.rescheduledFrom));
 let GPK_NOW = null, SPCHG = null;   // gamePk → 正式預測紀錄（判斷是否為舊版模型）
 // 數字小標籤：較佳一方加粗（客隊數字在前）
 function chip(label, av, hv, better){   // better: "a" / "h" / ""
@@ -365,8 +369,9 @@ function whyBlock(A, H, m, s, ap, hp, aP, hP, fav, fp){
   return html + ref;
 }
 // 先發異動／公布：和排程較早的快照比。同一邊換人＝異動（金字）；原本沒人、現在有人＝公布（白字）；異動優先
-function spChange(pk, aP, hP){
-  const sn = SNAPS[pk]; if(!sn || !sn.length) return null;
+// 延賽改期（rf＝原定開賽時間）：原定時間之前的快照屬於舊賽程，不拿來比（避免把舊先發當成異動）
+function spChange(pk, aP, hP, rf){
+  const sn = (SNAPS[pk] || []).filter(x => !rf || snapT(x) >= Date.parse(rf)); if(!sn.length) return null;
   const out = {chg:{}, ann:{}};
   for(const [side, cur] of [["away", aP], ["home", hP]]){
     if(!cur) continue;
@@ -434,10 +439,10 @@ let PEXTRA = {post:false, tbd:[], nextAt:null};
 function renderPredict(games, isPast){
   let html = isPast ? "<p>目前沒有即將開打的比賽，改顯示最近比賽的賽前估算：</p>" : "";
   const DG = {last:null, cnt:dayCounts(games.filter(g => TEAM[g.teams.home.team.id] && TEAM[g.teams.away.team.id]).map(g => g.gameDate))};
-  { const ok = games.filter(g => TEAM[g.teams.home.team.id] && TEAM[g.teams.away.team.id] && !g.rescheduledFrom && !(g.status && g.status.detailedState === "Postponed")).map(g => twKey(g.gameDate)).sort(); DG.sumDay = isPast ? null : ok[0]; }   // 總覽那行已寫日期的那一天：卡片只寫時間
+  { const ok = games.filter(g => TEAM[g.teams.home.team.id] && TEAM[g.teams.away.team.id] && !ppPending(g) && !(g.status && g.status.detailedState === "Postponed")).map(g => twKey(g.gameDate)).sort(); DG.sumDay = isPast ? null : ok[0]; }   // 總覽那行已寫日期的那一天：卡片只寫時間
   // 今日數據焦點：列表第一天、兩隊先發都公布的場次
   games = games.filter(g => !(g.status && g.status.detailedState === "Postponed")).sort((a,b) => new Date(a.gameDate) - new Date(b.gameDate));   // 依開賽時間排序；延賽的原日期場次不顯示（§21）
-  const isPP = g => !!g.rescheduledFrom;   // 延賽改期後的場次
+  const isPP = ppPending;   // 延賽改期、勝率還沒重算的場次
   const vg = games.filter(g => TEAM[g.teams.home.team.id] && TEAM[g.teams.away.team.id]);
   const day0 = vg.length ? twKey(vg[0].gameDate) : null;
   const FC = pickFocus(vg.map((g,i) => ({g,i})).filter(({g}) => !isPast && !isPP(g) && twKey(g.gameDate) === day0 && g.teams.home.probablePitcher && g.teams.away.probablePitcher).map(({g,i}) => {
@@ -464,7 +469,7 @@ function renderPredict(games, isPast){
     const [tc, tl] = tier(fp/100);
     const st = favSteps(m, favHome);
     SS_NOW = g.seriesStatus; GTYPE_NOW = g.gameType; GPK_NOW = g.gamePk;
-    SPCHG = spChange(g.gamePk, aP, hP);
+    SPCHG = spChange(g.gamePk, aP, hP, g.rescheduledFrom);
     const off = OFFICIAL[g.gamePk];
     const v1note = off && off.model && !off.model.startsWith(MODEL_V) ? `<div class="vnote">此場正式紀錄為舊版模型 ${off.model.slice(0,2)}</div>` : "";
     const w = g.weather && g.weather.condition ? `參考資訊：天氣 ${g.weather.condition}${g.weather.temp?`，氣溫 ${Math.round((g.weather.temp-32)*5/9)}°C`:""}（不列入勝率計算）` : "";
@@ -585,6 +590,25 @@ function accLine(id, recs, isVer, label, href){
   const t = n >= 50 ? `${label} 命中率 <span class="num">${Math.round(k/n*100)}%</span>（<span class="num">${k}/${n}</span> 場）` : n===0 ? `${label} 尚無結算場次` : `${label} 累積中（<span class="num">${n}</span> 場）`;
   el.innerHTML = `${t}・<a href="${href}">看命中率 ›</a>`; el.hidden = false;
 }
+// 命中率表要隱藏的未開賽場次（gamePk 集合）
+async function hitHide(recs){
+  const pend = recs.filter(x => !x.official && (x.correct === null || x.correct === undefined)), hide = new Set();
+  if(!pend.length) return hide;
+  const open = recs.filter(x => x.correct === null || x.correct === undefined);
+  try{
+    const s = await getJSON(`${API}/schedule?sportId=1&gamePks=${open.map(x => x.gamePk).join(",")}`);
+    const POST = ["F","D","L","W"], key = g => g.gameType + ":" + [g.teams.home.team.id, g.teams.away.team.id].sort().join("-");
+    const gs = (s.dates || []).flatMap(x => x.games).filter(g => !["Postponed","Cancelled"].includes(g.status.detailedState));
+    const first = {};
+    for(const g of gs.filter(g => POST.includes(g.gameType) && g.status.abstractGameState !== "Final").sort((a,b) => (a.seriesGameNumber||0)-(b.seriesGameNumber||0) || new Date(a.gameDate)-new Date(b.gameDate))) if(!(key(g) in first)) first[key(g)] = g;
+    for(const g of gs) if(POST.includes(g.gameType) && g.status.abstractGameState === "Preview" && first[key(g)] !== g) hide.add(g.gamePk);
+  }catch(e){   // 讀不到官方賽程：同一組對戰只列最早一場還沒結算的
+    const seen = new Set();
+    for(const x of open.slice().sort((a,b) => a.gameTime < b.gameTime ? -1 : 1)){ const k = [x.home, x.away].sort().join("-"); if(seen.has(k) && !x.official) hide.add(x.gamePk); seen.add(k); }
+  }
+  for(const x of recs) if(x.official) hide.delete(x.gamePk);
+  return hide;
+}
 // 預測命中率：讀取網站上的 data/predictions.json
 async function secHit(){
   const el = document.getElementById("hit");
@@ -614,7 +638,9 @@ async function secHit(){
   html += btCard("mlb", "mlb_v2", "MLB 2026 例行賽 7/1 起・MLB v2", [53, 60]);
   html += `<p class="hr-upd">最後更新：${fmtT(d.updated)}（台灣時間）</p>`;
   html += '<div class="tblwrap" style="overflow-x:auto"><table class="hrt"><tr><th>比賽時間</th><th class="mu-h"><span class="mu-full">對戰（客 @ 主）</span><span class="mu-short">客 @ 主</span></th><th class="md">模型</th><th>預測</th><th class="dk">預測勝率</th><th class="dk">實際比分</th><th class="dk">結果</th></tr>';
-  for(const x of d.records.slice().reverse().slice(0,15)){
+  // 還沒結算的場次：季後賽同一系列只列下一場（前一戰打完才出現下一戰，與預測頁同規則）；已鎖定正式預測的照列
+  const hide = await hitHide(d.records);
+  for(const x of d.records.filter(x => !hide.has(x.gamePk)).reverse().slice(0,15)){
     const snap = x.official || x.snapshots[x.snapshots.length-1], hp = snap.homeWinProb;
     const pw = hp >= 0.5 ? x.home : x.away, p = Math.max(hp, 1-hp);
     const tag = x.official ? "" : TENT;

@@ -9,7 +9,7 @@ const WHY_TXT = {
     toss: "兩隊條件接近，這場要看臨場表現",
   },
   item: {rec:"戰績", home:"主場因素", sp:"先發投手", prior:"上一季實力"},
-  rec: "{t}本季 {w} 勝 {l} 敗，勝率 {p} 高於{o}的 {op}，戰績面占優",
+  rec: "{t}本季 {w} 勝 {l} 敗，勝率 {p} 高於{o}的 {op}，戰績較好",
   recClose: "兩隊戰績相近（{p} 對 {op}），這項影響不大",
   preseason: "新球季尚未開打，依上一季實力估算",
   prior: "開季場次還少，參考上季得失分表現（畢氏勝率：<span class=\"nw\">{t} {p}</span>、<span class=\"nw\">{o} {q}</span>）",
