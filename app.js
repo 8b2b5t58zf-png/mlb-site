@@ -326,7 +326,7 @@ function matchup(A, H){
   if(sa.rpg && sh.rpg && sa.rpg!==sh.rpg){ const X = +sa.rpg > +sh.rpg ? [A,sa,sh] : [H,sh,sa], s0 = sd(all.map(t=>+t.rpg));
     out.push({z: s0 ? Math.abs(sa.rpg-sh.rpg)/s0 : 0, short:`${ts(X[0])}打線較強`, txt:`${ts(X[0])}打線每場平均多得 ${(X[1].rpg-X[2].rpg).toFixed(2)} 分（<b>${X[1].rpg}</b> 對 ${X[2].rpg}）`}); }
   if(sa.era && sh.era && sa.era!==sh.era){ const [X,Y,a,b] = +sa.era < +sh.era ? [A,H,sa.era,sh.era] : [H,A,sh.era,sa.era], s0 = sd(all.map(t=>+t.era));
-    out.push({z: s0 ? Math.abs(sa.era-sh.era)/s0 : 0, short:`${ts(X)}投手群較穩`, txt:`${ts(X)}投手群防禦率 <b>${a}</b>，低於${ts(Y)}的 ${b}`}); }
+    out.push({z: s0 ? Math.abs(sa.era-sh.era)/s0 : 0, short:`${ts(X)}投手群數據較好`, txt:`${ts(X)}投手群防禦率 <b>${a}</b>，低於${ts(Y)}的 ${b}`}); }
   out.sort((x,y)=>y.z-x.z);
   if(out.length && out[0].z < 0.5) out.unshift({z:-2, close:true, txt:"兩隊打線和投手群相當接近"});
   const hr = homeRec(TEAM[H.id]); if(hr) out.push({z:-1, txt:`${ts(H)}本季主場 ${hr.wins}勝${hr.losses}敗`});
