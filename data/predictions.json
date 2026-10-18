@@ -1,5 +1,5 @@
 {
- "updated": "2026-10-18 11:25 (UTC+8)",
+ "updated": "2026-10-18 12:27 (UTC+8)",
  "records": [
   {
    "gamePk": 849818,
@@ -248,6 +248,27 @@
      "hasStarters": false,
      "homeStarter": null,
      "awayStarter": null
+    },
+    {
+     "at": "2026-10-18 12:27 (UTC+8)",
+     "model": "v2：Log5縮回(0.250)、主場+0.082、先發ERA×0.137+WHIP×0.606（拉回40局）",
+     "homeWinProb": 0.4899,
+     "steps": {
+      "standings": -1.6,
+      "home": 2.0,
+      "starter": -1.4
+     },
+     "starterUsed": true,
+     "starterStatus": "both",
+     "hasStarters": true,
+     "homeStarter": {
+      "id": 800048,
+      "name": "Parker Messick"
+     },
+     "awayStarter": {
+      "id": 656876,
+      "name": "Drew Rasmussen"
+     }
     }
    ],
    "official": null,
