@@ -1,5 +1,5 @@
 {
- "updated": "2026-10-19 01:05 (UTC+8)",
+ "updated": "2026-10-19 07:59 (UTC+8)",
  "records": [
   {
    "id": "401909088",
@@ -21,7 +21,7 @@
    "final": null,
    "actualWinner": null,
    "correct": null,
-   "latestStandingsAt": "2026-10-18T17:05:34Z"
+   "latestStandingsAt": "2026-10-18T23:59:30Z"
   },
   {
    "id": "401909089",
@@ -43,7 +43,7 @@
    "final": null,
    "actualWinner": null,
    "correct": null,
-   "latestStandingsAt": "2026-10-18T17:05:34Z"
+   "latestStandingsAt": "2026-10-18T23:59:30Z"
   },
   {
    "id": "401909090",
@@ -65,7 +65,7 @@
    "final": null,
    "actualWinner": null,
    "correct": null,
-   "latestStandingsAt": "2026-10-18T17:05:34Z"
+   "latestStandingsAt": "2026-10-18T23:59:30Z"
   }
  ]
 }
