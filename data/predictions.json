@@ -1,5 +1,5 @@
 {
- "updated": "2026-10-18 12:27 (UTC+8)",
+ "updated": "2026-10-19 04:53 (UTC+8)",
  "records": [
   {
    "gamePk": 849818,
@@ -62,6 +62,125 @@
    },
    "homeScore": 4,
    "awayScore": 6
+  },
+  {
+   "gamePk": 849817,
+   "gameTime": "2026-10-17 08:00 (UTC+8)",
+   "away": "坦帕灣光芒",
+   "home": "克里夫蘭守護者",
+   "homeWinProb": 0.4751,
+   "awayWinProb": 0.5249,
+   "predictedWinner": "坦帕灣光芒",
+   "model": "v1：勝率50%+畢氏勝率50%、Log5、主場+4%",
+   "predictedAt": "2026-10-15 15:56 (UTC+8)",
+   "final": null,
+   "actualWinner": null,
+   "correct": null,
+   "snapshots": [
+    {
+     "homeWinProb": 0.4751,
+     "awayWinProb": 0.5249,
+     "model": "v1：勝率50%+畢氏勝率50%、Log5、主場+4%",
+     "at": "2026-10-15 15:56 (UTC+8)"
+    },
+    {
+     "at": "2026-10-16 13:24 (UTC+8)",
+     "model": "v2：Log5縮回(0.250)、主場+0.082、先發ERA×0.137+WHIP×0.606（拉回40局）",
+     "homeWinProb": 0.5042,
+     "steps": {
+      "standings": -1.6,
+      "home": 2.0,
+      "starter": 0.0
+     },
+     "starterUsed": false,
+     "starterStatus": "partial",
+     "hasStarters": false,
+     "homeStarter": null,
+     "awayStarter": {
+      "id": 607259,
+      "name": "Nick Martinez"
+     }
+    },
+    {
+     "at": "2026-10-17 00:35 (UTC+8)",
+     "model": "v2：Log5縮回(0.250)、主場+0.082、先發ERA×0.137+WHIP×0.606（拉回40局）",
+     "homeWinProb": 0.4359,
+     "steps": {
+      "standings": -1.6,
+      "home": 2.0,
+      "starter": -6.8
+     },
+     "starterUsed": true,
+     "starterStatus": "both",
+     "hasStarters": true,
+     "homeStarter": {
+      "id": 542888,
+      "name": "Shawn Armstrong"
+     },
+     "awayStarter": {
+      "id": 607259,
+      "name": "Nick Martinez"
+     }
+    },
+    {
+     "at": "2026-10-17 09:16 (UTC+8)",
+     "model": "v2：Log5縮回(0.250)、主場+0.082、先發ERA×0.137+WHIP×0.606（拉回40局）",
+     "homeWinProb": 0.5042,
+     "steps": {
+      "standings": -1.6,
+      "home": 2.0,
+      "starter": 0.0
+     },
+     "starterUsed": false,
+     "starterStatus": "none",
+     "hasStarters": false,
+     "homeStarter": null,
+     "awayStarter": null
+    },
+    {
+     "at": "2026-10-18 12:27 (UTC+8)",
+     "model": "v2：Log5縮回(0.250)、主場+0.082、先發ERA×0.137+WHIP×0.606（拉回40局）",
+     "homeWinProb": 0.4899,
+     "steps": {
+      "standings": -1.6,
+      "home": 2.0,
+      "starter": -1.4
+     },
+     "starterUsed": true,
+     "starterStatus": "both",
+     "hasStarters": true,
+     "homeStarter": {
+      "id": 800048,
+      "name": "Parker Messick"
+     },
+     "awayStarter": {
+      "id": 656876,
+      "name": "Drew Rasmussen"
+     }
+    }
+   ],
+   "official": {
+    "at": "2026-10-18 12:27 (UTC+8)",
+    "model": "v2：Log5縮回(0.250)、主場+0.082、先發ERA×0.137+WHIP×0.606（拉回40局）",
+    "homeWinProb": 0.4899,
+    "steps": {
+     "standings": -1.6,
+     "home": 2.0,
+     "starter": -1.4
+    },
+    "starterUsed": true,
+    "starterStatus": "both",
+    "hasStarters": true,
+    "homeStarter": {
+     "id": 800048,
+     "name": "Parker Messick"
+    },
+    "awayStarter": {
+     "id": 656876,
+     "name": "Drew Rasmussen"
+    }
+   },
+   "date": "2026-10-17"
   },
   {
    "gamePk": 849808,
@@ -174,105 +293,6 @@
    "date": "2026-10-18",
    "homeScore": 3,
    "awayScore": 7
-  },
-  {
-   "gamePk": 849817,
-   "gameTime": "2026-10-19 05:08 (UTC+8)",
-   "away": "坦帕灣光芒",
-   "home": "克里夫蘭守護者",
-   "homeWinProb": 0.4751,
-   "awayWinProb": 0.5249,
-   "predictedWinner": null,
-   "model": "v1：勝率50%+畢氏勝率50%、Log5、主場+4%",
-   "predictedAt": "2026-10-15 15:56 (UTC+8)",
-   "final": null,
-   "actualWinner": null,
-   "correct": null,
-   "snapshots": [
-    {
-     "homeWinProb": 0.4751,
-     "awayWinProb": 0.5249,
-     "model": "v1：勝率50%+畢氏勝率50%、Log5、主場+4%",
-     "at": "2026-10-15 15:56 (UTC+8)"
-    },
-    {
-     "at": "2026-10-16 13:24 (UTC+8)",
-     "model": "v2：Log5縮回(0.250)、主場+0.082、先發ERA×0.137+WHIP×0.606（拉回40局）",
-     "homeWinProb": 0.5042,
-     "steps": {
-      "standings": -1.6,
-      "home": 2.0,
-      "starter": 0.0
-     },
-     "starterUsed": false,
-     "starterStatus": "partial",
-     "hasStarters": false,
-     "homeStarter": null,
-     "awayStarter": {
-      "id": 607259,
-      "name": "Nick Martinez"
-     }
-    },
-    {
-     "at": "2026-10-17 00:35 (UTC+8)",
-     "model": "v2：Log5縮回(0.250)、主場+0.082、先發ERA×0.137+WHIP×0.606（拉回40局）",
-     "homeWinProb": 0.4359,
-     "steps": {
-      "standings": -1.6,
-      "home": 2.0,
-      "starter": -6.8
-     },
-     "starterUsed": true,
-     "starterStatus": "both",
-     "hasStarters": true,
-     "homeStarter": {
-      "id": 542888,
-      "name": "Shawn Armstrong"
-     },
-     "awayStarter": {
-      "id": 607259,
-      "name": "Nick Martinez"
-     }
-    },
-    {
-     "at": "2026-10-17 09:16 (UTC+8)",
-     "model": "v2：Log5縮回(0.250)、主場+0.082、先發ERA×0.137+WHIP×0.606（拉回40局）",
-     "homeWinProb": 0.5042,
-     "steps": {
-      "standings": -1.6,
-      "home": 2.0,
-      "starter": 0.0
-     },
-     "starterUsed": false,
-     "starterStatus": "none",
-     "hasStarters": false,
-     "homeStarter": null,
-     "awayStarter": null
-    },
-    {
-     "at": "2026-10-18 12:27 (UTC+8)",
-     "model": "v2：Log5縮回(0.250)、主場+0.082、先發ERA×0.137+WHIP×0.606（拉回40局）",
-     "homeWinProb": 0.4899,
-     "steps": {
-      "standings": -1.6,
-      "home": 2.0,
-      "starter": -1.4
-     },
-     "starterUsed": true,
-     "starterStatus": "both",
-     "hasStarters": true,
-     "homeStarter": {
-      "id": 800048,
-      "name": "Parker Messick"
-     },
-     "awayStarter": {
-      "id": 656876,
-      "name": "Drew Rasmussen"
-     }
-    }
-   ],
-   "official": null,
-   "date": "2026-10-19"
   },
   {
    "gamePk": 849806,
