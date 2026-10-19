@@ -210,7 +210,7 @@ async function loadGames(){
   const firstOpen = {};   // 依第幾戰排序（延賽時官方日期可能前後顛倒）
   for(const g of games.filter(g=>POST.includes(g.gameType) && g.status.abstractGameState!=="Final").sort((a,b)=>(a.seriesGameNumber||0)-(b.seriesGameNumber||0) || new Date(a.gameDate)-new Date(b.gameDate))) if(!(skey(g) in firstOpen)) firstOpen[skey(g)] = g;
   const real = g => !!(TEAM[g.teams.home.team.id] && TEAM[g.teams.away.team.id]);   // 兩隊都確定才算
-  const next = games.filter(g=>g.status.abstractGameState==="Preview" && real(g) && (!POST.includes(g.gameType) || firstOpen[skey(g)] === g)).slice(0,4);
+  const next = games.filter(g=>g.status.abstractGameState==="Preview" && real(g) && (!POST.includes(g.gameType) || (firstOpen[skey(g)] === g && !(g.seriesStatus && g.seriesStatus.isOver)))).slice(0,4);   // 系列賽已分出勝負：不出下一戰卡片（§30）
   // 對戰組合未定的季後賽系列：不出卡片，只顯示一行開打日期
   const SNAME = {W:"世界大賽", L:"聯盟冠軍賽", D:"分區系列賽", F:"外卡系列賽"}, tbdSeen = {};
   const tbd = games.filter(g=>POST.includes(g.gameType) && g.status.abstractGameState==="Preview" && !real(g)).sort((a,b)=>new Date(a.gameDate)-new Date(b.gameDate)).filter(g => !tbdSeen[g.gameType] && (tbdSeen[g.gameType] = 1)).map(g => `${SNAME[g.gameType]} ${twWD(g.gameDate)}開打<br>對戰組合待${g.gameType==="W" ? "聯盟冠軍賽" : "前一輪"}結束後確定`);
@@ -270,7 +270,7 @@ function seriesPost(ss){      // 賽後：比賽結束後的系列戰狀態
   if(ss.isTied || W===L) return W ? `系列賽 ${W}:${L} 戰成平手` : "";
   return lead ? `${lead}系列賽 ${W}:${L} 領先` : "";
 }
-// 系列賽標籤（卡片第一行）：「ALCS 第 4 戰」，第 6、7 戰加「（如有需要）」
+// 系列賽標籤（卡片第一行）：「ALCS 第 6 戰」；卡片只出確定會打的下一戰，所以不加任何附註（§30）
 const SER_AB = {"World Series":"WS","AL Championship Series":"ALCS","NL Championship Series":"NLCS","AL Division Series":"ALDS","NL Division Series":"NLDS","AL Wild Card Series":"AL 外卡","NL Wild Card Series":"NL 外卡"};
 function serTag(g){
   const ss = g.seriesStatus, n = g.seriesGameNumber;
@@ -278,8 +278,7 @@ function serTag(g){
   const ab = SER_AB[ss.description] || sz(ss.description);
   const p = Object.fromEntries(new Intl.DateTimeFormat("en-GB",{timeZone:"Asia/Taipei",hour12:false,month:"numeric",day:"numeric",weekday:"short",hour:"2-digit",minute:"2-digit"}).formatToParts(new Date(g.gameDate)).map(x=>[x.type,x.value]));
   const wd = {Sun:"日",Mon:"一",Tue:"二",Wed:"三",Thu:"四",Fri:"五",Sat:"六"}[p.weekday];
-  const ifn = (n >= 6 && (g.gamesInSeries||ss.totalGames) >= 7) ? "（如有需要）" : "";
-  return `<div class="ser-row"><span class="ser-tag">${ab} 第 <span class="num">${n}</span> 戰${ifn}</span></div>`;
+  return `<div class="ser-row"><span class="ser-tag">${ab} 第 <span class="num">${n}</span> 戰</span></div>`;
 }
 // 第三行縮短：「系列賽 2:1 守護者領先」／「系列賽 2:2 平手」
 function serShort(ss){

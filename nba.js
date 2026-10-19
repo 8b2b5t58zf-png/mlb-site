@@ -161,7 +161,7 @@ async function nbaGames(){
   { // 季後賽：同一系列只顯示下一場還沒打完的比賽
     const sk = e => e.competitions[0].competitors.map(c => c.team.id).sort().join("-"), fo = {};
     all.concat(up).filter(e => e.season.type===3 && !e.status.type.completed).sort((a,b) => new Date(a.date) - new Date(b.date)).forEach(e => { if(!(sk(e) in fo)) fo[sk(e)] = e.id; });
-    up = up.filter(e => e.season.type!==3 || fo[sk(e)] === e.id);
+    up = up.filter(e => e.season.type!==3 || (fo[sk(e)] === e.id && !(e.competitions[0].series || {}).completed));   // 系列賽已分出勝負：不出下一戰卡片（§30）
   }
   // 對戰組合未定（TBD）的比賽：不出卡片，只顯示一行開打日期
   const isTbd = e => e.competitions[0].competitors.some(c => !c.team || !c.team.id || +c.team.id <= 0 || c.team.abbreviation === "TBD" || /TBD/i.test(c.team.displayName||""));
