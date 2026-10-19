@@ -226,6 +226,9 @@ async function loadGames(){
   if(act.length){ const k = act.map(g => twKey(g.gameDate)).sort()[0], ag = act.filter(g => twKey(g.gameDate) === k);
     ACTIVE = {day:k, n:games.filter(g => real(g) && twKey(g.gameDate) === k && !bad.some(b => (g.status.detailedState||"").startsWith(b))).length,
       fin: ag.every(g => g.status.abstractGameState === "Final"), post: ag.some(g => POST.includes(g.gameType))}; }
+  // §29 今天（台灣日期）有比賽且都已結算：總覽寫「今天 {n} 場已結算」，不寫「今天沒有比賽」（延賽／取消不算）
+  { const today = twKey(new Date()), tg = games.filter(g => real(g) && twKey(g.gameDate) === today && !bad.some(b => (g.status.detailedState||"").startsWith(b)) && !(g.status.detailedState||"").startsWith("Cancel"));
+    TODAY_DONE = !ACTIVE && tg.length && tg.every(g => REC[g.gamePk] ? REC[g.gamePk].final != null : g.status.abstractGameState === "Final") ? tg.length : 0; }
   const show = next.length || ACTIVE ? next.filter(g => !act.includes(g)) : done;   // 已過開賽時間但 API 還沒轉 Live 的場次也不出卡
   // 先抓先發投手成績與 FIP 常數，再畫預測卡
   await Promise.all([loadFIPC(), loadTeamHit(), ...show.map(g=>loadH2H(g.teams.away.team.id, g.teams.home.team.id)), loadPitchers(show.flatMap(g=>[g.teams.home.probablePitcher, g.teams.away.probablePitcher]).filter(Boolean).map(p=>p.id))]);
@@ -244,10 +247,12 @@ function daySummary(games, isPast){
   if(!el){ el = document.createElement("p"); el.id = "mlb-day"; el.className = "day-sum"; (document.getElementById("mlb-acc")||document.querySelector("#sec-predict h2")).after(el); }
   if(ACTIVE && !isPast){ el.hidden = false; el.innerHTML = wf(ACTIVE.fin ? "dayFin" : "dayLive", {d:`${+ACTIVE.day.slice(5,7)}/${+ACTIVE.day.slice(8,10)}`, n:ACTIVE.n}, ["n"]); return; }   // §29
   // 今天沒有比賽：只有延賽卡時寫「今天沒有比賽・下一戰 {延賽日期時間}」（§21）；有後續卡片時日期只寫在這行（卡片只寫時間）
-  if(!games.length){ if(!isPast && pp.length){ el.hidden = false; el.innerHTML = `今天沒有比賽・下一戰 ${twWD(pp[0].gameDate, true)}`; } else el.hidden = true; return; }
+  const noG = TODAY_DONE ? `今天 ${wn(TODAY_DONE)} 場已結算` : "今天沒有比賽";   // §29
+  if(TODAY_DONE && (isPast || !games.length) && !pp.length){ el.hidden = false; el.innerHTML = noG; return; }   // 沒有已知的下一戰
+  if(!games.length){ if(!isPast && pp.length){ el.hidden = false; el.innerHTML = `${noG}・下一戰 ${twWD(pp[0].gameDate, true)}`; } else el.hidden = true; return; }
   const d0 = games.map(x => day(x.gameDate)).sort()[0], g = games.filter(x => day(x.gameDate) === d0);
   const noToday = !isPast && d0 !== day(new Date().toISOString());
-  const md = noToday ? "今天沒有比賽・下一戰 " + twWD(g[0].gameDate) : `${+d0.slice(5,7)}/${+d0.slice(8,10)}`;
+  const md = noToday ? noG + "・下一戰 " + twWD(g[0].gameDate) : `${+d0.slice(5,7)}/${+d0.slice(8,10)}`;
   const a = g.filter(x => x.teams.home.probablePitcher && x.teams.away.probablePitcher).length;
   el.hidden = false; el.innerHTML = a === g.length ? wf("dayAll", {d:md, n:g.length}, ["n"]) : [wf("dayHead", {d:md, n:g.length}, ["n"]), a ? wf("dayA", {a}, ["a"]) : "", wf("dayB", {b:g.length-a}, ["b"])].filter(Boolean).join("・");
   if(noToday) el.innerHTML = el.innerHTML.replace("） 共", "）共");
@@ -444,7 +449,7 @@ function twWD(d, withTime){
 }
 function emptyCard(nextAt){ return `<div class="empty-card">${nextAt ? `今天沒有比賽，下一戰 ${twWD(nextAt, true)}` : "今天沒有比賽，下一戰時間待公布"}</div>`; }
 let PEXTRA = {post:false, tbd:[], nextAt:null};
-let ACTIVE = null;   // §29 已開打、還沒結算的那一天：{day:"YYYY-MM-DD", n, fin:是否都已 Final, post:是否季後賽}
+let ACTIVE = null, TODAY_DONE = 0;   // TODAY_DONE：今天已結算的場數（今天全部結算才 >0）   // §29 已開打、還沒結算的那一天：{day:"YYYY-MM-DD", n, fin:是否都已 Final, post:是否季後賽}
 // 畫出預測卡片
 function renderPredict(games, isPast){
   let html = isPast ? "<p>目前沒有即將開打的比賽，改顯示最近比賽的賽前估算：</p>" : "";
