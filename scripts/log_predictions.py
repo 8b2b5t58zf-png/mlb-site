@@ -78,16 +78,22 @@ if not ONLY:
         if r["gamePk"] in SEEN or r.get("final") or r.get("status") == "cancelled" or not (lo <= r["gameTime"][:10] <= hi): continue
         if not get(f"/schedule?sportId=1&gamePk={r['gamePk']}").get("dates"):
             r["status"] = "cancelled"; cancelled += 1
-for g in (x for dt in d.get("dates", []) for x in dt["games"]):
+# 延賽改期：同一個 gamePk 會出現兩筆（舊日期標 Postponed、新日期才是真的），有新日期那筆就丟掉 Postponed 那筆，
+# 否則舊日期會把 gameTime 改回去（10/19 美聯第 5 戰因此沒被結算守候抓到）
+GAMES = [x for dt in d.get("dates", []) for x in dt["games"]]
+REAL = {x["gamePk"] for x in GAMES if not x["status"].get("detailedState", "").startswith("Postponed")}
+GAMES = [x for x in GAMES if x["gamePk"] not in REAL or not x["status"].get("detailedState", "").startswith("Postponed")]
+for g in GAMES:
     pk, H, A = g["gamePk"], g["teams"]["home"], g["teams"]["away"]
     state = g["status"]["abstractGameState"]
     ppd = g["status"].get("detailedState", "").startswith("Postponed")   # 延賽：API 可能標 Final，但其實沒開打，不能鎖
-    start = datetime.fromisoformat(g["gameDate"].replace("Z", "+00:00"))
+    start = datetime.fromisoformat(((ppd and g.get("rescheduleDate")) or g["gameDate"]).replace("Z", "+00:00"))   # 只剩延賽那筆時，用改期後的時間
     r = recs.get(pk)
     # 0) 依 API 目前的開賽時間：還沒開打就不能鎖定（解除過早的正式紀錄，舊快照留著當歷史）；賽程改期就更新時間
+    gt = start.astimezone(TZ).strftime("%Y-%m-%d %H:%M") + " (UTC+8)"
+    if r is not None and r.get("gameTime") != gt and not r.get("final"):   # 開賽時間以 API 為準（含進行中／剛結束的場次，修正被舊日期改壞的時間）
+        r["gameTime"], r["date"] = gt, start.astimezone(TZ).strftime("%Y-%m-%d")
     if r is not None and ((state == "Preview" and now < start) or ppd):
-        gt = start.astimezone(TZ).strftime("%Y-%m-%d %H:%M") + " (UTC+8)"
-        if r.get("gameTime") != gt: r["gameTime"], r["date"] = gt, start.astimezone(TZ).strftime("%Y-%m-%d")
         if r.get("official") is not None:
             r["official"] = None; r["predictedWinner"] = None; unfrozen += 1
     # 1) 尚未開打：記一筆快照（只往後加，不覆蓋；和上一筆相同就不重複記）
