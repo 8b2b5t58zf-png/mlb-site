@@ -1,5 +1,5 @@
 {
- "updated": "2026-10-19 08:24 (UTC+8)",
+ "updated": "2026-10-19 23:43 (UTC+8)",
  "records": [
   {
    "gamePk": 849818,
@@ -363,6 +363,27 @@
       "name": "Freddy Peralta"
      },
      "awayStarter": null
+    },
+    {
+     "at": "2026-10-19 23:43 (UTC+8)",
+     "model": "v2：Log5縮回(0.250)、主場+0.082、先發ERA×0.137+WHIP×0.606（拉回40局）",
+     "homeWinProb": 0.5399,
+     "steps": {
+      "standings": 1.6,
+      "home": 2.1,
+      "starter": 0.3
+     },
+     "starterUsed": true,
+     "starterStatus": "both",
+     "hasStarters": true,
+     "homeStarter": {
+      "id": 642547,
+      "name": "Freddy Peralta"
+     },
+     "awayStarter": {
+      "id": 542888,
+      "name": "Shawn Armstrong"
+     }
     }
    ],
    "official": null,
