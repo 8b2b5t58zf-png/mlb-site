@@ -111,7 +111,7 @@ function ccCard(o){   // spec-compact v1
   return `<div class="pcard cc${o.focus?" focus":""}">
   <button type="button" class="cc-head" aria-expanded="false" aria-controls="${id}" data-lg="${o.focus?"focus":o.lg}">
     ${o.pp ? `<span class="cc-r1"><span class="cc-ser">${o.ser||""}<span class="cc-pp">延賽</span></span></span><span class="cc-ppt num">${o.pp}</span>` : `<span class="cc-r1"><span class="cc-ser">${ft}${o.ser||""}</span><span class="cc-rt"><span class="cc-time num">${o.time}</span>${o.tag?`<span class="cc-tag">${o.tag}</span>`:""}<span class="cc-c1">${cf}</span></span></span>`}
-    <span class="cc-r2"><span class="cc-tm">${o.A}</span><span class="cc-c2">${cf}</span><span class="cc-tm r">${o.H}</span></span>
+    <span class="cc-r2"><span class="cc-tm">${o.A}</span><span class="cc-c2">${cf}${o.tag && !o.pp ? `<span class="cc-tag cc-t2">${o.tag}</span>` : ""}</span><span class="cc-tm r">${o.H}</span></span>
     <span class="cc-r3"><span class="cc-lab">本場</span><span class="num cc-p">${o.ap}%</span><span class="cc-bar"><span class="${o.favHome?"oth":"fav"}" style="width:${o.aw ?? o.ap}%"></span><span class="${o.favHome?"fav":"oth"}" style="width:${o.hw ?? o.hp}%"></span></span><span class="num cc-p r">${o.hp}%</span></span>
     <span class="cc-r4"><span class="cc-why">${o.focus || o.reason || ""}</span><span class="cc-more">看分析 ›</span></span>
   </button>
@@ -147,15 +147,17 @@ function dayCounts(ds){ const m = {}; for(const d of ds){ const k = twKey(d); m[
 function cardTime(d){ const t = new Date(new Date(d).getTime() + 8*3600e3);
   return `<span class="ct-d">${t.getUTCMonth()+1}/${t.getUTCDate()}（${WD[t.getUTCDay()]}）${hhmm(d)}</span><span class="ct-l">（台灣時間）</span><span class="ct-s">（台灣）</span>`; }
 
-// 第一行放不下時：先把信心標籤移到第二行中間，還放不下再把「（台灣時間）」縮成「（台灣）」
+// 第一行放不下時：先把信心標籤移到第二行中間，還放不下再把「（台灣時間）」縮成「（台灣）」（日期、星期一定保留）；
+// 仍放不下（例：數據焦點＋系列賽標籤＋時間＋先發標籤）才把「先發已公布／等先發」標籤也移到第二行中間，第一行不換行
 function ccOver(r){ if(r.scrollWidth > r.clientWidth + 1) return true;
   const a = r.querySelector(".cc-ser"), b = r.querySelector(".cc-rt"); if(!a || !b) return false;
   const ra = a.getBoundingClientRect(), rb = b.getBoundingClientRect();
   return rb.top >= ra.bottom - 1 && rb.height > 0 || rb.right > r.getBoundingClientRect().right + 1;   // 時間那段被擠到下一行或超出
 }
-function ccFit(){ document.querySelectorAll(".cc-head").forEach(h => { if(!h.offsetParent) return; const r = h.querySelector(".cc-r1"); h.classList.remove("tight", "tzs");
+function ccFit(){ document.querySelectorAll(".cc-head").forEach(h => { if(!h.offsetParent) return; const r = h.querySelector(".cc-r1"); h.classList.remove("tight", "tzs", "tag2");
   if(h.querySelector(".cc-focus,.cc-pp") || ccOver(r)) h.classList.add("tight");
-  if(ccOver(r)) h.classList.add("tzs"); }); }
+  if(ccOver(r)) h.classList.add("tzs");
+  if(ccOver(r) && h.querySelector(".cc-t2")) h.classList.add("tag2"); }); }
 addEventListener("resize", ccFit);
 if(document.fonts && document.fonts.ready) document.fonts.ready.then(() => ccFit());
 new MutationObserver(() => requestAnimationFrame(ccFit)).observe(document.documentElement, {childList:true, subtree:true});
