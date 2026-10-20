@@ -292,8 +292,10 @@ body.view-about #mlb-main,body.view-about #nba-main{display:none}
 .cc-head:focus-visible{outline:2px solid #d4af37;outline-offset:-2px;border-radius:12px}
 .cc-head>span{display:flex;align-items:center;gap:8px;min-width:0}
 .cc-r1{justify-content:space-between;min-height:18px;flex-wrap:wrap;gap:6px}
-.cc-rt{display:flex;align-items:center;gap:6px;margin-left:auto;white-space:nowrap}
+.cc-head>.cc-r1{column-gap:4px}   /* 標題和時間之間留 4px，讓「（台灣時間）」在 375 寬放得下 */
+.cc-rt{display:flex;align-items:center;gap:4px;margin-left:auto;white-space:nowrap}
 .cc-time{font-size:12px;color:#8b949e;white-space:nowrap}
+.cc-time .ct-s{display:none} .cc-head.tzs .ct-l{display:none} .cc-head.tzs .ct-s{display:inline}
 .cc-tag{font-size:11px;background:#1c232d;border-radius:4px;padding:0 6px;color:#8b949e;line-height:18px}
 .cc-conf.tier{font-size:11px;padding:0 8px;line-height:18px;white-space:nowrap}
 .cc-c2{display:none}
@@ -302,7 +304,7 @@ body.view-about #mlb-main,body.view-about #nba-main{display:none}
 .cc-tm{font-size:15px;font-weight:700;color:#e6edf3;white-space:nowrap;flex:1;min-width:0}
 .cc-tm.r{text-align:right}
 .cc-r3{gap:6px!important}
-.cc-p{font-size:13px;color:#c9d1d9;width:36px;flex:none}
+.cc-p{font-size:13px;color:#c9d1d9;min-width:36px;flex:none;white-space:nowrap;font-variant-numeric:tabular-nums}
 .cc-p.r{text-align:right}
 .cc-lab{font-size:12px;color:#8b949e;flex:none;white-space:nowrap;margin-right:-2px}
 .cc-bar{flex:1;display:flex;height:8px;border-radius:4px;overflow:hidden;gap:2px;background:var(--bar-oth)}
@@ -385,3 +387,4 @@ html.pre-nba #lg-tag{font-size:0}
 html.pre-nba #lg-tag::after{content:"｜NBA";font-size:18px}
 /* 其他分頁載入中：內容區先撐一個螢幕高，資料到了才收回，避免後面的圖表、頁尾在畫面裡被推來推去 */
 .sk-wait{min-height:100vh}
+.sb-t .num{font-variant-numeric:tabular-nums;white-space:nowrap}

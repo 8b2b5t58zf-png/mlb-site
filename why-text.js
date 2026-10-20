@@ -4,7 +4,8 @@ const WHY_TXT = {
   title: "為什麼這樣預測？",
   // 總結句（依信心分級，不帶數字）
   sum: {
-    strong: "各項指標都站在{t}這邊，差距明顯",
+    strong: "各項指標都站在{t}這邊，差距明顯",   // 只用在最高一級（NBA 70% 以上、MLB 60% 以上）
+    mid: "各項指標都站在{t}這邊",               // NBA 60%～未滿 70%（信心 中），後面不加字
     lean: "{t}靠{item}拉開些微差距，但還不到明顯領先",
     toss: "兩隊條件接近，這場要看臨場表現",
   },
@@ -61,14 +62,15 @@ const wd = v => Math.abs(v) < 0.05 ? "±0.0%" : (v > 0 ? "▲+" : "▼−") + Ma
 const wc = v => Math.abs(v) < 0.05 ? "zero" : v > 0 ? "up" : "down";
 // rows＝[[數值, 句子, key]]；fav/fp 為卡片看好方與整數勝率
 // F＝看好方最終勝率（一位小數）
-function whyBlock2(rows, favName, fp, F){
+// o.tk：指定總結句級別（NBA 依四捨五入前勝率決定）；o.r：合計列「約 {r}%」顯示的數字（預設 fp）
+function whyBlock2(rows, favName, fp, F, o={}){
   const vals = whyFit(rows.map(r=>r[0]), F - 50);
-  const tk = fp >= 60 ? "strong" : fp >= 53 ? "lean" : "toss";
+  const tk = o.tk || (fp >= 60 ? "strong" : fp >= 53 ? "lean" : "toss");
   let best = 0; vals.forEach((v,i)=>{ if(v > vals[best]) best = i; });
   const head = fp === 50 || tk === "toss" ? WHY_TXT.sum.toss : WHY_TXT.sum[tk].replace("{t}", favName).replace("{item}", WHY_TXT.item[rows[best][2]]);
   const li = rows.map((r,i) => `<li><span class="dl ${wc(vals[i])}">${wd(vals[i])}</span><span>${r[1]}</span></li>`).join("");
   return `<div class="why"><div class="why-h">${WHY_TXT.title}</div><div class="why-c">${head}</div>
-    <ul class="why-l">${li}<li class="why-tot"><span class="dl"></span><span>${wf("total", {t:favName, p:F.toFixed(1), r:fp}, ["p","r"])}</span></li></ul></div>`;
+    <ul class="why-l">${li}<li class="why-tot"><span class="dl"></span><span>${wf("total", {t:favName, p:F.toFixed(1), r:o.r ?? fp}, ["p","r"])}</span></li></ul></div>`;
 }
 // 參考數據：lines＝字串陣列（空的略過），最多 4 列；預設收合
 function refBlock(lines, lg){
@@ -110,7 +112,7 @@ function ccCard(o){   // spec-compact v1
   <button type="button" class="cc-head" aria-expanded="false" aria-controls="${id}" data-lg="${o.focus?"focus":o.lg}">
     ${o.pp ? `<span class="cc-r1"><span class="cc-ser">${o.ser||""}<span class="cc-pp">延賽</span></span></span><span class="cc-ppt num">${o.pp}</span>` : `<span class="cc-r1"><span class="cc-ser">${ft}${o.ser||""}</span><span class="cc-rt"><span class="cc-time num">${o.time}</span>${o.tag?`<span class="cc-tag">${o.tag}</span>`:""}<span class="cc-c1">${cf}</span></span></span>`}
     <span class="cc-r2"><span class="cc-tm">${o.A}</span><span class="cc-c2">${cf}</span><span class="cc-tm r">${o.H}</span></span>
-    <span class="cc-r3"><span class="cc-lab">本場</span><span class="num cc-p">${o.ap}%</span><span class="cc-bar"><span class="${o.favHome?"oth":"fav"}" style="width:${o.ap}%"></span><span class="${o.favHome?"fav":"oth"}" style="width:${o.hp}%"></span></span><span class="num cc-p r">${o.hp}%</span></span>
+    <span class="cc-r3"><span class="cc-lab">本場</span><span class="num cc-p">${o.ap}%</span><span class="cc-bar"><span class="${o.favHome?"oth":"fav"}" style="width:${o.aw ?? o.ap}%"></span><span class="${o.favHome?"fav":"oth"}" style="width:${o.hw ?? o.hp}%"></span></span><span class="num cc-p r">${o.hp}%</span></span>
     <span class="cc-r4"><span class="cc-why">${o.focus || o.reason || ""}</span><span class="cc-more">看分析 ›</span></span>
   </button>
   <div class="cc-body" id="${id}" inert><div class="cc-in">${o.body}</div></div></div>`;
@@ -138,15 +140,24 @@ document.addEventListener("click", e => {
   b.setAttribute("aria-expanded", d.open); b.textContent = d.open ? "看算法 ▴" : "看算法 ▾";
 });
 
-// 某天只有一場：不放日期標題，日期改寫在卡片第一行
 const twKey = d => new Date(new Date(d).getTime() + 8*3600e3).toISOString().slice(0,10);
 function dayCounts(ds){ const m = {}; for(const d of ds){ const k = twKey(d); m[k] = (m[k]||0) + 1; } return m; }
-function cardTime(d, st){ const t = new Date(new Date(d).getTime() + 8*3600e3);
-  return st && st.cnt && st.cnt[twKey(d)] === 1 && st.sumDay !== twKey(d) ? `${t.getUTCMonth()+1}/${t.getUTCDate()}（${WD[t.getUTCDay()]}）${hhmm(d)}` : hhmm(d); }
+// 每張卡都帶日期（單張截圖也看得出哪一天）：「10/20（二）08:08（台灣時間）」；日期一律用開賽時間換成台灣時間（UTC+8），不用美國當地比賽日
+// 第一行放不下時，ccFit 只把結尾換成「（台灣）」，日期和星期都保留
+function cardTime(d){ const t = new Date(new Date(d).getTime() + 8*3600e3);
+  return `<span class="ct-d">${t.getUTCMonth()+1}/${t.getUTCDate()}（${WD[t.getUTCDay()]}）${hhmm(d)}</span><span class="ct-l">（台灣時間）</span><span class="ct-s">（台灣）</span>`; }
 
-// 第一行放不下時，信心標籤移到第二行中間
-function ccFit(){ document.querySelectorAll(".cc-head").forEach(h => { if(!h.offsetParent) return; const r = h.querySelector(".cc-r1"); h.classList.remove("tight"); const t = !!h.querySelector(".cc-focus,.cc-pp") || r.scrollWidth > r.clientWidth + 1; h.classList.toggle("tight", t); }); }
+// 第一行放不下時：先把信心標籤移到第二行中間，還放不下再把「（台灣時間）」縮成「（台灣）」
+function ccOver(r){ if(r.scrollWidth > r.clientWidth + 1) return true;
+  const a = r.querySelector(".cc-ser"), b = r.querySelector(".cc-rt"); if(!a || !b) return false;
+  const ra = a.getBoundingClientRect(), rb = b.getBoundingClientRect();
+  return rb.top >= ra.bottom - 1 && rb.height > 0 || rb.right > r.getBoundingClientRect().right + 1;   // 時間那段被擠到下一行或超出
+}
+function ccFit(){ document.querySelectorAll(".cc-head").forEach(h => { if(!h.offsetParent) return; const r = h.querySelector(".cc-r1"); h.classList.remove("tight", "tzs");
+  if(h.querySelector(".cc-focus,.cc-pp") || ccOver(r)) h.classList.add("tight");
+  if(ccOver(r)) h.classList.add("tzs"); }); }
 addEventListener("resize", ccFit);
+if(document.fonts && document.fonts.ready) document.fonts.ready.then(() => ccFit());
 new MutationObserver(() => requestAnimationFrame(ccFit)).observe(document.documentElement, {childList:true, subtree:true});
 
 // 命中率依信心分組（spec-accuracy-display §2）：只算正式紀錄、同版本、排除取消與剛好 50%
@@ -177,16 +188,26 @@ function homePattern(lg, n, aHigh){
   return hs ? hs.map(x => !!x === aHigh) : null;
 }
 const serDisp = pa => { const x = Math.min(99, Math.max(1, Math.round(pa*100))); return [x, 100-x]; };
+// NBA 顯示用（只改顯示，不改資料）：p＝某一方勝率（0-100，四捨五入前）。勝率高的一方無條件捨去到整數、另一方用 100 減；
+// 高的一方捨去後剛好 50 時兩隊都顯示到小數一位（例 50.4／49.6）。回傳 [p 這方, 另一方] 的字串（不含 %）
+function pDisp(p){
+  const hi = Math.max(p, 100 - p), f = Math.min(99, Math.floor(hi + 1e-9));
+  let a, b;
+  if(f === 50){ const x = Math.min(50.9, Math.floor(hi*10 + 1e-6)/10); a = x.toFixed(1); b = (Math.round((100 - x)*10)/10).toFixed(1); }
+  else { a = String(f); b = String(100 - f); }
+  return p >= 50 ? [a, b] : [b, a];
+}
 // o: {lg, ab(系列簡稱), n(幾戰制), gameNo(下一場是第幾戰), wH, wA(目前主／客隊勝場), pNext(下一場主隊勝率 0-1), pH, pA(主隊在主場／客場勝率), H, A(隊名)}
 function seriesBar(o){
   const need = Math.floor(o.n/2) + 1;
   if(!o.n || o.n < 3 || o.wH >= need || o.wA >= need || !o.gameNo) return "";
   const std = homePattern(o.lg, o.n, true); if(!std) return "";
   const pat = homePattern(o.lg, o.n, !!std[o.gameNo-1]);   // 下一場主隊若在「高種子主場」那一戰當主隊，就是高種子
-  const ph = seriesProb(o.wH, o.wA, o.n, o.pNext, o.pH, o.pA, pat), [h, a] = serDisp(ph);
+  const ph = seriesProb(o.wH, o.wA, o.n, o.pNext, o.pH, o.pA, pat), [h, a] = o.lg === "nba" ? pDisp(ph*100) : serDisp(ph);
+  const hw = o.lg === "nba" ? Math.round(ph*1000)/10 : h, aw = o.lg === "nba" ? Math.round((1-ph)*1000)/10 : a;   // NBA 條長照四捨五入前的數字畫
   const st = o.wH === o.wA ? `${o.wH}:${o.wA} 平手` : o.wH > o.wA ? `${o.H} ${o.wH}:${o.wA} 領先` : `${o.A} ${o.wA}:${o.wH} 領先`;
-  const hi = h >= a;
-  return `<div class="sbar"><div class="sb-r1"><span>${o.ab}・${st}</span><span>系列晉級機率</span></div><div class="sb-r2"><span class="sb-t">${o.A} <span class="num">${a}%</span></span><span class="sb-b"><span class="${hi?"o":"g"}" style="width:${a}%"></span><span class="${hi?"g":"o"}" style="width:${h}%"></span></span><span class="sb-t r">${o.H} <span class="num">${h}%</span></span></div><p class="sb-note">晉級機率含已贏場次，單場勝率只看下一戰</p></div>`;
+  const hi = ph >= 0.5;
+  return `<div class="sbar"><div class="sb-r1"><span>${o.ab}・${st}</span><span>系列晉級機率</span></div><div class="sb-r2"><span class="sb-t">${o.A} <span class="num">${a}%</span></span><span class="sb-b"><span class="${hi?"o":"g"}" style="width:${aw}%"></span><span class="${hi?"g":"o"}" style="width:${hw}%"></span></span><span class="sb-t r">${o.H} <span class="num">${h}%</span></span></div><p class="sb-note">晉級機率含已贏場次，單場勝率只看下一戰</p></div>`;
 }
 const SER_ALGO = '<p class="desc">晉級機率：用每場單場勝率與目前系列比數計算，先發未公布的場次先用戰績估算，依目前單場模型推算，非投注建議</p>';
 
@@ -208,10 +229,11 @@ function btCard(lg, key, sub, cuts, extra){
 }
 
 // 今日數據焦點（§25 修訂、spec-accuracy-display §3）：只看列表第一天；cands: [{i, fh(主隊勝率 0-1), key(季後賽關鍵戰), txt(系列賽句)}]
-function pickFocus(cands){
+function pickFocus(cands, disp){   // disp(fh)＝[主隊, 客隊] 顯示字串（NBA 用 pDisp）；沒給就四捨五入
+
   if(!cands.length) return null;
   const key = cands.filter(c => c.key);
   const c = (key.length ? key : cands).slice().sort((a,b) => Math.abs(a.fh-.5) - Math.abs(b.fh-.5))[0];
-  const hp = Math.round(c.fh*100), ap = 100-hp;
+  const [hp, ap] = disp ? disp(c.fh) : (x => [x, 100-x])(Math.round(c.fh*100));
   return {i:c.i, txt: c.txt || `本日勝率最接近（${ap}%：${hp}%）`};
 }

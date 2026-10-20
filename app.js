@@ -276,14 +276,14 @@ function seriesPost(ss){      // 賽後：比賽結束後的系列戰狀態
   return lead ? `${lead}系列賽 ${W}:${L} 領先` : "";
 }
 // 系列賽標籤（卡片第一行）：「ALCS 第 6 戰」；卡片只出確定會打的下一戰，所以不加任何附註（§30）
-const SER_AB = {"World Series":"WS","AL Championship Series":"ALCS","NL Championship Series":"NLCS","AL Division Series":"ALDS","NL Division Series":"NLDS","AL Wild Card Series":"AL 外卡","NL Wild Card Series":"NL 外卡"};
+const SER_AB = {"World Series":"世界大賽","AL Championship Series":"ALCS","NL Championship Series":"NLCS","AL Division Series":"ALDS","NL Division Series":"NLDS","AL Wild Card Series":"AL 外卡","NL Wild Card Series":"NL 外卡"};
 function serTag(g){
   const ss = g.seriesStatus, n = g.seriesGameNumber;
   if(!ss || !n || !["F","D","L","W"].includes(g.gameType)) return "";
   const ab = SER_AB[ss.description] || sz(ss.description);
   const p = Object.fromEntries(new Intl.DateTimeFormat("en-GB",{timeZone:"Asia/Taipei",hour12:false,month:"numeric",day:"numeric",weekday:"short",hour:"2-digit",minute:"2-digit"}).formatToParts(new Date(g.gameDate)).map(x=>[x.type,x.value]));
   const wd = {Sun:"日",Mon:"一",Tue:"二",Wed:"三",Thu:"四",Fri:"五",Sat:"六"}[p.weekday];
-  return `<div class="ser-row"><span class="ser-tag">${ab} 第 <span class="num">${n}</span> 戰</span></div>`;
+  return `<div class="ser-row"><span class="ser-tag">${ab}${/[A-Za-z]$/.test(ab) ? " " : ""}第 <span class="num">${n}</span> 戰</span></div>`;   // 中文全名不空格：「世界大賽第 1 戰」；英文簡稱留空格：「ALCS 第 6 戰」
 }
 // 第三行縮短：「系列賽 2:1 守護者領先」／「系列賽 2:2 平手」
 function serShort(ss){
@@ -507,7 +507,7 @@ function renderPredict(games, isPast){
       <details class="algo"><summary>兩隊數據對比</summary>${compare(A.team, H.team, ap, hp)}</details>
       ${w ? `<div class="ref">${w}</div>` : ""}
       <div class="upd">最後更新：${tw(Date.now())}（台灣時間）</div>`;
-    html += sb + ccCard({lg:"mlb", pp: isPP(g) ? `延賽至 ${twWD(g.gameDate, true)}（勝率將重算）` : "", focus: FC && g === vg[FC.i] && !isPP(g) ? FC.txt : "", ser, time:cardTime(g.gameDate, DG), tag: wait ? "等先發" : "先發已公布", A:ts(A.team), H:ts(H.team), conf:CONF[tc], tc, ap:apct, hp:hpct, favHome, reason, body});
+    html += sb + ccCard({lg:"mlb", pp: isPP(g) ? `延賽至 ${twWD(g.gameDate, true)}（勝率將重算）` : "", focus: FC && g === vg[FC.i] && !isPP(g) ? FC.txt : "", ser, time:cardTime(g.gameDate), tag: wait ? "等先發" : "先發已公布", A:ts(A.team), H:ts(H.team), conf:CONF[tc], tc, ap:apct, hp:hpct, favHome, reason, body});
   }
   const X = PEXTRA;
   if(!html.includes('class="pcard')) html = ACTIVE ? (ACTIVE.post ? '<p class="po-note" style="margin-top:12px">下一戰在本戰結束後顯示</p>' : "") : emptyCard(X.nextAt);   // 比賽進行中：不放「今天沒有比賽」大框

@@ -86,7 +86,7 @@ function nFocusList(list){
   NFOCUS = null; list = list.slice().sort((a,b) => new Date(a.date) - new Date(b.date)); if(!list.length) return list;
   const d0 = twKey(list[0].date);
   const fc = pickFocus(list.map((e,i) => ({e,i})).filter(({e}) => twKey(e.date) === d0).map(({e,i}) => { const c = e.competitions[0], H = c.competitors.find(x=>x.homeAway==="home"), A = c.competitors.find(x=>x.homeAway==="away");
-    return {i, fh: nModel(H.team.id, A.team.id, c.neutralSite).F/100, key:false, txt:""}; }));
+    return {i, fh: nModel(H.team.id, A.team.id, c.neutralSite).F/100, key:false, txt:""}; }), fh => pDisp(fh*100));
   if(!fc) return list;
   NFOCUS = {id:list[fc.i].id, txt:fc.txt};
   return [list[fc.i], ...list.filter((_,j) => j !== fc.i)];
@@ -94,11 +94,13 @@ function nFocusList(list){
 function nbaCard(ev, DG){
   const c = ev.competitions[0], H = c.competitors.find(x=>x.homeAway==="home"), A = c.competitors.find(x=>x.homeAway==="away");
   const th = NT[H.team.id] || {g:0,w:0,l:0}, ta = NT[A.team.id] || {g:0,w:0,l:0};
-  const m = nModel(H.team.id, A.team.id, c.neutralSite), hp = Math.round(m.F), ap = 100-hp;
-  const favHome = hp >= ap, fp = Math.max(hp, ap), fav = favHome ? H.team : A.team, oth = favHome ? A.team : H.team;
-  const early = nEarly(new Date(ev.date)), [tc, tl] = nTier(fp, early), k = favHome ? 1 : -1, s1 = k*m.d1, s2 = k*m.d2;
+  const m = nModel(H.team.id, A.team.id, c.neutralSite), hpR = Math.round(m.F);   // hpR：系列晉級計算沿用的整數勝率（不改計算）
+  // 只改顯示：信心／級別用四捨五入前的勝率（69.6% 算「中」）；顯示數字見 pDisp（高的一方捨去、另一方 100 減）；條長照四捨五入前畫
+  const favHome = m.F >= 50, raw = favHome ? m.F : Math.round((100-m.F)*10)/10, fp = Math.floor(raw + 1e-9), fav = favHome ? H.team : A.team, oth = favHome ? A.team : H.team;
+  const [hp, ap] = pDisp(m.F), [fpD, othD] = favHome ? [hp, ap] : [ap, hp];
+  const early = nEarly(new Date(ev.date)), [tc, tl] = nTier(raw, early), k = favHome ? 1 : -1, s1 = k*m.d1, s2 = k*m.d2;
   const small = th.g < NM.minG || ta.g < NM.minG;
-  const big = fp === 50 ? `五五波：雙方各 <span class="num">50%</span>` : `${nWord(fp, early)}：${nts(fav)} <span class="num">${fp}%</span>`;
+  const big = fp === 50 ? `五五波：雙方各 <span class="num">50%</span>` : `${nWord(raw, early)}：${nts(fav)} <span class="num">${fpD}%</span>`;
   // 為什麼這樣預測：本季戰績、上一季實力、主場（只寫計入模型的項目）
   const pc = t => t.g ? t.w/t.g : 0;
   let t1;
@@ -110,7 +112,7 @@ function nbaCard(ev, DG){
   const pY = pX === H ? A : H;
   const t2 = th.g >= 30 && ta.g >= 30 ? WHY_TXT.priorLate : NPYTH[pX.team.id] != null && NPYTH[pY.team.id] != null ? wf("prior", {t:nts(pX.team), p:wpct(NPYTH[pX.team.id]), o:nts(pY.team), q:wpct(NPYTH[pY.team.id])}, ["p","q"]) : "開季場次還少，參考上季得失分表現";
   const t3 = c.neutralSite ? WHY_TXT.neutral : wf("home", {t:nts(H.team)});
-  const why = whyBlock2([[k*m.s1, t1, "rec"], [k*m.s2, t2, "prior"], [k*m.s3, t3, "home"]], nts(fav), fp, favHome ? m.F : Math.round((100-m.F)*10)/10);
+  const why = whyBlock2([[k*m.s1, t1, "rec"], [k*m.s2, t2, "prior"], [k*m.s3, t3, "home"]], nts(fav), fp, raw, {tk: tc === "strong" ? "strong" : tc === "lean" ? "mid" : raw >= 53 ? "lean" : "toss", r: fp});   // 「差距明顯」只用在最高一級；合計列「約 {r}%」用捨去後的整數
   // 參考數據（固定四列：近 10 場、主客場、場均得失分差、休息天數）
   const sv = (t, re) => { const e = t && t.raw && t.raw.stats.find(x => re.test(x.name||"") || re.test(x.type||"")); return e && e.displayValue && e.displayValue !== "0-0" ? e.displayValue.split("-") : null; };
   const la = sv(ta, /last ?ten|^l10$/i), lh = sv(th, /last ?ten|^l10$/i), ra = sv(ta, /^road$/i), rh = sv(th, /^home$/i);
@@ -130,15 +132,15 @@ function nbaCard(ev, DG){
       {k:"上季實力", t:tm(m.d1), v:m.d1, sfx:"上季較強"},
       {k:"主場", t:nts(H.team), v:c.neutralSite?null:m.d2, sfx:"主場出賽"}]
     : [{k:"戰績", t:tm(m.d1), v:m.d1, sfx:"戰績較佳"},
-      {k:"主場", t:nts(H.team), v:c.neutralSite?null:m.d2, sfx:"主場出賽"}], favHome, false, fp);
+      {k:"主場", t:nts(H.team), v:c.neutralSite?null:m.d2, sfx:"主場出賽"}], favHome, false, raw);
   const se = c.series, sH = se && se.competitors && se.competitors.find(x => x.id === H.team.id), sA = se && se.competitors && se.competitors.find(x => x.id === A.team.id);
   const sb = ev.season.type === 3 && se && !se.completed && sH && sA ? seriesBar({lg:"nba", ab: se.title || se.description || "季後賽", n: se.totalCompetitions, gameNo: sH.wins + sA.wins + 1, wH: sH.wins, wA: sA.wins,
-    pNext: hp/100, pH: nModel(H.team.id, A.team.id).F/100, pA: 1 - nModel(A.team.id, H.team.id).F/100, H: nts(H.team), A: nts(A.team)}) : "";
+    pNext: hpR/100, pH: nModel(H.team.id, A.team.id).F/100, pA: 1 - nModel(A.team.id, H.team.id).F/100, H: nts(H.team), A: nts(A.team)}) : "";
   const body = `${why}${ref}${sb ? SER_ALGO : ""}
-    ${early && fp >= 70 ? '<div class="early-note">開季數據少，保守看待</div>' : ""}
-    <div class="tier-row"><span class="tier ${tc}">${tl}</span>${fp!==50?`<span class="upset">${nts(oth)}仍有 ${100-fp}% 勝率</span>`:""}</div>
+    ${early && raw >= 70 ? '<div class="early-note">開季數據少，保守看待</div>' : ""}
+    <div class="tier-row"><span class="tier ${tc}">${tl}</span>${fp!==50?`<span class="upset">${nts(oth)}仍有 <span class="num">${othD}%</span> 勝率</span>`:""}</div>
     ${NST_AT && Date.now() - NST_AT > NFRESH ? `<div class="upd">依據 ${twT(NST_AT)}（台灣時間）時的戰績</div>` : `<div class="upd">戰績更新：${twT(NST_AT || Date.now())}（台灣時間）</div>`}`;
-  return sb + ccCard({lg:"nba", focus: NFOCUS && NFOCUS.id === ev.id ? NFOCUS.txt : "", ser:"", time:cardTime(ev.date, DG), tag: small ? "樣本不足" : "", A:nts(A.team), H:nts(H.team), conf:CONF[tc], tc, ap, hp, favHome, reason, body});
+  return sb + ccCard({lg:"nba", focus: NFOCUS && NFOCUS.id === ev.id ? NFOCUS.txt : "", ser:"", time:cardTime(ev.date), tag: small ? "樣本不足" : "", A:nts(A.team), H:nts(H.team), conf:CONF[tc], tc, ap, hp, aw:Math.round((100-m.F)*10)/10, hw:m.F, favHome, reason, body});
 }
 
 async function nbaGames(){
