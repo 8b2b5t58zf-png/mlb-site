@@ -1,5 +1,5 @@
 {
- "updated": "2026-10-20 07:57 (UTC+8)",
+ "updated": "2026-10-20 11:12 (UTC+8)",
  "records": [
   {
    "gamePk": 849818,
@@ -408,9 +408,11 @@
     }
    },
    "predictedWinner": "坦帕灣光芒",
-   "final": null,
-   "actualWinner": null,
-   "correct": null
+   "final": "克里夫蘭守護者 3 : 7 坦帕灣光芒",
+   "actualWinner": "坦帕灣光芒",
+   "correct": true,
+   "homeScore": 7,
+   "awayScore": 3
   },
   {
    "gamePk": 849814,
@@ -426,6 +428,123 @@
      "steps": {
       "standings": 1.6,
       "home": 2.1,
+      "starter": 0.0
+     },
+     "starterUsed": false,
+     "starterStatus": "none",
+     "hasStarters": false,
+     "homeStarter": null,
+     "awayStarter": null
+    }
+   ],
+   "official": null,
+   "predictedWinner": null,
+   "final": null,
+   "actualWinner": null,
+   "correct": null,
+   "status": "cancelled"
+  },
+  {
+   "gamePk": 849805,
+   "date": "2026-10-24",
+   "gameTime": "2026-10-24 08:00 (UTC+8)",
+   "away": "坦帕灣光芒",
+   "home": "密爾瓦基釀酒人",
+   "snapshots": [
+    {
+     "at": "2026-10-20 11:12 (UTC+8)",
+     "model": "v2：Log5縮回(0.250)、主場+0.082、先發ERA×0.137+WHIP×0.606（拉回40局）",
+     "homeWinProb": 0.5345,
+     "steps": {
+      "standings": 1.4,
+      "home": 2.1,
+      "starter": 0.0
+     },
+     "starterUsed": false,
+     "starterStatus": "none",
+     "hasStarters": false,
+     "homeStarter": null,
+     "awayStarter": null
+    }
+   ],
+   "official": null,
+   "predictedWinner": null,
+   "final": null,
+   "actualWinner": null,
+   "correct": null
+  },
+  {
+   "gamePk": 849802,
+   "date": "2026-10-25",
+   "gameTime": "2026-10-25 08:00 (UTC+8)",
+   "away": "坦帕灣光芒",
+   "home": "密爾瓦基釀酒人",
+   "snapshots": [
+    {
+     "at": "2026-10-20 11:12 (UTC+8)",
+     "model": "v2：Log5縮回(0.250)、主場+0.082、先發ERA×0.137+WHIP×0.606（拉回40局）",
+     "homeWinProb": 0.5345,
+     "steps": {
+      "standings": 1.4,
+      "home": 2.1,
+      "starter": 0.0
+     },
+     "starterUsed": false,
+     "starterStatus": "none",
+     "hasStarters": false,
+     "homeStarter": null,
+     "awayStarter": null
+    }
+   ],
+   "official": null,
+   "predictedWinner": null,
+   "final": null,
+   "actualWinner": null,
+   "correct": null
+  },
+  {
+   "gamePk": 849804,
+   "date": "2026-10-27",
+   "gameTime": "2026-10-27 08:00 (UTC+8)",
+   "away": "密爾瓦基釀酒人",
+   "home": "坦帕灣光芒",
+   "snapshots": [
+    {
+     "at": "2026-10-20 11:12 (UTC+8)",
+     "model": "v2：Log5縮回(0.250)、主場+0.082、先發ERA×0.137+WHIP×0.606（拉回40局）",
+     "homeWinProb": 0.5064,
+     "steps": {
+      "standings": -1.4,
+      "home": 2.0,
+      "starter": 0.0
+     },
+     "starterUsed": false,
+     "starterStatus": "none",
+     "hasStarters": false,
+     "homeStarter": null,
+     "awayStarter": null
+    }
+   ],
+   "official": null,
+   "predictedWinner": null,
+   "final": null,
+   "actualWinner": null,
+   "correct": null
+  },
+  {
+   "gamePk": 849803,
+   "date": "2026-10-28",
+   "gameTime": "2026-10-28 08:00 (UTC+8)",
+   "away": "密爾瓦基釀酒人",
+   "home": "坦帕灣光芒",
+   "snapshots": [
+    {
+     "at": "2026-10-20 11:12 (UTC+8)",
+     "model": "v2：Log5縮回(0.250)、主場+0.082、先發ERA×0.137+WHIP×0.606（拉回40局）",
+     "homeWinProb": 0.5064,
+     "steps": {
+      "standings": -1.4,
+      "home": 2.0,
       "starter": 0.0
      },
      "starterUsed": false,
