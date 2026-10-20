@@ -164,12 +164,12 @@ if(document.fonts && document.fonts.ready) document.fonts.ready.then(() => ccFit
 new MutationObserver(() => requestAnimationFrame(ccFit)).observe(document.documentElement, {childList:true, subtree:true});
 
 // 命中率依信心分組（spec-accuracy-display §2）：只算正式紀錄、同版本、排除取消與剛好 50%
-function confGroups(recs, isVer, cuts, lg){   // cuts: [中下限, 高下限]（看好方勝率，整數 %，與卡片信心標籤相同）
+function confGroups(recs, isVer, cuts, lg){   // cuts: [中下限, 高下限]（看好方勝率 %，不先四捨五入成整數，與卡片信心標籤相同）
   const done = recs.filter(x => x.status !== "cancelled" && x.official && isVer(x) && x.correct !== null && x.correct !== undefined);
   const half = done.filter(x => x.official.homeWinProb === 0.5).length;
   const G = [["低", `未滿 <span class="num">${cuts[0]}%</span>`], ["中", `<span class="num">${cuts[0]}</span>～未滿 <span class="num">${cuts[1]}%</span>`], ["高", `<span class="num">${cuts[1]}%</span> 以上`]].map(([n, r]) => ({n, r, xs:[]}));
   for(const x of done){ const hp = x.official.homeWinProb; if(hp === 0.5) continue;
-    const p = Math.max(hp, 1-hp), q = Math.round(p*100); G[q >= cuts[1] ? 2 : q >= cuts[0] ? 1 : 0].xs.push({p, ok:!!x.correct}); }
+    const p = Math.max(hp, 1-hp), q = Math.round(p*1000)/10;   // 用四捨五入前的勝率（到小數一位，與卡片信心標籤相同）分組，69.6% 歸「中」 G[q >= cuts[1] ? 2 : q >= cuts[0] ? 1 : 0].xs.push({p, ok:!!x.correct}); }
   const rows = G.map(g => { const n = g.xs.length, k = g.xs.filter(x => x.ok).length;
     const v = n >= 50 ? `<span class="cg-v1">平均預測 <span class="num">${Math.round(g.xs.reduce((a,x)=>a+x.p,0)/n*100)}%</span></span><span class="cg-v2">實際 <span class="num">${Math.round(k/n*100)}%</span>（<span class="num">${k}/${n}</span> 場）</span>` : `累積中（<span class="num">${n}</span> 場）`;
     return `<div class="cg-row"><span class="cg-l">信心 ${g.n}<span class="cg-r">${g.r}</span></span><span class="cg-v">${v}</span></div>`; }).join("");
