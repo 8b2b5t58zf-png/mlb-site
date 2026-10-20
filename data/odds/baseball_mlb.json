@@ -28,12 +28,12 @@
    "home_team": "Cleveland Guardians"
   },
   "e4c03eec29795f56b6b06c313d3af271": {
-   "away_prob": 0.4116,
+   "away_prob": 0.4106,
    "away_team": "Tampa Bay Rays",
    "bookmakers": 9,
    "commence_time": "2026-10-24T00:00:00Z",
-   "fetched_at": "2026-10-20T08:30:55Z",
-   "home_prob": 0.5884,
+   "fetched_at": "2026-10-20T19:15:31Z",
+   "home_prob": 0.5894,
    "home_team": "Milwaukee Brewers"
   },
   "f4ca2d8a09898a94722dde0633e0a7e1": {
@@ -46,5 +46,5 @@
    "home_team": "Cleveland Guardians"
   }
  },
- "updated_at": "2026-10-20T08:30:55Z"
+ "updated_at": "2026-10-20T19:15:31Z"
 }
