@@ -292,15 +292,15 @@ body.view-about #mlb-main,body.view-about #nba-main{display:none}
 .cc-head:focus-visible{outline:2px solid #d4af37;outline-offset:-2px;border-radius:12px}
 .cc-head>span{display:flex;align-items:center;gap:8px;min-width:0}
 .cc-r1{justify-content:space-between;min-height:18px;flex-wrap:wrap;gap:6px}
-.cc-head>.cc-r1{column-gap:4px}   /* 標題和時間之間留 4px，讓「（台灣時間）」在 375 寬放得下 */
+.cc-head>.cc-r1{column-gap:6px}   /* 第一行間距最小 6px */
 .cc-rt{display:flex;align-items:center;gap:4px;margin-left:auto;white-space:nowrap}
 .cc-time{font-size:12px;color:#8b949e;white-space:nowrap}
 .cc-time .ct-s{display:none} .cc-head.tzs .ct-l{display:none} .cc-head.tzs .ct-s{display:inline}
-.cc-tag{font-size:11px;background:#1c232d;border-radius:4px;padding:0 6px;color:#8b949e;line-height:18px}
+.cc-tag{font-size:11px;background:#1c232d;border-radius:4px;padding:0 5.75px;color:#8b949e;line-height:18px}
 .cc-conf.tier{font-size:11px;padding:0 8px;line-height:18px;white-space:nowrap}
 .cc-c2{display:none}
 .cc-head.tight .cc-c1{display:none} .cc-head.tight .cc-c2{display:inline-flex}
-.cc-c2{align-items:center;gap:4px;flex:none} .cc-t2{display:none} .cc-head.tag2 .cc-r1 .cc-tag{display:none} .cc-head.tag2 .cc-t2{display:inline-block}
+.cc-c2{align-items:center;gap:4px;flex:none} .cc-head>.cc-t2{display:none;text-align:left} .cc-head.tag2 .cc-r1 .cc-tag{display:none} .cc-head.tag2>.cc-t2{display:flex;justify-content:flex-start}   /* 第一行放不下時「先發已公布／等先發」移到第二行、靠左對齊隊名 */
 .cc-r2{justify-content:space-between}
 .cc-tm{font-size:15px;font-weight:700;color:#e6edf3;white-space:nowrap;flex:1;min-width:0}
 .cc-tm.r{text-align:right}

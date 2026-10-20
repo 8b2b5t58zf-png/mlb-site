@@ -479,9 +479,11 @@ function renderPredict(games, isPast){
     const aP = A.probablePitcher, hP = H.probablePitcher;
     const ap = aP && PSTAT[aP.id], hp = hP && PSTAT[hP.id];
     const m = modelV2(H.team.id, A.team.id, hp, ap);
-    const hpct = Math.round(m.F), apct = 100 - hpct;  // 長條用整數 %
-    const favHome = hpct >= apct, fp = Math.max(hpct, apct), fav = favHome ? H.team : A.team;
-    const [tc, tl] = tier(fp/100);
+    const hpct = Math.round(m.F);  // 系列晉級計算沿用的整數勝率（不改計算）
+    // 只改顯示：信心／級別用四捨五入前的勝率；顯示數字用 pDisp（高的一方捨去、另一方 100 減，捨去後 50 則顯示小數一位）；條長照四捨五入前畫
+    const favHome = m.F >= 50, raw = favHome ? m.F : Math.round((100-m.F)*10)/10, fp = Math.floor(raw + 1e-9), fav = favHome ? H.team : A.team;
+    const [hpD, apD] = pDisp(m.F);
+    const [tc, tl] = tier(raw/100);
     const st = favSteps(m, favHome);
     SS_NOW = g.seriesStatus; GTYPE_NOW = g.gameType; GPK_NOW = g.gamePk;
     SPCHG = spChange(g.gamePk, aP, hP, g.rescheduledFrom);
@@ -507,7 +509,7 @@ function renderPredict(games, isPast){
       <details class="algo"><summary>兩隊數據對比</summary>${compare(A.team, H.team, ap, hp)}</details>
       ${w ? `<div class="ref">${w}</div>` : ""}
       <div class="upd">最後更新：${tw(Date.now())}（台灣時間）</div>`;
-    html += sb + ccCard({lg:"mlb", pp: isPP(g) ? `延賽至 ${twWD(g.gameDate, true)}（勝率將重算）` : "", focus: FC && g === vg[FC.i] && !isPP(g) ? FC.txt : "", ser, time:cardTime(g.gameDate), tag: wait ? "等先發" : "先發已公布", A:ts(A.team), H:ts(H.team), conf:CONF[tc], tc, ap:apct, hp:hpct, favHome, reason, body});
+    html += sb + ccCard({lg:"mlb", pp: isPP(g) ? `延賽至 ${twWD(g.gameDate, true)}（勝率將重算）` : "", focus: FC && g === vg[FC.i] && !isPP(g) ? FC.txt : "", ser, time:cardTime(g.gameDate), tag: wait ? "等先發" : "先發已公布", A:ts(A.team), H:ts(H.team), conf:CONF[tc], tc, ap:apD, hp:hpD, aw:Math.round((100-m.F)*10)/10, hw:m.F, favHome, reason, body});
   }
   const X = PEXTRA;
   if(!html.includes('class="pcard')) html = ACTIVE ? (ACTIVE.post ? '<p class="po-note" style="margin-top:12px">下一戰在本戰結束後顯示</p>' : "") : emptyCard(X.nextAt);   // 比賽進行中：不放「今天沒有比賽」大框

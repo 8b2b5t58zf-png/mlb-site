@@ -5,6 +5,7 @@ const WHY_TXT = {
   // 總結句（依信心分級，不帶數字）
   sum: {
     strong: "各項指標都站在{t}這邊，差距明顯",   // 只用在最高一級（NBA 70% 以上、MLB 60% 以上）
+    strongEarly: "各項指標都站在{t}這邊・開季數據少，保守看待",   // NBA 開季（到 1/14）70% 以上，不寫「差距明顯」
     mid: "各項指標都站在{t}這邊",               // NBA 60%～未滿 70%（信心 中），後面不加字
     lean: "{t}靠{item}拉開些微差距，但還不到明顯領先",
     toss: "兩隊條件接近，這場要看臨場表現",
@@ -110,8 +111,8 @@ function ccCard(o){   // spec-compact v1
   const id = `cc-${++CC_N}`, ft = o.focus ? `<span class="cc-focus">數據焦點</span>` : "", cf = `<span class="tier ${o.tc} cc-conf">信心 ${o.conf}</span>`;
   return `<div class="pcard cc${o.focus?" focus":""}">
   <button type="button" class="cc-head" aria-expanded="false" aria-controls="${id}" data-lg="${o.focus?"focus":o.lg}">
-    ${o.pp ? `<span class="cc-r1"><span class="cc-ser">${o.ser||""}<span class="cc-pp">延賽</span></span></span><span class="cc-ppt num">${o.pp}</span>` : `<span class="cc-r1"><span class="cc-ser">${ft}${o.ser||""}</span><span class="cc-rt"><span class="cc-time num">${o.time}</span>${o.tag?`<span class="cc-tag">${o.tag}</span>`:""}<span class="cc-c1">${cf}</span></span></span>`}
-    <span class="cc-r2"><span class="cc-tm">${o.A}</span><span class="cc-c2">${cf}${o.tag && !o.pp ? `<span class="cc-tag cc-t2">${o.tag}</span>` : ""}</span><span class="cc-tm r">${o.H}</span></span>
+    ${o.pp ? `<span class="cc-r1"><span class="cc-ser">${o.ser||""}<span class="cc-pp">延賽</span></span></span><span class="cc-ppt num">${o.pp}</span>` : `<span class="cc-r1"><span class="cc-ser">${ft}${o.ser||""}</span><span class="cc-rt"><span class="cc-time num">${o.time}</span>${o.tag?`<span class="cc-tag">${o.tag}</span>`:""}<span class="cc-c1">${cf}</span></span></span>${o.tag?`<span class="cc-t2"><span class="cc-tag">${o.tag}</span></span>`:""}`}
+    <span class="cc-r2"><span class="cc-tm">${o.A}</span><span class="cc-c2">${cf}${o.tag && !o.pp ? `` : ""}</span><span class="cc-tm r">${o.H}</span></span>
     <span class="cc-r3"><span class="cc-lab">本場</span><span class="num cc-p">${o.ap}%</span><span class="cc-bar"><span class="${o.favHome?"oth":"fav"}" style="width:${o.aw ?? o.ap}%"></span><span class="${o.favHome?"fav":"oth"}" style="width:${o.hw ?? o.hp}%"></span></span><span class="num cc-p r">${o.hp}%</span></span>
     <span class="cc-r4"><span class="cc-why">${o.focus || o.reason || ""}</span><span class="cc-more">看分析 ›</span></span>
   </button>
@@ -205,8 +206,8 @@ function seriesBar(o){
   if(!o.n || o.n < 3 || o.wH >= need || o.wA >= need || !o.gameNo) return "";
   const std = homePattern(o.lg, o.n, true); if(!std) return "";
   const pat = homePattern(o.lg, o.n, !!std[o.gameNo-1]);   // 下一場主隊若在「高種子主場」那一戰當主隊，就是高種子
-  const ph = seriesProb(o.wH, o.wA, o.n, o.pNext, o.pH, o.pA, pat), [h, a] = o.lg === "nba" ? pDisp(ph*100) : serDisp(ph);
-  const hw = o.lg === "nba" ? Math.round(ph*1000)/10 : h, aw = o.lg === "nba" ? Math.round((1-ph)*1000)/10 : a;   // NBA 條長照四捨五入前的數字畫
+  const ph = seriesProb(o.wH, o.wA, o.n, o.pNext, o.pH, o.pA, pat), [h, a] = pDisp(ph*100);
+  const hw = Math.round(ph*1000)/10, aw = Math.round((1-ph)*1000)/10;   // MLB／NBA 條長照四捨五入前的數字畫
   const st = o.wH === o.wA ? `${o.wH}:${o.wA} 平手` : o.wH > o.wA ? `${o.H} ${o.wH}:${o.wA} 領先` : `${o.A} ${o.wA}:${o.wH} 領先`;
   const hi = ph >= 0.5;
   return `<div class="sbar"><div class="sb-r1"><span>${o.ab}・${st}</span><span>系列晉級機率</span></div><div class="sb-r2"><span class="sb-t">${o.A} <span class="num">${a}%</span></span><span class="sb-b"><span class="${hi?"o":"g"}" style="width:${aw}%"></span><span class="${hi?"g":"o"}" style="width:${hw}%"></span></span><span class="sb-t r">${o.H} <span class="num">${h}%</span></span></div><p class="sb-note">晉級機率含已贏場次，單場勝率只看下一戰</p></div>`;
