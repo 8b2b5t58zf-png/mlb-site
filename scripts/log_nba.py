@@ -44,11 +44,12 @@ def model(h, a, neutral=False):
     q = min(0.99, max(0.01, (h - h*a) / (h + a - 2*h*a))); q2 = 1/(1 + math.exp(-(math.log(q/(1-q)) + (0 if neutral else 0.221))))
     return round(q2, 4)
 
-now = datetime.now(timezone.utc)
+now = datetime.fromisoformat(os.environ["NBA_NOW"]) if os.environ.get("NBA_NOW") else datetime.now(timezone.utc)   # NBA_NOW 只供本機測試
+LOCK = timedelta(minutes=30)
 data = json.load(open(OUT, encoding="utf-8")) if os.path.exists(OUT) else {"records": []}
 ORIG = json.dumps(data["records"], sort_keys=True, ensure_ascii=False)
 recs = {r["id"]: r for r in data["records"]}
-nowtw = lambda: datetime.now(TZ).strftime("%Y-%m-%d %H:%M") + " (UTC+8)"
+nowtw = lambda: now.astimezone(TZ).strftime("%Y-%m-%d %H:%M") + " (UTC+8)"
 evs = {}
 for off in range(-3, 3):
     d = (now - timedelta(hours=5) + timedelta(days=off)).strftime("%Y%m%d")
@@ -71,6 +72,12 @@ for e in evs.values():
             if not r["snapshots"] or r["snapshots"][-1]["homeWinProb"] != p:
                 r["snapshots"].append({"at": nowtw(), "model": MODEL, "homeWinProb": p, "standingsFetchedAt": ST_AT,
                     "homeGames": T.get(H["team"]["id"], {}).get("g", 0), "awayGames": T.get(A["team"]["id"], {}).get("g", 0)})
+    # 開打前 30 分鐘內鎖定正式預測（at＝實際鎖定時間，早於開打）；已有 official 永不改寫
+    if r and r["official"] is None and r["snapshots"] and state == "pre" and start - LOCK <= now < start:
+        sn = r["snapshots"][-1]
+        r["official"] = {**sn, "at": nowtw(), "snapshotAt": sn["at"], "standingsFetchedAt": r.get("latestStandingsAt") or sn.get("standingsFetchedAt")}
+        r["predictedWinner"] = r["home"] if r["official"]["homeWinProb"] >= 0.5 else r["away"]
+    # 保險：開打前沒跑到（排程延遲），開打後才用開賽前最後一份快照補上（at 保留快照時間）
     if r and r["official"] is None and (state != "pre" or now >= start) and r["snapshots"]:
         r["official"] = {**r["snapshots"][-1], "standingsFetchedAt": r.get("latestStandingsAt") or r["snapshots"][-1].get("standingsFetchedAt")}
         r["predictedWinner"] = r["home"] if r["official"]["homeWinProb"] >= 0.5 else r["away"]

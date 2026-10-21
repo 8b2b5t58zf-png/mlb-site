@@ -277,9 +277,14 @@ async function nbaHit(){
   html += `<p class="hr-upd">最後更新：${fmtT(d.updated)}（台灣時間）</p>`;
   if(!d.records.length){ el.innerHTML = html + '<p class="note">2026-27 例行賽 10/21（台灣時間）開打，開打前會開始記錄。</p>'; return; }
   html += '<div class="tblwrap" style="overflow-x:auto"><table class="hrt"><tr><th>比賽時間</th><th class="mu-h"><span class="mu-full">對戰（客 @ 主）</span><span class="mu-short">客 @ 主</span></th><th>預測</th><th class="dk">勝率</th><th class="dk">實際比分</th><th class="dk">結果</th></tr>';
-  for(const x of d.records.slice().reverse().slice(0,15)){
+  // 開季第一天排程漏跑，這兩場依開賽前快照補記（B N 10/21 決定）；只影響顯示
+  const BF = {"401909088":"依開賽前快照補記（10/18 18:24）","401909089":"依開賽前快照補記（10/18 18:24）"};
+  const rows = d.records.slice().reverse().slice(0,15);
+  for(const x of d.records.slice().reverse()) if(BF[x.id] && !rows.includes(x)) rows.push(x);
+  for(const x of rows){
     const sn = x.official || x.snapshots[x.snapshots.length-1], hp = sn.homeWinProb, pw = hp >= .5 ? x.home : x.away;
     html += `<tr><td class="nw dt">${fmtDH(x.gameTime)}</td><td class="nw mu">${x.away} @ ${x.home}</td><td class="nw">${pw}${x.correct==null?"":" "+resMark(x.correct)}${x.official?"":TENT}</td><td class="num dk">${Math.round(Math.max(hp,1-hp)*100)}%</td><td class="dk">${x.final||"尚未開打／進行中"}</td><td class="dk">${x.correct===null?"待賽":x.correct?"猜對":"猜錯"}</td></tr>`;
+    if(BF[x.id]) html += `<tr class="bf-row"><td colspan="6"><span class="bf-note">${BF[x.id]}</span></td></tr>`;
   }
   el.innerHTML = html + "</table></div>";
 }

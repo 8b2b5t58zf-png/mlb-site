@@ -389,3 +389,6 @@ html.pre-nba #lg-tag::after{content:"｜NBA";font-size:18px}
 /* 其他分頁載入中：內容區先撐一個螢幕高，資料到了才收回，避免後面的圖表、頁尾在畫面裡被推來推去 */
 .sk-wait{min-height:100vh}
 .sb-t .num{font-variant-numeric:tabular-nums;white-space:nowrap}
+/* 命中率表：補記備註（不換行，不撐寬表格） */
+.hrt .bf-row td{padding-top:0;border-top:0}
+.hrt .bf-note{display:block;white-space:nowrap;font-size:11px;color:#8b949e;max-width:calc(100vw - 48px);overflow:hidden;text-overflow:clip}

@@ -1,0 +1,28 @@
+name: NBA 賽程守候
+# 照當天賽程：第一場開打前 30 分鐘到最後一場結束後約 3 小時，每 30 分鐘更新一次，並在開打前鎖定正式預測。
+# 下面的排程只是「叫醒」用：不在比賽時段或已有一輪在守就馬上結束。
+on:
+  schedule:
+    - cron: "12,42 * * * *"
+  workflow_dispatch:
+    inputs:
+      chain: { description: "上一輪交棒（自動用）", required: false, default: "0" }
+permissions:
+  contents: write
+  actions: write
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 355
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - name: 守候並更新
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CHAIN: ${{ inputs.chain || '0' }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898810+github-actions[bot]@users.noreply.github.com"
+          python3 scripts/nba_watch.py
