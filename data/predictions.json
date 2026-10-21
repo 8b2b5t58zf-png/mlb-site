@@ -1,5 +1,5 @@
 {
- "updated": "2026-10-21 09:03 (UTC+8)",
+ "updated": "2026-10-22 01:21 (UTC+8)",
  "records": [
   {
    "gamePk": 849818,
@@ -464,6 +464,24 @@
      "starterStatus": "none",
      "hasStarters": false,
      "homeStarter": null,
+     "awayStarter": null
+    },
+    {
+     "at": "2026-10-22 01:21 (UTC+8)",
+     "model": "v2：Log5縮回(0.250)、主場+0.082、先發ERA×0.137+WHIP×0.606（拉回40局）",
+     "homeWinProb": 0.5345,
+     "steps": {
+      "standings": 1.4,
+      "home": 2.1,
+      "starter": 0.0
+     },
+     "starterUsed": false,
+     "starterStatus": "partial",
+     "hasStarters": false,
+     "homeStarter": {
+      "id": 694819,
+      "name": "Jacob Misiorowski"
+     },
      "awayStarter": null
     }
    ],
