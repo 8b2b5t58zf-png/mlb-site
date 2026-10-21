@@ -167,9 +167,11 @@ async function nbaGames(){
   // 對戰組合未定（TBD）的比賽：不出卡片，只顯示一行開打日期
   const isTbd = e => e.competitions[0].competitors.some(c => !c.team || !c.team.id || +c.team.id <= 0 || c.team.abbreviation === "TBD" || /TBD/i.test(c.team.displayName||""));
   const tbdE = up.filter(isTbd)[0]; up = up.filter(e => !isTbd(e));
-  const nPost = up.slice(0,8).some(e => e.season.type===3);
   up.sort((a,b) => new Date(a.date) - new Date(b.date));   // 依開賽時間排序
-  const nCards = (DG => nFocusList(up.slice(0,8)).map(e => dayHdr(e.date, DG) + nbaCard(e, DG)).join(""))({last:null, cnt:dayCounts(up.slice(0,8).map(e => e.date))});
+  // 最多約 8 張卡，但第 8 張那天（台灣日期）的比賽要全部顯示，不能切掉同一天後面的場次（10/22 11 場只出 8 張）
+  const upShow = up.length > 8 ? up.filter((e,i) => i < 8 || twKey(e.date) === twKey(up[7].date)) : up;
+  const nPost = upShow.some(e => e.season.type===3);
+  const nCards = (DG => nFocusList(upShow).map(e => dayHdr(e.date, DG) + nbaCard(e, DG)).join(""))({last:null, cnt:dayCounts(upShow.map(e => e.date))});
   const nNext = (all.filter(e => e.status.type.state === "pre" && !isTbd(e)).sort((a,b) => a.date.localeCompare(b.date))[0] || {}).date;
   // §29 已開打、我們的紀錄還沒結算：不放「今天沒有比賽」大框，改一行進行中／整理中
   let NREC = {};
@@ -184,7 +186,7 @@ async function nbaGames(){
   let nDone = "";
   if(!nLive){ const today = twKey(new Date()), tg = all.filter(e => (e.season.type===2 || e.season.type===3) && !isTbd(e) && twKey(e.date) === today && !/postponed|cancel/i.test(e.status.type.name||""));
     if(tg.length && tg.every(e => NREC[e.id] ? NREC[e.id].final != null : e.status.type.state === "post")){
-      const nx = up.slice(0,8)[0], k = nx && twKey(nx.date);
+      const nx = upShow[0], k = nx && twKey(nx.date);
       nDone = `<p class="day-sum">今天 ${wn(tg.length)} 場已結算${nx ? `・下一戰 ${twWD(nx.date)}共 ${wn(up.filter(e => twKey(e.date) === k).length)} 場` : ""}</p>`; } }
   document.getElementById("nba-predict-list").innerHTML = note + nDone + (nCards || nLive || (nDone ? "" : emptyCard(nNext))) + (nCards && nPost ? '<p class="po-note">下一戰在本戰結束後顯示</p>' : "") + (tbdE ? `<p class="tbd-note">季後賽下一輪 ${twWD(tbdE.date)}開打<br>對戰組合待前一輪結束後確定</p>` : "");
   const done = all.filter(e => e.status.type.completed).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,5);

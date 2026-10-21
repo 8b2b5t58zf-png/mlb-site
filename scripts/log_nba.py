@@ -45,7 +45,7 @@ def model(h, a, neutral=False):
     return round(q2, 4)
 
 now = datetime.fromisoformat(os.environ["NBA_NOW"]) if os.environ.get("NBA_NOW") else datetime.now(timezone.utc)   # NBA_NOW 只供本機測試
-LOCK = timedelta(minutes=30)
+LOCK = timedelta(minutes=60)
 data = json.load(open(OUT, encoding="utf-8")) if os.path.exists(OUT) else {"records": []}
 ORIG = json.dumps(data["records"], sort_keys=True, ensure_ascii=False)
 recs = {r["id"]: r for r in data["records"]}
@@ -72,7 +72,7 @@ for e in evs.values():
             if not r["snapshots"] or r["snapshots"][-1]["homeWinProb"] != p:
                 r["snapshots"].append({"at": nowtw(), "model": MODEL, "homeWinProb": p, "standingsFetchedAt": ST_AT,
                     "homeGames": T.get(H["team"]["id"], {}).get("g", 0), "awayGames": T.get(A["team"]["id"], {}).get("g", 0)})
-    # 開打前 30 分鐘內鎖定正式預測（at＝實際鎖定時間，早於開打）；已有 official 永不改寫
+    # 開打前 60 分鐘內鎖定正式預測（at＝實際鎖定時間，早於開打）；已有 official 永不改寫
     if r and r["official"] is None and r["snapshots"] and state == "pre" and start - LOCK <= now < start:
         sn = r["snapshots"][-1]
         r["official"] = {**sn, "at": nowtw(), "snapshotAt": sn["at"], "standingsFetchedAt": r.get("latestStandingsAt") or sn.get("standingsFetchedAt")}
