@@ -293,10 +293,13 @@ async function nbaHit(){
   const gt = x => Date.parse(x.gameTime.slice(0,16).replace(" ","T") + ":00+08:00"), nowT = Date.now();
   const nextDay = (d.records.filter(x => x.final == null && gt(x) > nowT).map(x => x.gameTime.slice(0,10)).sort()[0]) || null;
   const rows = d.records.filter(x => x.final != null || gt(x) <= nowT || x.gameTime.slice(0,10) === nextDay).reverse();
+  // 已結束：ESPN 狀態 post／final；拿不到狀態時，開打超過 3 小時就當作已結束
+  const EST = {}; for(const e of NALL) EST[e.id] = e.status && e.status.type;
+  const fin = x => { const t = EST[x.id]; return t && t.state ? (t.state === "post" || !!t.completed) : nowT - gt(x) > 3*3600e3; };
   for(const x of rows){
     const started = gt(x) <= nowT, wait = x.final == null && x.correct == null;
     const sn = x.official || x.snapshots[x.snapshots.length-1], hp = sn.homeWinProb, pw = hp >= .5 ? x.home : x.away;
-    html += `<tr><td class="nw dt">${fmtDH(x.gameTime)}</td><td class="nw mu">${x.away} @ ${x.home}</td><td class="nw">${pw}${x.correct==null?"":" "+resMark(x.correct)}${x.official?"":TENT}</td><td class="num dk">${Math.round(Math.max(hp,1-hp)*100)}%</td><td class="dk${x.final?"":" pend"}">${x.final||(started?"進行中":"未開打")}</td><td class="dk${wait?" pend":""}">${wait?(started?"待結算":"未開打"):x.correct?"猜對":"猜錯"}</td></tr>`;
+    html += `<tr><td class="nw dt">${fmtDH(x.gameTime)}</td><td class="nw mu">${x.away} @ ${x.home}</td><td class="nw">${pw}${x.correct==null?"":" "+resMark(x.correct)}${x.official?"":TENT}</td><td class="num dk">${Math.round(Math.max(hp,1-hp)*100)}%</td><td class="dk${x.final?"":" pend"}">${x.final||(fin(x)?"比分更新中":started?"進行中":"未開打")}</td><td class="dk${wait?" pend":""}">${wait?(started?"待結算":"未開打"):x.correct?"猜對":"猜錯"}</td></tr>`;
     if(BF[x.id]) html += `<tr class="bf-row"><td colspan="6"><span class="bf-note">${BF[x.id]}</span></td></tr>`;
   }
   el.innerHTML = html + "</table></div>";
