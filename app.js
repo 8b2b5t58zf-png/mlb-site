@@ -608,6 +608,7 @@ function accLine(id, recs, isVer, label, href){
   el.innerHTML = `${t}・<a href="${href}">看命中率 ›</a>`; el.hidden = false;
 }
 // 命中率表要隱藏的未開賽場次（gamePk 集合）
+const MST = {};   // gamePk → MLB 官方比賽狀態（命中率表判斷是否已結束）
 async function hitHide(recs){
   const pend = recs.filter(x => !x.official && (x.correct === null || x.correct === undefined)), hide = new Set();
   if(!pend.length) return hide;
@@ -615,6 +616,7 @@ async function hitHide(recs){
   try{
     const s = await getJSON(`${API}/schedule?sportId=1&gamePks=${open.map(x => x.gamePk).join(",")}`);
     const POST = ["F","D","L","W"], key = g => g.gameType + ":" + [g.teams.home.team.id, g.teams.away.team.id].sort().join("-");
+    for(const g of (s.dates || []).flatMap(x => x.games)) MST[g.gamePk] = g.status;
     const gs = (s.dates || []).flatMap(x => x.games).filter(g => !["Postponed","Cancelled"].includes(g.status.detailedState));
     const first = {};
     for(const g of gs.filter(g => POST.includes(g.gameType) && g.status.abstractGameState !== "Final").sort((a,b) => (a.seriesGameNumber||0)-(b.seriesGameNumber||0) || new Date(a.gameDate)-new Date(b.gameDate))) if(!(key(g) in first)) first[key(g)] = g;
@@ -661,8 +663,11 @@ async function secHit(){
     const snap = x.official || x.snapshots[x.snapshots.length-1], hp = snap.homeWinProb;
     const pw = hp >= 0.5 ? x.home : x.away, p = Math.max(hp, 1-hp);
     const tag = x.official ? "" : TENT;
+    // 與 NBA 同用字：已結束看官方狀態 Final，拿不到狀態就以開打超過 3 小時當作已結束
+    const gt = Date.parse(x.gameTime.slice(0,16).replace(" ","T") + ":00+08:00"), started = gt <= Date.now(), wait = x.correct === null || x.correct === undefined;
+    const fin = () => { const t = MST[x.gamePk]; return t && t.abstractGameState ? t.abstractGameState === "Final" : Date.now() - gt > 3*3600e3; };
     const v = (snap.model||"").slice(0,2);
-    html += `<tr><td class="nw dt">${fmtDH(x.gameTime)}</td><td class="nw mu">${short(x.away)} @ ${short(x.home)}</td><td class="md"><span class="vp ${v}">${v}</span></td><td class="nw">${short(pw)}${x.correct==null?"":" "+resMark(x.correct)}${tag}${noSp(x.official) ? `<div class="nosp">${WHY_TXT.noSp}</div>` : ""}</td><td class="dk">${pDisp(p*100)[0]}%</td><td class="dk">${x.final || "尚未開打／進行中"}</td><td class="dk">${x.correct === null ? "待賽" : x.correct ? "猜對" : "猜錯"}</td></tr>`;
+    html += `<tr><td class="nw dt">${fmtDH(x.gameTime)}</td><td class="nw mu">${short(x.away)} @ ${short(x.home)}</td><td class="md"><span class="vp ${v}">${v}</span></td><td class="nw">${short(pw)}${x.correct==null?"":" "+resMark(x.correct)}${tag}${noSp(x.official) ? `<div class="nosp">${WHY_TXT.noSp}</div>` : ""}</td><td class="dk">${pDisp(p*100)[0]}%</td><td class="dk${x.final?"":" pend"}">${x.final || (fin(x) ? "比分更新中" : started ? "進行中" : "未開打")}</td><td class="dk${wait?" pend":""}">${wait ? (started ? "待結算" : "未開打") : x.correct ? "猜對" : "猜錯"}</td></tr>`;
   }
   el.innerHTML = html + "</table></div>";
 }
