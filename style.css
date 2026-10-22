@@ -401,3 +401,4 @@ html.pre-nba #lg-tag::after{content:"｜NBA";font-size:18px}
 #nba-predict-list{gap:8px}
 #nba-predict-list>.po-note,#nba-predict-list>.tbd-note{margin-top:0}
 #nba-predict-list .cc-head{row-gap:4px}
+.tent.pend{color:#8b949e;background:none}

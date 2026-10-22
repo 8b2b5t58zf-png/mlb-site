@@ -299,7 +299,7 @@ async function nbaHit(){
   for(const x of rows){
     const started = gt(x) <= nowT, wait = x.final == null && x.correct == null;
     const sn = x.official || x.snapshots[x.snapshots.length-1], hp = sn.homeWinProb, pw = hp >= .5 ? x.home : x.away;
-    html += `<tr><td class="nw dt">${fmtDH(x.gameTime)}</td><td class="nw mu">${x.away} @ ${x.home}</td><td class="nw">${pw}${x.correct==null?"":" "+resMark(x.correct)}${x.official?"":TENT}</td><td class="num dk">${Math.round(Math.max(hp,1-hp)*100)}%</td><td class="dk${x.final?"":" pend"}">${x.final||(fin(x)?"比分更新中":started?"進行中":"未開打")}</td><td class="dk${wait?" pend":""}">${wait?(started?"待結算":"未開打"):x.correct?"猜對":"猜錯"}</td></tr>`;
+    html += `<tr><td class="nw dt">${fmtDH(x.gameTime)}</td><td class="nw mu">${x.away} @ ${x.home}</td><td class="nw">${pw}${x.correct==null?"":" "+resMark(x.correct)}${x.official?"":TENT}</td><td class="num dk">${pDisp(hp*100)[hp>=.5?0:1]}%</td><td class="dk${x.final?"":" pend"}">${x.final||(fin(x)?"比分更新中":started?"進行中":"未開打")}</td><td class="dk${wait?" pend":""}">${wait?(started?"待結算":"未開打"):x.correct?"猜對":"猜錯"}</td></tr>`;
     if(BF[x.id]) html += `<tr class="bf-row"><td colspan="6"><span class="bf-note">${BF[x.id]}</span></td></tr>`;
   }
   el.innerHTML = html + "</table></div>";
