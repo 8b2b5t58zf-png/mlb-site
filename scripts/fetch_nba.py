@@ -32,7 +32,7 @@ team = lambda t: {k: t.get(k) for k in TK}
 def slim_ev(e):
     c = e["competitions"][0]
     return {"id": e["id"], "date": e["date"], "season": {"type": e["season"]["type"]},
-            "status": {"type": {k: e["status"]["type"].get(k) for k in ("state", "completed")}},
+            "status": {"type": {k: e["status"]["type"].get(k) for k in ("state", "completed", "name")}},
             "competitions": [{"competitors": [{"homeAway": x["homeAway"], "score": x.get("score"), "team": team(x["team"])} for x in c["competitors"]]}]}
 def slim_sum(d):
     comp = d["header"]["competitions"][0]

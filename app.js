@@ -594,7 +594,7 @@ async function renderAnalysis(games){
 // "2026-10-18 08:00 (UTC+8)" → "10/18 上午08:00"（與全站時間格式一致）
 const fmtD = s => { const m = String(s).match(/(\d+)-(\d+)-(\d+) (\d+:\d+)/); return m ? `${+m[2]}/${+m[3]} ${m[4]}` : s; };
 const fmtDH = s => { const m = String(s).match(/(\d+)-(\d+)-(\d+) (\d+:\d+)/); return m ? `<span class="dd">${+m[2]}/${+m[3]}</span> <span class="tt">${m[4]}</span>` : s; };
-const TENT = '<div class="tent pend">未開打</div>';   // 命中率表：還沒開打的場次一律寫「未開打」灰字（10/22）
+const TENT = '';   // 命中率表：預測欄只放預測的隊名；「未開打」只放在實際比分與結果欄（10/22）
 const resMark = c => c === null || c === undefined ? '<span class="rm wait">待賽</span>' : c ? '<span class="rm ok" aria-label="猜對">✓</span>' : '<span class="rm bad" aria-label="猜錯">✗</span>';
 const fmtT = s => { const m = String(s).match(/(\d+)-(\d+)-(\d+) (\d+):(\d+)/); if(!m) return s; const h=+m[4]; return `${+m[2]}/${+m[3]} ${h<12?"上午":"下午"}${String(h%12||12).padStart(2,"0")}:${m[5]}`; };
 const FULL2SHORT = Object.fromEntries(Object.values(ZH));

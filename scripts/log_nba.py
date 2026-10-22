@@ -50,17 +50,29 @@ data = json.load(open(OUT, encoding="utf-8")) if os.path.exists(OUT) else {"reco
 ORIG = json.dumps(data["records"], sort_keys=True, ensure_ascii=False)
 recs = {r["id"]: r for r in data["records"]}
 nowtw = lambda: now.astimezone(TZ).strftime("%Y-%m-%d %H:%M") + " (UTC+8)"
-evs = {}
+# 同一個 event id 可能出現在兩天（延賽改期：舊日期標 POSTPONED、新日期才是真的）。比照 MLB dbe9d22：
+# 有非延賽那筆就只用它，延賽那筆不能把開賽時間改回舊日期；只剩延賽那筆就不改時間
+PPD = lambda e: bool(re.search(r"POSTPONED|CANCEL|SUSPEND", (e["status"]["type"].get("name") or ""), re.I))
+evs, dup = {}, {}
 for off in range(-3, 3):
     d = (now - timedelta(hours=5) + timedelta(days=off)).strftime("%Y%m%d")
     day = (_sb or {}).get("days", {}).get(d) or get(f"{ESPN}/scoreboard?dates={d}")
-    for e in day.get("events", []): evs[e["id"]] = e
+    for e in day.get("events", []):
+        dup.setdefault(e["id"], []).append(e)
+for k, lst in dup.items():
+    real = [e for e in lst if not PPD(e)]
+    if len({e["date"] for e in real}) > 1: real = []   # 同 id 兩個不同的非延賽時間：無法判斷，不動時間
+    evs[k] = (real or lst)[0]; evs[k]["_timeOK"] = bool(real)
 for e in evs.values():
     if e["season"]["type"] != 2: continue
     c = e["competitions"][0]; H = next(x for x in c["competitors"] if x["homeAway"] == "home"); A = next(x for x in c["competitors"] if x["homeAway"] == "away")
     if any(not x["team"].get("id") or str(x["team"]["id"]) in ("0", "-1") or x["team"].get("abbreviation") == "TBD" for x in (H, A)): continue   # 對戰未定不預測
     start = datetime.fromisoformat(e["date"].replace("Z", "+00:00")); state = e["status"]["type"]["state"]
     r = recs.get(e["id"])
+    # 開賽時間以 ESPN 同一 event id 的最新 date 為準（含已鎖定、已結算的場次；只改 gameTime，不動 official／結算）
+    gt = start.astimezone(TZ).strftime("%Y-%m-%d %H:%M") + " (UTC+8)"
+    if r is not None and e.get("_timeOK") and r["gameTime"] != gt:
+        print(f'開賽時間更新 {r["away"]}@{r["home"]}：{r["gameTime"]} → {gt}'); r["gameTime"] = gt
     if state == "pre" and now < start:
         if r is None:
             r = recs[e["id"]] = {"id": e["id"], "gameTime": start.astimezone(TZ).strftime("%Y-%m-%d %H:%M") + " (UTC+8)",
