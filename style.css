@@ -392,3 +392,12 @@ html.pre-nba #lg-tag::after{content:"｜NBA";font-size:18px}
 /* 命中率表：補記備註（不換行，不撐寬表格） */
 .hrt .bf-row td{padding-top:0;border-top:0}
 .hrt .bf-note{display:block;white-space:nowrap;font-size:11px;color:#8b949e;max-width:calc(100vw - 48px);overflow:hidden;text-overflow:clip}
+
+/* NBA 資料更新延遲提示條（UI設計師 10/22）：資料時間那行正下方、只佔一行 */
+.delay-bar{background:#161b22;border:1px solid #d29922;border-radius:6px;padding:6px 12px;margin:0 0 8px;font-size:12px;line-height:22px;color:#e6edf3;white-space:nowrap;overflow:hidden;text-overflow:clip}
+/* 命中率表：待結算／未開打用灰字、不加底色 */
+.hrt td.pend{color:#8b949e;background:none}
+/* NBA 第一屏縮版（UI設計師 10/22）：卡片間距 8px（卡片上下內距維持 12px）、第一行與隊名間距 4px；字級、勝率條、焦點金框、觸控 44px 不動 */
+#nba-predict-list{gap:8px}
+#nba-predict-list>.po-note,#nba-predict-list>.tbd-note{margin-top:0}
+#nba-predict-list .cc-head{row-gap:4px}

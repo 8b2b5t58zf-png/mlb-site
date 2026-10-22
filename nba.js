@@ -82,6 +82,8 @@ const nWord = p => p >= 70 ? "勝率明顯較高" : p >= 60 ? "略占上風" : "
 let NALL = [];   // 近期所有賽程（判斷背靠背：前 36 小時內同隊有比賽）
 // 今日數據焦點（NBA）：列表第一天勝率最接近五成的一場，排第一張
 let NFOCUS = null;
+let NRECG = {};   // data/nba-predictions.json 的紀錄（id → 紀錄）
+let NDAT = null, NTODAY = false;   // 預測頁資料時間、今天（台灣日期）有沒有比賽，給「資料更新延遲」提示條用
 function nFocusList(list){
   NFOCUS = null; list = list.slice().sort((a,b) => new Date(a.date) - new Date(b.date)); if(!list.length) return list;
   const d0 = twKey(list[0].date);
@@ -94,7 +96,9 @@ function nFocusList(list){
 function nbaCard(ev, DG){
   const c = ev.competitions[0], H = c.competitors.find(x=>x.homeAway==="home"), A = c.competitors.find(x=>x.homeAway==="away");
   const th = NT[H.team.id] || {g:0,w:0,l:0}, ta = NT[A.team.id] || {g:0,w:0,l:0};
-  const m = nModel(H.team.id, A.team.id, c.neutralSite), hpR = Math.round(m.F);   // hpR：系列晉級計算沿用的整數勝率（不改計算）
+  const m0 = nModel(H.team.id, A.team.id, c.neutralSite), lk = ev.status.type.state !== "pre" && NRECG[ev.id] && NRECG[ev.id].official;
+  // 已開打未結束：勝率用開賽前鎖定的正式預測，不再跟著戰績變動（10/22 UI設計師決定）
+  const m = lk ? {...m0, F: Math.round(lk.homeWinProb*1000)/10} : m0, hpR = Math.round(m.F);   // hpR：系列晉級計算沿用的整數勝率（不改計算）
   // 只改顯示：信心／級別用四捨五入前的勝率（69.6% 算「中」）；顯示數字見 pDisp（高的一方捨去、另一方 100 減）；條長照四捨五入前畫
   const favHome = m.F >= 50, raw = favHome ? m.F : Math.round((100-m.F)*10)/10, fp = Math.floor(raw + 1e-9), fav = favHome ? H.team : A.team, oth = favHome ? A.team : H.team;
   const [hp, ap] = pDisp(m.F), [fpD, othD] = favHome ? [hp, ap] : [ap, hp];
@@ -150,7 +154,10 @@ async function nbaGames(){
   const res = res0.map(x => x || {events:[]});
   const evs = res.flatMap(r=>r.events||[]);
   const seen = new Set(), all = evs.filter(e => !seen.has(e.id) && seen.add(e.id));
-  let up = all.filter(e => e.status.type.state==="pre" && (e.season.type===2 || e.season.type===3));
+  NRECG = {};
+  if(location.protocol !== "file:"){ try{ const r = await fetch("data/nba-predictions.json?t=" + Date.now()); if(r.ok) for(const x of (await r.json()).records) NRECG[x.id] = x; }catch(e){} }
+  // 已開打、還沒結束的場次留成賽前卡（勝率用鎖定的正式預測），10/29「進行中」卡上線前的做法
+  let up = all.filter(e => (e.status.type.state==="pre" || (e.status.type.state==="in" && !e.status.type.completed)) && (e.season.type===2 || e.season.type===3));
   let note = ""; PRE_NOTE["nba-predict-list"] = "";
   if(!up.length){
     // 例行賽還沒開打：顯示開幕賽程
@@ -174,8 +181,7 @@ async function nbaGames(){
   const nCards = (DG => nFocusList(upShow).map(e => dayHdr(e.date, DG) + nbaCard(e, DG)).join(""))({last:null, cnt:dayCounts(upShow.map(e => e.date))});
   const nNext = (all.filter(e => e.status.type.state === "pre" && !isTbd(e)).sort((a,b) => a.date.localeCompare(b.date))[0] || {}).date;
   // §29 已開打、我們的紀錄還沒結算：不放「今天沒有比賽」大框，改一行進行中／整理中
-  let NREC = {};
-  if(location.protocol !== "file:"){ try{ const r = await fetch("data/nba-predictions.json?t=" + Date.now()); if(r.ok) for(const x of (await r.json()).records) NREC[x.id] = x; }catch(e){} }
+  const NREC = NRECG;
   const nAct = nCards ? [] : all.filter(e => (e.season.type===2 || e.season.type===3) && !isTbd(e) && Date.now() - new Date(e.date) < 12*3600e3
     && (e.status.type.state === "in" || (e.status.type.state === "post" && NREC[e.id] && NREC[e.id].final == null)));
   let nLive = "";
@@ -189,6 +195,7 @@ async function nbaGames(){
       const nx = upShow[0], k = nx && twKey(nx.date);
       nDone = `<p class="day-sum">今天 ${wn(tg.length)} 場已結算${nx ? `・下一戰 ${twWD(nx.date)}共 ${wn(up.filter(e => twKey(e.date) === k).length)} 場` : ""}</p>`; } }
   document.getElementById("nba-predict-list").innerHTML = note + nDone + (nCards || nLive || (nDone ? "" : emptyCard(nNext))) + (nCards && nPost ? '<p class="po-note">下一戰在本戰結束後顯示</p>' : "") + (tbdE ? `<p class="tbd-note">季後賽下一輪 ${twWD(tbdE.date)}開打<br>對戰組合待前一輪結束後確定</p>` : "");
+  NDAT = usedCache || dataAt; NTODAY = all.some(e => (e.season.type===2 || e.season.type===3) && twKey(e.date) === twKey(new Date()));
   const done = all.filter(e => e.status.type.completed).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,5);
   await nbaRecaps(done);
 }
@@ -278,24 +285,36 @@ async function nbaHit(){
   if(old.length) html += `<p class="note">舊版模型 v1 另計：${old.length} 場猜對 ${oOk} 場</p>`;
   html += `<p class="hr-upd">最後更新：${fmtT(d.updated)}（台灣時間）</p>`;
   if(!d.records.length){ el.innerHTML = html + '<p class="note">2026-27 例行賽 10/21（台灣時間）開打，開打前會開始記錄。</p>'; return; }
-  html += '<div class="tblwrap" style="overflow-x:auto"><table class="hrt"><tr><th>比賽時間</th><th class="mu-h"><span class="mu-full">對戰（客 @ 主）</span><span class="mu-short">客 @ 主</span></th><th>預測</th><th class="dk">勝率</th><th class="dk">實際比分</th><th class="dk">結果</th></tr>';
+  html += '<p class="note hr-cnt">命中率只計算已結算場次・非投注建議</p><div class="tblwrap" style="overflow-x:auto"><table class="hrt"><tr><th>比賽時間</th><th class="mu-h"><span class="mu-full">對戰（客 @ 主）</span><span class="mu-short">客 @ 主</span></th><th>預測</th><th class="dk">勝率</th><th class="dk">實際比分</th><th class="dk">結果</th></tr>';
   // 開季第一天排程漏跑，這兩場依開賽前快照補記（B N 10/21 決定）；只影響顯示
   const BF = {"401909088":"依開賽前快照補記（10/18 18:24）","401909089":"依開賽前快照補記（10/18 18:24）"};
-  const rows = d.records.slice().reverse().slice(0,15);
-  for(const x of d.records.slice().reverse()) if(BF[x.id] && !rows.includes(x)) rows.push(x);
+  // 只列：已結算、已開打待結算、下一個比賽日（台灣日期）的場次；後天以後的不列（10/22 UI設計師）
+  const gt = x => Date.parse(x.gameTime.slice(0,16).replace(" ","T") + ":00+08:00"), nowT = Date.now();
+  const nextDay = (d.records.filter(x => x.final == null && gt(x) > nowT).map(x => x.gameTime.slice(0,10)).sort()[0]) || null;
+  const rows = d.records.filter(x => x.final != null || gt(x) <= nowT || x.gameTime.slice(0,10) === nextDay).reverse();
   for(const x of rows){
+    const started = gt(x) <= nowT, wait = x.final == null && x.correct == null;
     const sn = x.official || x.snapshots[x.snapshots.length-1], hp = sn.homeWinProb, pw = hp >= .5 ? x.home : x.away;
-    html += `<tr><td class="nw dt">${fmtDH(x.gameTime)}</td><td class="nw mu">${x.away} @ ${x.home}</td><td class="nw">${pw}${x.correct==null?"":" "+resMark(x.correct)}${x.official?"":TENT}</td><td class="num dk">${Math.round(Math.max(hp,1-hp)*100)}%</td><td class="dk">${x.final||"尚未開打／進行中"}</td><td class="dk">${x.correct===null?"待賽":x.correct?"猜對":"猜錯"}</td></tr>`;
+    html += `<tr><td class="nw dt">${fmtDH(x.gameTime)}</td><td class="nw mu">${x.away} @ ${x.home}</td><td class="nw">${pw}${x.correct==null?"":" "+resMark(x.correct)}${x.official?"":TENT}</td><td class="num dk">${Math.round(Math.max(hp,1-hp)*100)}%</td><td class="dk${x.final?"":" pend"}">${x.final||(started?"進行中":"未開打")}</td><td class="dk${wait?" pend":""}">${wait?(started?"待結算":"未開打"):x.correct?"猜對":"猜錯"}</td></tr>`;
     if(BF[x.id]) html += `<tr class="bf-row"><td colspan="6"><span class="bf-note">${BF[x.id]}</span></td></tr>`;
   }
   el.innerHTML = html + "</table></div>";
+}
+// 資料更新延遲提示條：今天有比賽、預測頁資料時間超過 1 小時就顯示在資料時間那行正下方；資料更新後消失（用字：內容編輯 10/22）
+function nbaDelay(){
+  const st = document.getElementById("st-nba-predict-list"); if(!st) return;
+  let el = document.getElementById("nba-delay");
+  const show = NTODAY && NDAT && Date.now() - NDAT > 3600e3;
+  if(!show){ if(el) el.remove(); return; }
+  if(!el){ el = document.createElement("div"); el.id = "nba-delay"; el.className = "delay-bar"; el.setAttribute("role","status"); st.after(el); }
+  el.innerHTML = `資料更新延遲（最後 <span class="num">${twMD(NDAT).slice(6)}</span>），比分以官方為準`;
 }
 async function secNbaStand(){ await nbaStandings(); }
 async function secNbaGames(){ if(!Object.keys(NT).length) await nbaStandings(); await nbaPrior(); await nbaGames(); }
 async function loadNBA(){
   if(nbaLoaded) return; nbaLoaded = true;
   await runSection(["nba-standings-box"], secNbaStand);
-  await runSection(["nba-predict-list","nba-analysis"], secNbaGames);
+  await runSection(["nba-predict-list","nba-analysis"], secNbaGames); nbaDelay();
   await runSection(["nba-hit"], nbaHit);
   await runSection(["nba-leaders-box"], nbaLeaders);
 }
