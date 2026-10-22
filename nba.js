@@ -196,6 +196,7 @@ async function nbaGames(){
       nDone = `<p class="day-sum">今天 ${wn(tg.length)} 場已結算${nx ? `・下一戰 ${twWD(nx.date)}共 ${wn(up.filter(e => twKey(e.date) === k).length)} 場` : ""}</p>`; } }
   document.getElementById("nba-predict-list").innerHTML = note + nDone + (nCards || nLive || (nDone ? "" : emptyCard(nNext))) + (nCards && nPost ? '<p class="po-note">下一戰在本戰結束後顯示</p>' : "") + (tbdE ? `<p class="tbd-note">季後賽下一輪 ${twWD(tbdE.date)}開打<br>對戰組合待前一輪結束後確定</p>` : "");
   NDAT = usedCache || dataAt; NTODAY = all.some(e => (e.season.type===2 || e.season.type===3) && twKey(e.date) === twKey(new Date()));
+  nbaDelay();   // 先畫提示條，不等賽後分析載完
   const done = all.filter(e => e.status.type.completed).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,5);
   await nbaRecaps(done);
 }
