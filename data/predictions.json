@@ -1,5 +1,5 @@
 {
- "updated": "2026-10-23 09:02 (UTC+8)",
+ "updated": "2026-10-24 10:01 (UTC+8)",
  "records": [
   {
    "gamePk": 849818,
@@ -506,8 +506,28 @@
      }
     }
    ],
-   "official": null,
-   "predictedWinner": null,
+   "official": {
+    "at": "2026-10-23 06:48 (UTC+8)",
+    "model": "v2：Log5縮回(0.250)、主場+0.082、先發ERA×0.137+WHIP×0.606（拉回40局）",
+    "homeWinProb": 0.6049,
+    "steps": {
+     "standings": 1.4,
+     "home": 2.1,
+     "starter": 7.0
+    },
+    "starterUsed": true,
+    "starterStatus": "both",
+    "hasStarters": true,
+    "homeStarter": {
+     "id": 694819,
+     "name": "Jacob Misiorowski"
+    },
+    "awayStarter": {
+     "id": 607259,
+     "name": "Nick Martinez"
+    }
+   },
+   "predictedWinner": "密爾瓦基釀酒人",
    "final": null,
    "actualWinner": null,
    "correct": null
@@ -658,6 +678,35 @@
    "snapshots": [
     {
      "at": "2026-10-23 09:02 (UTC+8)",
+     "model": "v2：Log5縮回(0.250)、主場+0.082、先發ERA×0.137+WHIP×0.606（拉回40局）",
+     "homeWinProb": 0.5345,
+     "steps": {
+      "standings": 1.4,
+      "home": 2.1,
+      "starter": 0.0
+     },
+     "starterUsed": false,
+     "starterStatus": "none",
+     "hasStarters": false,
+     "homeStarter": null,
+     "awayStarter": null
+    }
+   ],
+   "official": null,
+   "predictedWinner": null,
+   "final": null,
+   "actualWinner": null,
+   "correct": null
+  },
+  {
+   "gamePk": 849800,
+   "date": "2026-11-01",
+   "gameTime": "2026-11-01 08:00 (UTC+8)",
+   "away": "坦帕灣光芒",
+   "home": "密爾瓦基釀酒人",
+   "snapshots": [
+    {
+     "at": "2026-10-24 10:01 (UTC+8)",
      "model": "v2：Log5縮回(0.250)、主場+0.082、先發ERA×0.137+WHIP×0.606（拉回40局）",
      "homeWinProb": 0.5345,
      "steps": {
