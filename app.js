@@ -195,7 +195,7 @@ async function loadFIPC(){
 // 季後賽系列名稱中文化
 const SERIES = {"World Series":"世界大賽","AL Championship Series":"美聯冠軍賽","NL Championship Series":"國聯冠軍賽","AL Division Series":"美聯分區系列賽","NL Division Series":"國聯分區系列賽","AL Wild Card Series":"美聯外卡賽","NL Wild Card Series":"國聯外卡賽"};
 const sz = s => SERIES[s] || s;
-const tw = s => new Date(s).toLocaleString("zh-TW",{timeZone:"Asia/Taipei",month:"numeric",day:"numeric",hour:"2-digit",minute:"2-digit"});
+const tw = s => twMD(s);   // 24 小時制（賽後標題、最後更新）
 
 // 抓最近 14 天到未來 7 天的賽程（含比分、先發投手）
 async function loadGames(){
@@ -508,7 +508,7 @@ function renderPredict(games, isPast){
         <p class="desc">戰績：兩隊實力分數（勝率與畢氏期望勝率各半）用 Log5 比較，再依回測縮回 50% 附近；主場與先發投手依 2026 例行賽回測校正。三格差值依序計算，加總等於最終勝率。模型 ${MODEL_V}。</p>${sb ? SER_ALGO : ""}</details>
       <details class="algo"><summary>兩隊數據對比</summary>${compare(A.team, H.team, ap, hp)}</details>
       ${w ? `<div class="ref">${w}</div>` : ""}
-      <div class="upd">最後更新：${tw(Date.now())}（台灣時間）</div>`;
+      <div class="upd">最後更新：${twMD(usedCache || Date.now())}（台灣時間）</div>`;
     html += sb + ccCard({lg:"mlb", pp: isPP(g) ? `延賽至 ${twWD(g.gameDate, true)}（勝率將重算）` : "", focus: FC && g === vg[FC.i] && !isPP(g) ? FC.txt : "", ser, time:cardTime(g.gameDate), tag: wait ? "等先發" : "先發已公布", A:ts(A.team), H:ts(H.team), conf:CONF[tc], tc, ap:apD, hp:hpD, aw:Math.round((100-m.F)*10)/10, hw:m.F, favHome, reason, body});
   }
   const X = PEXTRA;
@@ -591,12 +591,12 @@ async function renderAnalysis(games){
   document.getElementById("analysis").innerHTML = html || "最近沒有已完賽的比賽";
 }
 
-// "2026-10-18 08:00 (UTC+8)" → "10/18 上午08:00"（與全站時間格式一致）
+// "2026-10-18 20:05 (UTC+8)" → "10/18 20:05"（24 小時制，不再寫上午／下午）
 const fmtD = s => { const m = String(s).match(/(\d+)-(\d+)-(\d+) (\d+:\d+)/); return m ? `${+m[2]}/${+m[3]} ${m[4]}` : s; };
 const fmtDH = s => { const m = String(s).match(/(\d+)-(\d+)-(\d+) (\d+:\d+)/); return m ? `<span class="dd">${+m[2]}/${+m[3]}</span> <span class="tt">${m[4]}</span>` : s; };
 const TENT = '';   // 命中率表：預測欄只放預測的隊名；「未開打」只放在實際比分與結果欄（10/22）
 const resMark = c => c === null || c === undefined ? '<span class="rm wait">待賽</span>' : c ? '<span class="rm ok" aria-label="猜對">✓</span>' : '<span class="rm bad" aria-label="猜錯">✗</span>';
-const fmtT = s => { const m = String(s).match(/(\d+)-(\d+)-(\d+) (\d+):(\d+)/); if(!m) return s; const h=+m[4]; return `${+m[2]}/${+m[3]} ${h<12?"上午":"下午"}${String(h%12||12).padStart(2,"0")}:${m[5]}`; };
+const fmtT = s => { const m = String(s).match(/(\d+)-(\d+)-(\d+) (\d+):(\d+)/); return m ? `${+m[2]}/${+m[3]} ${m[4]}:${m[5]}` : s; };
 const FULL2SHORT = Object.fromEntries(Object.values(ZH));
 const short = n => FULL2SHORT[n] || n;
 // 首頁準度一行（規格 #2）：只算開賽前鎖定的正式紀錄、依版本分開、排除取消、勝率剛好 50% 不計
@@ -720,8 +720,10 @@ async function footAt(lg){
   return FOOT_AT[lg];
 }
 async function footUpd(lg){
-  const t = await footAt(lg), foot = document.getElementById("foot");
+  let t = await footAt(lg), foot = document.getElementById("foot");
   if(LG_NOW !== lg || !foot) return;
+  // 延遲提示還在時，頁尾跟預測頁「資料時間」用同一刻，避免頁尾看起來更新
+  if(lg === "nba" && typeof nDelayed === "function" && nDelayed()) t = twMD(NDAT);
   let p = foot.querySelector(".foot-upd");
   if(!t){ if(p) p.remove(); return; }
   if(!p){ p = document.createElement("p"); p.className = "foot-upd"; foot.prepend(p); }
