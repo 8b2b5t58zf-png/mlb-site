@@ -11,7 +11,7 @@ async function nbaFile(name){
 const nAge = f => f && f.fetched_at ? Date.now() - Date.parse(f.fetched_at) : Infinity;
 async function nbaGet(name, pick, url){
   const f = await nbaFile(name), v = f ? pick(f) : null;
-  const markAt = t => { if(!dataAt || t < dataAt) dataAt = t; };
+  const markAt = t => { if(nbaAt == null || t < nbaAt) nbaAt = t; };
   if(v && nAge(f) < NFRESH){ markAt(Date.parse(f.fetched_at)); return {data:v, at:Date.parse(f.fetched_at)}; }
   const before = usedCache;
   try{ const d = await getJSON(url); return {data:d, at: usedCache !== before ? usedCache : Date.now()}; }
@@ -53,7 +53,7 @@ function nModel(hId, aId, neutral){
 // 美國日期 YYYYMMDD（ESPN 用美東日期）
 const usDay = off => { const d = new Date(Date.now() - 5*3600e3 + off*864e5); return d.toISOString().slice(0,10).replace(/-/g,""); };
 const usDate = d => new Date(d - 5*3600e3).toISOString().slice(0,10);
-const twT = s => new Date(s).toLocaleString("zh-TW",{timeZone:"Asia/Taipei",month:"numeric",day:"numeric",hour:"2-digit",minute:"2-digit"});
+const twT = s => twMD(s);   // 24 小時制，與資料時間同一種寫法
 const stv = (e, n) => { const s = e.stats.find(x=>x.name===n); return s ? s : {}; };
 
 async function nbaStandings(){
@@ -75,10 +75,11 @@ async function nbaStandings(){
 }
 
 
-// 信心門檻（2025-26 回測）：未滿 60% 勢均力敵、60–70% 略占上風、70% 以上明顯看好；開季到 1/14 信心照門檻，70% 以上的理由句改寫「…這邊・開季數據少，保守看待」
+// 信心用字（內容編輯 10/25）：未滿 60%「接近五五波」、60% 以上「勝率較高」。
+// 開季到 1/14 中與高同一句；徽章 class 仍分 lean（中）／strong（高）。70% 以上理由句維持開季保守寫法。
 const nEarly = (dt=new Date()) => { const m = dt.getMonth(), d = dt.getDate(); return m >= 8 || (m === 0 && d <= 14); };
-const nTier = p => p >= 70 ? ["strong","勝率明顯較高"] : p >= 60 ? ["lean","略占上風"] : ["toss","接近五五波"];
-const nWord = p => p >= 70 ? "勝率明顯較高" : p >= 60 ? "略占上風" : "勢均力敵";
+const nTier = p => p >= 70 ? ["strong","勝率較高"] : p >= 60 ? ["lean","勝率較高"] : ["toss","接近五五波"];
+const nWord = p => p >= 60 ? "勝率較高" : "接近五五波";
 let NALL = [];   // 近期所有賽程（判斷背靠背：前 36 小時內同隊有比賽）
 // 今日數據焦點（NBA）：列表第一天勝率最接近五成的一場，排第一張
 let NFOCUS = null;
@@ -142,7 +143,7 @@ function nbaCard(ev, DG){
     pNext: hpR/100, pH: nModel(H.team.id, A.team.id).F/100, pA: 1 - nModel(A.team.id, H.team.id).F/100, H: nts(H.team), A: nts(A.team)}) : "";
   const body = `${why}${ref}${sb ? SER_ALGO : ""}
     <div class="tier-row"><span class="tier ${tc}">${tl}</span>${fp!==50?`<span class="upset">${nts(oth)}仍有 <span class="num">${othD}%</span> 勝率</span>`:""}</div>
-    ${NST_AT && Date.now() - NST_AT > NFRESH ? `<div class="upd">依據 ${twT(NST_AT)}（台灣時間）時的戰績</div>` : `<div class="upd">戰績更新：${twT(NST_AT || Date.now())}（台灣時間）</div>`}`;
+    ${nUpdHTML()}`;
   return sb + ccCard({lg:"nba", focus: NFOCUS && NFOCUS.id === ev.id ? NFOCUS.txt : "", ser:"", time:cardTime(ev.date), tag: small ? "樣本不足" : "", A:nts(A.team), H:nts(H.team), conf:CONF[tc], tc, ap, hp, aw:Math.round((100-m.F)*10)/10, hw:m.F, favHome, reason, body});
 }
 
@@ -178,6 +179,7 @@ async function nbaGames(){
   // 最多約 8 張卡，但第 8 張那天（台灣日期）的比賽要全部顯示，不能切掉同一天後面的場次（10/22 11 場只出 8 張）
   const upShow = up.length > 8 ? up.filter((e,i) => i < 8 || twKey(e.date) === twKey(up[7].date)) : up;
   const nPost = upShow.some(e => e.season.type===3);
+  NDAT = usedCache || nbaAt; NTODAY = all.some(e => (e.season.type===2 || e.season.type===3) && twKey(e.date) === twKey(new Date()));
   const nCards = (DG => nFocusList(upShow).map(e => dayHdr(e.date, DG) + nbaCard(e, DG)).join(""))({last:null, cnt:dayCounts(upShow.map(e => e.date))});
   const nNext = (all.filter(e => e.status.type.state === "pre" && !isTbd(e)).sort((a,b) => a.date.localeCompare(b.date))[0] || {}).date;
   // §29 已開打、我們的紀錄還沒結算：不放「今天沒有比賽」大框，改一行進行中／整理中
@@ -195,10 +197,14 @@ async function nbaGames(){
       const nx = upShow[0], k = nx && twKey(nx.date);
       nDone = `<p class="day-sum">今天 ${wn(tg.length)} 場已結算${nx ? `・下一戰 ${twWD(nx.date)}共 ${wn(up.filter(e => twKey(e.date) === k).length)} 場` : ""}</p>`; } }
   document.getElementById("nba-predict-list").innerHTML = note + nDone + (nCards || nLive || (nDone ? "" : emptyCard(nNext))) + (nCards && nPost ? '<p class="po-note">下一戰在本戰結束後顯示</p>' : "") + (tbdE ? `<p class="tbd-note">季後賽下一輪 ${twWD(tbdE.date)}開打<br>對戰組合待前一輪結束後確定</p>` : "");
-  NDAT = usedCache || dataAt; NTODAY = all.some(e => (e.season.type===2 || e.season.type===3) && twKey(e.date) === twKey(new Date()));
   nbaDelay();   // 先畫提示條，不等賽後分析載完
   const done = all.filter(e => e.status.type.completed).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,5);
   await nbaRecaps(done);
+  // 賽後檔若更舊，nbaAt 會再往前；提示條、戰績時間、頁尾改到跟「資料時間」同一刻
+  NDAT = usedCache || nbaAt;
+  nbaDelay();
+  nSyncUpd();
+  if(typeof footUpd === "function") footUpd("nba");
 }
 
 // 當天無比賽／休賽季的固定說法（style-guide 第十五節）
@@ -304,14 +310,27 @@ async function nbaHit(){
   }
   el.innerHTML = html + "</table></div>";
 }
+// 延遲提示還在時，戰績那一行不顯示比預測頁資料時間還新的時刻（與「資料時間」同一刻，24 小時制）
+function nDelayed(){ return !!(NTODAY && NDAT && Date.now() - NDAT > 3600e3); }
+function nUpdHTML(){
+  const stand = NST_AT || Date.now();
+  if(nDelayed() && stand > NDAT) return `<div class="upd">戰績更新：${twMD(NDAT)}（台灣時間）</div>`;
+  if(NST_AT && Date.now() - NST_AT > NFRESH) return `<div class="upd">依據 ${twMD(NST_AT)}（台灣時間）時的戰績</div>`;
+  return `<div class="upd">戰績更新：${twMD(stand)}（台灣時間）</div>`;
+}
+function nSyncUpd(){
+  const html = nUpdHTML();
+  document.querySelectorAll("#nba-predict-list .upd").forEach(el => { el.outerHTML = html; });
+}
 // 資料更新延遲提示條：今天有比賽、預測頁資料時間超過 1 小時就顯示在資料時間那行正下方；資料更新後消失（用字：內容編輯 10/22）
+// 括號裡的時刻取自與「資料時間」相同的 twMD，避免兩行各寫各的
 function nbaDelay(){
   const st = document.getElementById("st-nba-predict-list"); if(!st) return;
   let el = document.getElementById("nba-delay");
-  const show = NTODAY && NDAT && Date.now() - NDAT > 3600e3;
+  const show = nDelayed();
   if(!show){ if(el) el.remove(); return; }
   if(!el){ el = document.createElement("div"); el.id = "nba-delay"; el.className = "delay-bar"; el.setAttribute("role","status"); st.after(el); }
-  el.innerHTML = `資料更新延遲（最後 <span class="num">${twMD(NDAT).slice(6)}</span>），比分以官方為準`;
+  el.innerHTML = `資料更新延遲（最後 <span class="num">${twMD(NDAT).slice(-5)}</span>），比分以官方為準`;
 }
 async function secNbaStand(){ await nbaStandings(); }
 async function secNbaGames(){ if(!Object.keys(NT).length) await nbaStandings(); await nbaPrior(); await nbaGames(); }
