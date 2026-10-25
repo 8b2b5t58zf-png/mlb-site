@@ -11,7 +11,7 @@ async function nbaFile(name){
 const nAge = f => f && f.fetched_at ? Date.now() - Date.parse(f.fetched_at) : Infinity;
 async function nbaGet(name, pick, url){
   const f = await nbaFile(name), v = f ? pick(f) : null;
-  const markAt = t => { if(!dataAt || t < dataAt) dataAt = t; };
+  const markAt = t => { if(nbaAt == null || t < nbaAt) nbaAt = t; };
   if(v && nAge(f) < NFRESH){ markAt(Date.parse(f.fetched_at)); return {data:v, at:Date.parse(f.fetched_at)}; }
   const before = usedCache;
   try{ const d = await getJSON(url); return {data:d, at: usedCache !== before ? usedCache : Date.now()}; }
@@ -179,7 +179,7 @@ async function nbaGames(){
   // 最多約 8 張卡，但第 8 張那天（台灣日期）的比賽要全部顯示，不能切掉同一天後面的場次（10/22 11 場只出 8 張）
   const upShow = up.length > 8 ? up.filter((e,i) => i < 8 || twKey(e.date) === twKey(up[7].date)) : up;
   const nPost = upShow.some(e => e.season.type===3);
-  NDAT = usedCache || dataAt; NTODAY = all.some(e => (e.season.type===2 || e.season.type===3) && twKey(e.date) === twKey(new Date()));
+  NDAT = usedCache || nbaAt; NTODAY = all.some(e => (e.season.type===2 || e.season.type===3) && twKey(e.date) === twKey(new Date()));
   const nCards = (DG => nFocusList(upShow).map(e => dayHdr(e.date, DG) + nbaCard(e, DG)).join(""))({last:null, cnt:dayCounts(upShow.map(e => e.date))});
   const nNext = (all.filter(e => e.status.type.state === "pre" && !isTbd(e)).sort((a,b) => a.date.localeCompare(b.date))[0] || {}).date;
   // §29 已開打、我們的紀錄還沒結算：不放「今天沒有比賽」大框，改一行進行中／整理中
@@ -200,8 +200,8 @@ async function nbaGames(){
   nbaDelay();   // 先畫提示條，不等賽後分析載完
   const done = all.filter(e => e.status.type.completed).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,5);
   await nbaRecaps(done);
-  // 賽後檔若更舊，dataAt 會再往前；提示條、戰績時間、頁尾改到跟「資料時間」同一刻
-  NDAT = usedCache || dataAt;
+  // 賽後檔若更舊，nbaAt 會再往前；提示條、戰績時間、頁尾改到跟「資料時間」同一刻
+  NDAT = usedCache || nbaAt;
   nbaDelay();
   nSyncUpd();
   if(typeof footUpd === "function") footUpd("nba");

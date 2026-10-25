@@ -23,7 +23,8 @@ const DIV = {201:"美聯東區",202:"美聯中區",200:"美聯西區",204:"國�
 // 抓資料，成功時存一份到瀏覽器（localStorage）；失敗時改用上次存的舊資料
 let usedCache = null;
 const PRE_NOTE = {};   // 區塊狀態列前綴（NBA 開季前：「例行賽 10/21 開打」）
-let dataAt = null;      // 排程存檔的資料時間（正常狀況，只顯示一行灰字）   // 若本區塊用了舊資料，記下那份資料的時間
+let dataAt = null;      // 若本區塊用了舊資料，記下那份資料的時間
+let nbaAt = null;       // NBA 排程檔的資料時間（跟 MLB 區塊分開，避免互相蓋掉）
 async function getJSON(url){
   const key = "mlbcache:" + url.replace(/startDate=[^&]*&endDate=[^&]*/,"sched"); // 賽程網址每天不同，統一一個鑰匙
   try{
@@ -54,13 +55,16 @@ async function runSection(ids, fn){
   for(const id of ids){ const st = document.getElementById("st-"+id); st.innerHTML = ""; if(id==="nba-predict-list") st.dataset.wait = "";
     const el = document.getElementById(id); if(id==="chart") el.innerHTML = '<canvas id="winChart"></canvas>'; else if(id==="predict" || id==="nba-predict-list"){ if(!el.querySelector(".skc")) el.innerHTML = SKC; } else { el.innerHTML = skeleton(5); el.classList.add("sk-wait"); } }
   const unwait = () => ids.forEach(id => { delete document.getElementById("st-"+id).dataset.wait; document.getElementById(id).classList.remove("sk-wait"); });
+  const nba = ids.some(id => String(id).startsWith("nba"));
+  if(nba) nbaAt = null;
   usedCache = null; dataAt = null;
   try{
     try{ await fn(); } finally { unwait(); }
+    const at = nba ? nbaAt : dataAt;
     if(usedCache) for(const id of ids) document.getElementById("st-"+id).innerHTML = `<div class="stale">暫時抓不到最新資料，目前顯示 ${twMD(usedCache)} 的資料</div>`;
     else for(const id of ids){ const pre = PRE_NOTE[id];
-      if(pre != null) document.getElementById("st-"+id).innerHTML = `<div class="dtime">${[pre, dataAt ? `資料時間 ${twMD(dataAt)}` : ""].filter(Boolean).join("・")}</div>`;
-      else if(dataAt) document.getElementById("st-"+id).innerHTML = `<div class="dtime">資料時間：${twMD(dataAt)}</div>`; }
+      if(pre != null) document.getElementById("st-"+id).innerHTML = `<div class="dtime">${[pre, at ? `資料時間 ${twMD(at)}` : ""].filter(Boolean).join("・")}</div>`;
+      else if(at) document.getElementById("st-"+id).innerHTML = `<div class="dtime">資料時間：${twMD(at)}</div>`; }
     setTimeout(markNav, 0);
     return true;
   }catch(e){
