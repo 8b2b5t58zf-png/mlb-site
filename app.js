@@ -214,12 +214,15 @@ async function loadGames(){
   const firstOpen = {};   // 依第幾戰排序（延賽時官方日期可能前後顛倒）
   for(const g of games.filter(g=>POST.includes(g.gameType) && g.status.abstractGameState!=="Final").sort((a,b)=>(a.seriesGameNumber||0)-(b.seriesGameNumber||0) || new Date(a.gameDate)-new Date(b.gameDate))) if(!(skey(g) in firstOpen)) firstOpen[skey(g)] = g;
   const real = g => !!(TEAM[g.teams.home.team.id] && TEAM[g.teams.away.team.id]);   // 兩隊都確定才算
-  const next = games.filter(g=>g.status.abstractGameState==="Preview" && real(g) && (!POST.includes(g.gameType) || (firstOpen[skey(g)] === g && !(g.seriesStatus && g.seriesStatus.isOver)))).slice(0,4);   // 系列賽已分出勝負：不出下一戰卡片（§30）
+  const seriesOpen = g => !POST.includes(g.gameType) || (firstOpen[skey(g)] === g && !(g.seriesStatus && g.seriesStatus.isOver));
+  const next = games.filter(g=>g.status.abstractGameState==="Preview" && real(g) && seriesOpen(g)).slice(0,4);   // 系列賽已分出勝負：不出下一戰卡片（§30）
+  // 進行中：開打時間已到（或官方 Live）且尚未 Final。和未開打同一列表，不要只留總覽文字
+  const liveGames = games.filter(g => real(g) && mlbInPlay(g) && seriesOpen(g));
   // 對戰組合未定的季後賽系列：不出卡片，只顯示一行開打日期
   const SNAME = {W:"世界大賽", L:"聯盟冠軍賽", D:"分區系列賽", F:"外卡系列賽"}, tbdSeen = {};
   const tbd = games.filter(g=>POST.includes(g.gameType) && g.status.abstractGameState==="Preview" && !real(g)).sort((a,b)=>new Date(a.gameDate)-new Date(b.gameDate)).filter(g => !tbdSeen[g.gameType] && (tbdSeen[g.gameType] = 1)).map(g => `${SNAME[g.gameType]} ${twWD(g.gameDate)}開打<br>對戰組合待${g.gameType==="W" ? "聯盟冠軍賽" : "前一輪"}結束後確定`);
   const nr = games.filter(g=>g.status.abstractGameState==="Preview" && real(g))[0];
-  PEXTRA = {post: next.some(g => POST.includes(g.gameType)), tbd, nextAt: nr ? nr.gameDate : null};         // 接下來 4 場
+  PEXTRA = {post: next.some(g => POST.includes(g.gameType)) || liveGames.some(g => POST.includes(g.gameType)), tbd, nextAt: nr ? nr.gameDate : null};         // 進行中的季後賽也要留「下一戰在本戰結束後顯示」
   const REC = {};
   if(location.protocol !== "file:"){ try{ const r = await fetch("data/predictions.json?t="+Date.now()); if(r.ok) for(const x of (await r.json()).records){ if(x.status === "cancelled") continue; REC[x.gamePk] = x; if(x.official) OFFICIAL[x.gamePk] = x.official; if(x.snapshots) SNAPS[x.gamePk] = x.snapshots; } }catch(e){} }
   // §29 比賽已開打但我們的紀錄還沒結算：不退回顯示舊的已完賽卡片，總覽改寫進行中／整理中
@@ -233,11 +236,13 @@ async function loadGames(){
   // §29 今天（台灣日期）有比賽且都已結算：總覽寫「今天 {n} 場已結算」，不寫「今天沒有比賽」（延賽／取消不算）
   { const today = twKey(new Date()), tg = games.filter(g => real(g) && twKey(g.gameDate) === today && !bad.some(b => (g.status.detailedState||"").startsWith(b)) && !(g.status.detailedState||"").startsWith("Cancel"));
     TODAY_DONE = !ACTIVE && tg.length && tg.every(g => REC[g.gamePk] ? REC[g.gamePk].final != null : g.status.abstractGameState === "Final") ? tg.length : 0; }
-  const show = next.length || ACTIVE ? next.filter(g => !act.includes(g)) : done;   // 已過開賽時間但 API 還沒轉 Live 的場次也不出卡
+  const seenLive = new Set(liveGames.map(g => g.gamePk));
+  const hasUp = next.length || liveGames.length;
+  const show = hasUp || ACTIVE ? [...liveGames, ...next.filter(g => !seenLive.has(g.gamePk) && !act.includes(g))] : done;
   // 先抓先發投手成績與 FIP 常數，再畫預測卡
   await Promise.all([loadFIPC(), loadTeamHit(), ...show.map(g=>loadH2H(g.teams.away.team.id, g.teams.home.team.id)), loadPitchers(show.flatMap(g=>[g.teams.home.probablePitcher, g.teams.away.probablePitcher]).filter(Boolean).map(p=>p.id))]);
-  renderPredict(show, !next.length && !ACTIVE);
-  daySummary(show, !next.length && !ACTIVE);
+  renderPredict(show, !hasUp && !ACTIVE);
+  daySummary(show, !hasUp && !ACTIVE);
   await renderAnalysis(done);
 }
 
@@ -249,7 +254,10 @@ function daySummary(games, isPast){
   games = real.filter(x => !ppPending(x));   // 與卡片同一份；延賽場次不列入今日摘要（§21）
   let el = document.getElementById("mlb-day");
   if(!el){ el = document.createElement("p"); el.id = "mlb-day"; el.className = "day-sum"; (document.getElementById("mlb-acc")||document.querySelector("#sec-predict h2")).after(el); }
-  if(ACTIVE && !isPast){ el.hidden = false; el.innerHTML = wf(ACTIVE.fin ? "dayFin" : "dayLive", {d:`${+ACTIVE.day.slice(5,7)}/${+ACTIVE.day.slice(8,10)}`, n:ACTIVE.n}, ["n"]); return; }   // §29
+  const playing = !isPast && games.some(mlbInPlay);
+  if(ACTIVE && !isPast){ el.hidden = false; el.innerHTML = wf(ACTIVE.fin && !playing ? "dayFin" : "dayLive", {d:`${+ACTIVE.day.slice(5,7)}/${+ACTIVE.day.slice(8,10)}`, n:ACTIVE.n}, ["n"]); return; }   // §29：有進行中卡時這行留著，下面仍出卡
+  if(playing){ const k = games.filter(mlbInPlay).map(g => twKey(g.gameDate)).sort()[0], n = games.filter(g => twKey(g.gameDate) === k).length;
+    el.hidden = false; el.innerHTML = wf("dayLive", {d:`${+k.slice(5,7)}/${+k.slice(8,10)}`, n}, ["n"]); return; }
   // 今天沒有比賽：只有延賽卡時寫「今天沒有比賽・下一戰 {延賽日期時間}」（§21）；有後續卡片時日期只寫在這行（卡片只寫時間）
   const noG = TODAY_DONE ? `今天 ${wn(TODAY_DONE)} 場已結算` : "今天沒有比賽";   // §29
   if(TODAY_DONE && (isPast || !games.length) && !pp.length){ el.hidden = false; el.innerHTML = noG; return; }   // 沒有已知的下一戰
@@ -326,6 +334,34 @@ let SS_NOW = null, GTYPE_NOW = null;
 const OFFICIAL = {}, SNAPS = {};   // SNAPS：gamePk → 排程快照（含當時先發）
 // 快照時間 "2026-10-18 12:27 (UTC+8)" → 毫秒
 const snapT = s => Date.parse(String((s && s.at) || "").slice(0,16).replace(" ", "T") + ":00+08:00");
+const MLB_BAD = ["Postponed", "Cancelled", "Suspended"];
+function mlbBad(g){ const ds = (g && g.status && g.status.detailedState) || ""; return MLB_BAD.some(b => ds.startsWith(b)); }
+// 進行中：官方 Live，或開打時間已到且尚未 Final（12 小時內；更久仍 Preview 的沿用原本不出進行中樣式）。延賽／取消／保留不套
+function mlbInPlay(g){
+  if(!g || !g.status || mlbBad(g) || g.status.abstractGameState === "Final") return false;
+  if(g.status.abstractGameState === "Live") return true;
+  const start = +new Date(g.gameDate);
+  return Date.now() >= start && Date.now() - start < 12*3600e3;
+}
+// 進行中勝率：正式鎖定優先；沒有就用開賽前最後一筆快照。不拿開打後的模型重算
+function mlbLocked(g){
+  const off = OFFICIAL[g.gamePk];
+  if(off && off.homeWinProb != null) return off;
+  const sn = (SNAPS[g.gamePk] || []).filter(x => x && x.homeWinProb != null);
+  if(!sn.length) return null;
+  const start = +new Date(g.gameDate), pre = sn.filter(x => !(snapT(x) > start));
+  return pre.length ? pre[pre.length - 1] : sn[0];
+}
+function applyMlbLock(m, lk){
+  if(!lk || lk.homeWinProb == null) return m;
+  const F = Math.round(lk.homeWinProb * 1000) / 10, st = lk.steps;
+  const out = Object.assign({}, m, {F, final: lk.homeWinProb});
+  if(st && st.standings != null && st.home != null && st.starter != null){
+    out.d1 = st.standings; out.d2 = st.home; out.d3 = st.starter;
+    if(lk.starterUsed != null) out.used = !!lk.starterUsed;
+  }
+  return out;
+}
 // 延賽卡（§21）：改期後的場次，且原定開賽時間之後還沒有新的快照（勝率還沒重算）才算；重算過就當一般卡片
 const ppPending = g => !!(g && g.rescheduledFrom) && !(SNAPS[g.gamePk] || []).some(x => snapT(x) >= Date.parse(g.rescheduledFrom));
 let GPK_NOW = null, SPCHG = null;   // gamePk → 正式預測紀錄（判斷是否為舊版模型）
@@ -465,7 +501,8 @@ function renderPredict(games, isPast){
   const vg = games.filter(g => TEAM[g.teams.home.team.id] && TEAM[g.teams.away.team.id]);
   const day0 = vg.length ? twKey(vg[0].gameDate) : null;
   const FC = pickFocus(vg.map((g,i) => ({g,i})).filter(({g}) => !isPast && !isPP(g) && twKey(g.gameDate) === day0 && g.teams.home.probablePitcher && g.teams.away.probablePitcher).map(({g,i}) => {
-    const hp = PSTAT[g.teams.home.probablePitcher.id], ap = PSTAT[g.teams.away.probablePitcher.id], m = modelV2(g.teams.home.team.id, g.teams.away.team.id, hp, ap);
+    const hp = PSTAT[g.teams.home.probablePitcher.id], ap = PSTAT[g.teams.away.probablePitcher.id], m0 = modelV2(g.teams.home.team.id, g.teams.away.team.id, hp, ap);
+    const lk = mlbInPlay(g) ? mlbLocked(g) : null, m = lk ? applyMlbLock(m0, lk) : m0;
     const ss = g.seriesStatus, need = ss && ss.totalGames ? Math.ceil(ss.totalGames/2) : 0;
     const key = !!(need && (ss.wins === need-1 || ss.losses === need-1 || g.seriesGameNumber === ss.totalGames));
     let txt = "";
@@ -482,7 +519,8 @@ function renderPredict(games, isPast){
     html += dayHdr(g.gameDate, DG);
     const aP = A.probablePitcher, hP = H.probablePitcher;
     const ap = aP && PSTAT[aP.id], hp = hP && PSTAT[hP.id];
-    const m = modelV2(H.team.id, A.team.id, hp, ap);
+    const inPlay = mlbInPlay(g) && !isPP(g);
+    const m = applyMlbLock(modelV2(H.team.id, A.team.id, hp, ap), inPlay ? mlbLocked(g) : null);
     const hpct = Math.round(m.F);  // 系列晉級計算沿用的整數勝率（不改計算）
     // 只改顯示：信心／級別用四捨五入前的勝率；顯示數字用 pDisp（高的一方捨去、另一方 100 減，捨去後 50 則顯示小數一位）；條長照四捨五入前畫
     const favHome = m.F >= 50, raw = favHome ? m.F : Math.round((100-m.F)*10)/10, fp = Math.floor(raw + 1e-9), fav = favHome ? H.team : A.team;
@@ -494,7 +532,7 @@ function renderPredict(games, isPast){
     const off = OFFICIAL[g.gamePk];
     const v1note = off && off.model && !off.model.startsWith(MODEL_V) ? `<div class="vnote">此場正式紀錄為舊版模型 ${off.model.slice(0,2)}</div>` : "";
     const w = g.weather && g.weather.condition ? `參考資訊：天氣 ${g.weather.condition}${g.weather.temp?`，氣溫 ${Math.round((g.weather.temp-32)*5/9)}°C`:""}（不列入勝率計算）` : "";
-    const wait = !aP || !hP;
+    const wait = inPlay ? false : (!aP || !hP);   // 進行中不再寫「先發公布後會重算」
     const ss0 = g.seriesStatus, post = ["F","D","L","W"].includes(g.gameType) && ss0 && !ss0.isOver;
     const wH0 = !ss0 ? 0 : ss0.wins === ss0.losses ? ss0.wins : (ss0.winningTeam && ss0.winningTeam.id === H.team.id ? ss0.wins : ss0.losses), wA0 = ss0 ? ss0.wins + ss0.losses - wH0 : 0;
     const sb = post ? seriesBar({lg:"mlb", ab:SER_AB[ss0.description] || sz(ss0.description), n:g.gamesInSeries || ss0.totalGames, gameNo:g.seriesGameNumber, wH:wH0, wA:wA0,
@@ -513,7 +551,7 @@ function renderPredict(games, isPast){
       <details class="algo"><summary>兩隊數據對比</summary>${compare(A.team, H.team, ap, hp)}</details>
       ${w ? `<div class="ref">${w}</div>` : ""}
       <div class="upd">最後更新：${twMD(usedCache || Date.now())}（台灣時間）</div>`;
-    html += sb + ccCard({lg:"mlb", pp: isPP(g) ? `延賽至 ${twWD(g.gameDate, true)}（勝率將重算）` : "", focus: FC && g === vg[FC.i] && !isPP(g) ? FC.txt : "", ser, time:cardTime(g.gameDate), tag: wait ? "等先發" : "先發已公布", A:ts(A.team), H:ts(H.team), conf:CONF[tc], tc, ap:apD, hp:hpD, aw:Math.round((100-m.F)*10)/10, hw:m.F, favHome, reason, body});
+    html += sb + ccCard({lg:"mlb", live: inPlay, pp: isPP(g) ? `延賽至 ${twWD(g.gameDate, true)}（勝率將重算）` : "", focus: FC && g === vg[FC.i] && !isPP(g) ? FC.txt : "", ser, time:cardTime(g.gameDate), tag: inPlay ? "" : (wait ? "等先發" : "先發已公布"), A:ts(A.team), H:ts(H.team), conf:CONF[tc], tc, ap:apD, hp:hpD, aw:Math.round((100-m.F)*10)/10, hw:m.F, favHome, reason, body});
   }
   const X = PEXTRA;
   if(!html.includes('class="pcard')) html = ACTIVE ? (ACTIVE.post ? '<p class="po-note" style="margin-top:12px">下一戰在本戰結束後顯示</p>' : "") : emptyCard(X.nextAt);   // 比賽進行中：不放「今天沒有比賽」大框
