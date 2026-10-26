@@ -314,20 +314,6 @@ function favSteps(m, favHome){
   const k = favHome ? 1 : -1;
   return {d1:k*m.d1, d2:k*m.d2, d3:k*m.d3, F: favHome ? m.F : Math.round((100-m.F)*10)/10};
 }
-const dCls = v => Math.abs(v) < 0.05 ? "zero" : v > 0 ? "up" : "down";
-const dTxt = v => Math.abs(v) < 0.05 ? "±0.0%" : (v>0?"▲+":"▼−") + Math.abs(v).toFixed(1) + "%";
-function bridge(m, s, fav){
-  const X = v => Math.max(0, Math.min(100, (v-35)/30*100));   // 顯示範圍 35%～65%
-  const seg = (from, to, cls) => `<span class="br-seg ${cls}" style="left:${X(Math.min(from,to))}%;width:${Math.max(X(Math.max(from,to))-X(Math.min(from,to)),0.8)}%"></span>`;
-  const row = (label, from, to, cls, val, extra="") => `<div class="br-row ${extra}"><span class="br-l">${label}</span><span class="br-track">${seg(from,to,cls)}</span><span class="br-v">${val}</span></div>`;
-  const p1 = 50+s.d1, p2 = p1+s.d2;
-  return `<div class="bridge"><div class="br-cap">${ts(fav)}（勝率較高一方）勝率的計算過程</div>
-    ${row("起點", 35, 50, "start", "50.0%", "muted")}
-    ${row("戰績", 50, p1, dCls(s.d1), dTxt(s.d1))}
-    ${row("主場", p1, p2, dCls(s.d2), dTxt(s.d2))}
-    ${m.used ? row("先發投手", p2, s.F, dCls(s.d3), dTxt(s.d3)) : `<div class="br-row na"><span class="br-l">先發投手</span><span class="br-track"></span><span class="br-v">資料不足，未調整</span></div>`}
-    ${row("最終勝率", 35, s.F, "final", s.F.toFixed(1)+"%")}</div>`;
-}
 
 // 「為什麼這樣預測」：結論句＋三條（戰績、主場、先發），數字與修正過程圖相同
 let SS_NOW = null, GTYPE_NOW = null;
@@ -475,7 +461,7 @@ function compare(A, H, ap, hp){
     s += r("先發 ERA", "每 9 局被打回的自責分，越低越好", ap.era, hp.era, cmpv(+ap.era, +hp.era, true));
     s += r("先發 WHIP", "平均每局讓幾人上壘（安打＋保送），越低越好", ap.whip, hp.whip, cmpv(+ap.whip, +hp.whip, true));
     s += r("先發 FIP", "只看三振、保送、全壘打的失分能力，越低越好", fa==null?"-":fa.toFixed(2), fh==null?"-":fh.toFixed(2), cmpv(fa, fh, true));
-    s += r("先發場數", "本季先發次數，場數少時數據會往聯盟平均修正", ap.gs, hp.gs, "");
+    s += r("先發場數", "本季先發次數", ap.gs, hp.gs, "");
   }
   return s + `</tbody></table>`;
 }
@@ -546,9 +532,7 @@ function renderPredict(games, isPast){
       ${v1note}${whyBlock(A.team, H.team, m, st, ap, hp, aP, hP, fav, fp)}
       <div class="tier-row"><span class="tier ${tc}">${tl}</span><span class="upset">${upset(A.team, H.team, ap, hp, aP, hP, fav, fp)}</span></div>
       ${serShort(g.seriesStatus) ? `<div class="meta">${serShort(g.seriesStatus)}</div>` : ""}
-      <details class="algo"><summary>看算法</summary>${bridge(m, st, fav)}
-        <p class="desc">戰績：兩隊實力分數（勝率與畢氏期望勝率各半）用 Log5 比較，再依回測縮回 50% 附近；主場與先發投手依 2026 例行賽回測校正。三格差值依序計算，加總等於最終勝率。模型 ${MODEL_V}。</p>${sb ? SER_ALGO : ""}</details>
-      <details class="algo"><summary>兩隊數據對比</summary>${compare(A.team, H.team, ap, hp)}</details>
+      <details class="cmp"><summary>兩隊數據對比</summary>${compare(A.team, H.team, ap, hp)}</details>
       ${w ? `<div class="ref">${w}</div>` : ""}
       <div class="upd">最後更新：${twMD(usedCache || Date.now())}（台灣時間）</div>`;
     html += sb + ccCard({lg:"mlb", live: inPlay, pp: isPP(g) ? `延賽至 ${twWD(g.gameDate, true)}（勝率將重算）` : "", focus: FC && g === vg[FC.i] && !isPP(g) ? FC.txt : "", ser, time:cardTime(g.gameDate), tag: inPlay ? "" : (wait ? "等先發" : "先發已公布"), A:ts(A.team), H:ts(H.team), conf:CONF[tc], tc, ap:apD, hp:hpD, aw:Math.round((100-m.F)*10)/10, hw:m.F, favHome, reason, body});
@@ -692,11 +676,10 @@ async function secHit(){
   let html = nv >= GOAL
     ? `<div class="hr-big">${Math.round(okv/nv*100)}%</div><div class="hr-sub">${MODEL_V} 命中率（共 ${nv} 場）</div>`
     : `<div class="hr-big muted">累積中</div><div class="hr-prog"><div class="hr-bar"><div style="width:${nv/GOAL*100}%"></div></div><span>${MODEL_V}：${nv} / ${GOAL} 場</span></div>`;
-  html += `<div class="hr-ref">2026 例行賽回測約 57.8%<br>季後賽場數少，正式命中率預計於 2027 例行賽累積後顯示</div>`;
+  html += `<div class="hr-ref">季後賽場數少，正式命中率預計於 2027 例行賽累積後顯示</div>`;
   const old = vers.filter(v=>v!==MODEL_V).map(v=>`舊版 ${v}：${off.filter(x=>ver(x)===v).length} 場，不列入正式命中率`);
   if(old.length) html += `<div class="hr-vers">${old.join("<br>")}</div>`;
   html += confGroups(d.records, x => (x.official.model||"").startsWith(MODEL_V), [53, 60], "mlb");
-  html += btCard("mlb", "mlb_v2", "MLB 2026 例行賽 7/1 起・MLB v2", [53, 60]);
   html += `<p class="hr-upd">最後更新：${fmtT(d.updated)}（台灣時間）</p>`;
   html += '<div class="tblwrap" style="overflow-x:auto"><table class="hrt"><tr><th>比賽時間</th><th class="mu-h"><span class="mu-full">對戰（客 @ 主）</span><span class="mu-short">客 @ 主</span></th><th class="md">模型</th><th>預測</th><th class="dk">預測勝率</th><th class="dk">實際比分</th><th class="dk">結果</th></tr>';
   // 還沒結算的場次：季後賽同一系列只列下一場（前一戰打完才出現下一戰，與預測頁同規則）；已鎖定正式預測的照列
@@ -778,9 +761,8 @@ function setLeague(lg){
   document.querySelectorAll(".lgsw button").forEach(b => b.setAttribute("aria-selected", b.dataset.lg===lg));
   document.getElementById("lg-tag").textContent = "｜" + lg.toUpperCase();
   document.getElementById("tg-scope").textContent = lg==="nba" ? "用 2025-26 季比賽驗證過" : "用 2026 整季比賽驗證過";
-  document.getElementById("tg-link").href = lg==="nba" ? "validation-nba.html" : "validation.html";
   document.getElementById("lg-sub").textContent = lg==="nba" ? "AI 運動實驗室・NBA 美國職籃勝負預測與賽後分析" : "AI 運動實驗室・美國職棒大聯盟勝負預測與賽後分析";
-  document.getElementById("foot").innerHTML = lg==="nba" ? '<p class="foot-src">AI Sports Lab 為個人數據分析網站，非投注建議。資料來源：MLB Stats API、ESPN。</p><p><a href="#about" data-go="about" class="foot-about">關於與免責</a>・<a href="validation-nba.html">NBA 回測說明</a></p>' : '<p class="foot-src">AI Sports Lab 為個人數據分析網站，非投注建議。資料來源：MLB Stats API、ESPN。</p><p><a href="#about" data-go="about" class="foot-about">關於與免責</a>・<a href="validation.html">回測說明</a></p>';
+  document.getElementById("foot").innerHTML = '<p class="foot-src">AI Sports Lab 為個人數據分析網站，非投注建議。資料來源：MLB Stats API、ESPN。</p><p><a href="#about" data-go="about" class="foot-about">關於與免責</a></p>';
   footUpd(lg);
   document.title = `AI Sports Lab｜${lg.toUpperCase()} 勝負預測與賽後分析`;
   renderNav();
