@@ -301,6 +301,7 @@ body.view-about #mlb-main,body.view-about #nba-main{display:none}
 .cc-c2{display:none}
 .cc-head.tight .cc-c1{display:none} .cc-head.tight .cc-c2{display:inline-flex}
 .cc-c2{align-items:center;gap:4px;flex:none} .cc-head>.cc-t2{display:none;text-align:left} .cc-head.tag2 .cc-r1 .cc-tag{display:none} .cc-head.tag2>.cc-t2{display:flex;justify-content:flex-start}   /* 第一行放不下時「先發已公布／等先發」移到第二行、靠左對齊隊名 */
+.cc-head>.cc-s2{display:none} .cc-head.ser2 .cc-ser .ser-tag{display:none} .cc-head.ser2>.cc-s2{display:flex} .cc-head.ser2>.cc-s2 .ser-tag{display:inline-block}   /* 進行中＋焦點＋系列賽仍放不下時，系列賽標籤改到第二行，開打時間留在第一行 */
 .cc-r2{justify-content:space-between}
 .cc-tm{font-size:15px;font-weight:700;color:#e6edf3;white-space:nowrap;flex:1;min-width:0}
 .cc-tm.r{text-align:right}
@@ -338,6 +339,19 @@ body.view-about #mlb-main,body.view-about #nba-main{display:none}
 
 /* 今日數據焦點 */
 .pcard.cc.focus{border-left:3px solid #d4af37}
+/* 進行中：四邊灰框；焦點卡左線仍用金，其餘三邊灰 */
+.pcard.cc.live{border:1px solid #8b949e}
+.pcard.cc.focus.live{border:1px solid #8b949e;border-left:3px solid #d4af37}
+.cc-live{
+  font-size:11px;
+  line-height:16px;
+  padding:0 6px;
+  border-radius:4px;
+  border:1px solid #8b949e;
+  color:#8b949e;
+  background:transparent;
+  white-space:nowrap;
+}
 .cc-ser{display:flex;align-items:center;gap:6px;min-width:0}
 .cc-focus{font-size:11px;color:#d4af37;border:1px solid #d4af37;border-radius:4px;padding:0 6px;line-height:16px;white-space:nowrap}
 .focus-sub{font-size:12px;color:#8b949e;margin:0 0 6px}
@@ -399,6 +413,7 @@ html.pre-nba #lg-tag::after{content:"｜NBA";font-size:18px}
 .hrt td.pend{color:#8b949e;background:none}
 /* NBA 第一屏縮版（UI設計師 10/22）：卡片間距 8px（卡片上下內距維持 12px）、第一行與隊名間距 4px；字級、勝率條、焦點金框、觸控 44px 不動 */
 #nba-predict-list{gap:8px}
+#nba-predict-list>.day-sum{grid-column:1/-1;margin:0;white-space:nowrap;overflow:hidden}
 #nba-predict-list>.po-note,#nba-predict-list>.tbd-note{margin-top:0}
 #nba-predict-list .cc-head{row-gap:4px}
 .tent.pend{color:#8b949e;background:none}
