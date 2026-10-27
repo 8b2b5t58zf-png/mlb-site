@@ -157,7 +157,7 @@ function nbaCard(ev, DG){
   const se = c.series, sH = se && se.competitors && se.competitors.find(x => x.id === H.team.id), sA = se && se.competitors && se.competitors.find(x => x.id === A.team.id);
   const sb = ev.season.type === 3 && se && !se.completed && sH && sA ? seriesBar({lg:"nba", ab: se.title || se.description || "季後賽", n: se.totalCompetitions, gameNo: sH.wins + sA.wins + 1, wH: sH.wins, wA: sA.wins,
     pNext: hpR/100, pH: nModel(H.team.id, A.team.id).F/100, pA: 1 - nModel(A.team.id, H.team.id).F/100, H: nts(H.team), A: nts(A.team)}) : "";
-  const body = `${why}${ref}${sb ? SER_ALGO : ""}
+  const body = `${why}${ref}
     <div class="tier-row"><span class="tier ${tc}">${tl}</span>${fp!==50?`<span class="upset">${nts(oth)}仍有 <span class="num">${othD}%</span> 勝率</span>`:""}</div>
     ${nUpdHTML()}`;
   return sb + ccCard({lg:"nba", live: inPlay, focus: NFOCUS && NFOCUS.id === ev.id ? NFOCUS.txt : "", ser:"", time:cardTime(ev.date), tag: small ? "樣本不足" : "", A:nts(A.team), H:nts(H.team), conf:CONF[tc], tc, ap, hp, aw:Math.round((100-m.F)*10)/10, hw:m.F, favHome, reason, body});
@@ -304,13 +304,12 @@ async function nbaHit(){
   const el = document.getElementById("nba-hit");
   const r = await fetch("data/nba-predictions.json?t=" + Date.now()); if(!r.ok) throw new Error("nba-predictions");
   const d = await r.json(), GOAL = 50;
-  if(typeof accLine === "function") accLine("nba-acc", d.records, x => x.official.model === NM.ver, "NBA blend_v1", "#nba-hitrate");
+  if(typeof accLine === "function") accLine("nba-acc", d.records, x => x.official.model === NM.ver, "NBA", "#nba-hitrate");
   const isNew = x => (x.official||{}).model === NM.ver, old = d.records.filter(x => x.official && x.correct !== null && !isNew(x)), oOk = old.filter(x=>x.correct).length;
   const done = d.records.filter(x => x.official && x.correct !== null && isNew(x)), n = done.length, ok = done.filter(x => x.correct).length;
   let html = n >= GOAL ? `<div class="hr-big">${Math.round(ok/n*100)}%</div><div class="hr-sub">NBA 模型命中率（共 ${n} 場）</div>`
-    : `<div class="hr-big muted">累積中</div><div class="hr-prog"><div class="hr-bar"><div style="width:${n/GOAL*100}%"></div></div><span>${NM.ver}：${n} / ${GOAL} 場</span></div><div class="hr-ref">滿 ${GOAL} 場正式預測後顯示命中率</div>`;
+    : `<div class="hr-big muted">累積中</div><div class="hr-prog"><div class="hr-bar"><div style="width:${n/GOAL*100}%"></div></div><span>NBA：${n} / ${GOAL} 場</span></div><div class="hr-ref">滿 ${GOAL} 場正式預測後顯示命中率</div>`;
   html += confGroups(d.records, x => x.official.model === NM.ver, [60, 70], "nba");
-  html += btCard("nba", "nba_blend_v1", "NBA 2025-26 全季・NBA blend_v1", [60, 70], "低、中信心兩組的實際命中比預測高約 5 個百分點，代表模型偏保守");
   if(old.length) html += `<p class="note">舊版模型 v1 另計：${old.length} 場猜對 ${oOk} 場</p>`;
   html += `<p class="hr-upd">最後更新：${fmtT(d.updated)}（台灣時間）</p>`;
   if(!d.records.length){ el.innerHTML = html + '<p class="note">2026-27 例行賽 10/21（台灣時間）開打，開打前會開始記錄。</p>'; return; }

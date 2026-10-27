@@ -24,7 +24,7 @@ if(T.indexOf(t)<0)t="predict";lg=lg==="nba"?"nba":"mlb";var e=document.documentE
 <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png?v=202610252200">
 <meta property="og:url" content="https://8b2b5t58zf-png.github.io/mlb-site/">
 <!-- 引入樣式檔，負責網頁外觀 -->
-<link rel="stylesheet" href="style.css?v=202610260930">
+<link rel="stylesheet" href="style.css?v=202610270137">
 <!-- 從 CDN 載入 Chart.js，用來畫圖表 -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
 </head>
@@ -35,7 +35,6 @@ if(T.indexOf(t)<0)t="predict";lg=lg==="nba"?"nba":"mlb";var e=document.documentE
   <h1 class="brand"><svg class="logo" viewBox="0 0 512 512" width="30" height="30" aria-hidden="true" focusable="false"><mask id="lgm"><rect width="512" height="512" fill="#fff"/><g><circle cx="256" cy="35" r="21"/><circle cx="330" cy="95" r="1"/><circle cx="92" cy="110" r="21"/><circle cx="425" cy="110" r="21"/><circle cx="162" cy="138" r="21"/><circle cx="230" cy="152" r="21"/><circle cx="366" cy="178" r="21"/><circle cx="285" cy="246" r="21"/><circle cx="38" cy="256" r="21"/><circle cx="478" cy="260" r="21"/><circle cx="140" cy="282" r="21"/><circle cx="378" cy="316" r="21"/><circle cx="248" cy="348" r="21"/><circle cx="168" cy="390" r="21"/><circle cx="350" cy="395" r="1"/><circle cx="92" cy="405" r="21"/><circle cx="425" cy="405" r="21"/><circle cx="256" cy="475" r="21"/></g></mask><g fill="none" stroke-width="15" mask="url(#lgm)"><path d="M330 95L366 178M162 138L230 152M162 138Q141 208 140 282M366 178L285 246M378 316L478 260M378 316L350 395M140 282L248 348M248 348L168 390M168 390L92 405M168 390Q219 425 256 475M256 35A221 221 0 0 1 424 111M423 403A221 221 0 0 1 256 477M94 404A221 221 0 0 1 37 256M92 110A221 221 0 0 1 256 35" stroke="#0a2a66"/><path d="M256 35Q303 53 330 95M230 152L330 95M256 35Q199 77 162 138M162 138L92 110M230 152L285 246M425 110L366 178M366 178L478 260M285 246L378 316M38 256L140 282M248 348L350 395M140 282L168 390M350 395Q297 427 256 475M424 111A221 221 0 0 1 479 260M479 260A221 221 0 0 1 423 403M256 477A221 221 0 0 1 94 404M37 256A221 221 0 0 1 92 110" stroke="#16b2ef"/></g><g fill="none" stroke="#fff" stroke-opacity=".14" stroke-width="2.5"><circle cx="92" cy="110" r="18.5"/><circle cx="425" cy="110" r="18.5"/><circle cx="230" cy="152" r="18.5"/><circle cx="366" cy="178" r="18.5"/><circle cx="38" cy="256" r="18.5"/><circle cx="478" cy="260" r="18.5"/><circle cx="140" cy="282" r="18.5"/><circle cx="378" cy="316" r="18.5"/><circle cx="248" cy="348" r="18.5"/><circle cx="92" cy="405" r="18.5"/><circle cx="425" cy="405" r="18.5"/><circle cx="256" cy="35" r="18.5"/><circle cx="162" cy="138" r="18.5"/><circle cx="285" cy="246" r="18.5"/><circle cx="168" cy="390" r="18.5"/><circle cx="256" cy="475" r="18.5"/></g><g fill="none" stroke-width="9"><g stroke="#0a2a66"><circle cx="92" cy="110" r="13"/><circle cx="425" cy="110" r="13"/><circle cx="230" cy="152" r="13"/><circle cx="366" cy="178" r="13"/><circle cx="38" cy="256" r="13"/><circle cx="478" cy="260" r="13"/><circle cx="140" cy="282" r="13"/><circle cx="378" cy="316" r="13"/><circle cx="248" cy="348" r="13"/><circle cx="92" cy="405" r="13"/><circle cx="425" cy="405" r="13"/></g><g stroke="#16b2ef"><circle cx="256" cy="35" r="13"/><circle cx="162" cy="138" r="13"/><circle cx="285" cy="246" r="13"/><circle cx="168" cy="390" r="13"/><circle cx="256" cy="475" r="13"/></g></g><g fill="#16b2ef"><circle cx="330" cy="95" r="17"/><circle cx="350" cy="395" r="17"/></g></svg><span class="nw">AI Sports Lab</span><span class="sport" id="lg-tag">｜MLB</span></h1>
   <p class="tagline">每場預測都附理由，<span id="tg-scope">用 2026 整季比賽驗證過</span></p>
   <p class="tagline-sub">看懂勝負背後的數字</p>
-  <p class="tagline-link"><a id="tg-link" href="validation.html">看驗證結果 ›</a></p>
   <span id="lg-sub" hidden></span>
   <span id="season" hidden></span>
 </header>
@@ -45,16 +44,7 @@ if(T.indexOf(t)<0)t="predict";lg=lg==="nba"?"nba":"mlb";var e=document.documentE
   <!-- 重點一：比賽勝負預測（數據模型估算） -->
   <section id="sec-predict"><h2>比賽勝負預測</h2>
     <p class="acc-line" id="mlb-acc">&nbsp;</p><p class="day-sum" id="mlb-day">&nbsp;</p>
-    <p class="note pnote">勝率是數據估算，非投注建議・台灣時間　<button type="button" class="algo-tog" aria-expanded="false" aria-controls="algo-mlb">看算法 ▾</button></p>
-    <details class="algo algo-top" id="algo-mlb"><summary>看算法（模型 v2）</summary>
-      <p class="focus-sub">數據焦點：每聯盟挑一場最值得看的比賽，非投注建議</p>
-      <ol><li><b>從 50% 出發</b>：每場比賽先假設兩隊各 50%，再依序加減三項，三格的加減加起來就是最終勝率。</li>
-      <li><b>戰績</b>：每隊實力分數＝本季實際勝率 50%＋畢氏期望勝率 50%（用總得分、總失分推算「應該」有的勝率），兩隊用 Log5 公式比較。棒球單場運氣成分大，所以再把差距縮小到約四分之一。</li>
-      <li><b>主場</b>：固定加約 2%（2026 例行賽主場勝率 52.8%）。</li>
-      <li><b>先發投手</b>：比較兩位先發的防禦率（ERA）和每局被上壘數（WHIP）；局數少的投手會往聯盟平均（ERA 4.20、WHIP 1.30）拉回，等於先加 40 局平均表現。先發未公布就不調整。</li>
-      <li>各項權重由 2026 例行賽回測決定（7/1 後 1,148 場）；近況、休息天數、裁判回測沒有幫助，未採用。傷兵、天氣只列參考，不計入勝率。</li>
-      <li>信心分級（較高一方勝率）：未滿 53% 為「接近五五波」（大字寫「勢均力敵」），53%～未滿 60% 為「略占上風」，60% 以上為「勝率明顯較高」。回測命中率分別約 51.5%、59.5%、65.0%。</li></ol>
-      <p>2026/10/15 之前記錄的預測是舊版模型 v1（主場 +4%、未含先發投手），紀錄保留不修改。</p></details>
+    <p class="note pnote">勝率是數據估算，非投注建議・台灣時間</p>
     <div class="status" id="st-predict"></div><div id="predict" class="grid"><div class="skc" aria-hidden="true"></div><div class="skc" aria-hidden="true"></div><div class="skc" aria-hidden="true"></div></div></section>
   <!-- 重點二：賽後分析文章（依真實比賽數據自動產生） -->
   <section id="sec-analysis"><h2>賽後分析</h2>
@@ -77,13 +67,7 @@ if(T.indexOf(t)<0)t="predict";lg=lg==="nba"?"nba":"mlb";var e=document.documentE
 <main id="nba-main" class="nba-only">
   <section id="nsec-predict"><h2>NBA 勝負預測</h2>
     <p class="acc-line" id="nba-acc">&nbsp;</p>
-    <p class="note pnote">勝率是數據估算，非投注建議・台灣時間　<button type="button" class="algo-tog" aria-expanded="false" aria-controls="algo-nba">看算法 ▾</button></p>
-    <details class="algo algo-top" id="algo-nba"><summary>看算法（NBA v1）</summary>
-      <p class="focus-sub">數據焦點：每聯盟挑一場最值得看的比賽，非投注建議</p>
-      <ol><li>信心分級（較高一方勝率）：未滿 60% 為「接近五五波」，60% 以上為「勝率較高」（開季到 1/14，60%～未滿 70% 與 70% 以上同一句）。</li><li>每隊<b>實力分數</b>＝本季勝率 50%＋畢氏期望勝率 50%（得分<sup>14</sup> ÷（得分<sup>14</sup>＋失分<sup>14</sup>））。</li>
-      <li>依出賽場數往 .500 拉回：權重＝場數 ÷（場數＋5），開季前幾場拉得很重。</li>
-      <li>兩隊用 <b>Log5</b> 比較，再加<b>主場因素</b>（2025-26 例行賽主場勝率 55.5%，682 勝 547 敗）。</li>
-      <li>任一隊出賽未滿 10 場顯示「樣本不足」。傷兵、背靠背只列參考，不計入勝率；不使用任何博彩資料。</li></ol></details>
+    <p class="note pnote">勝率是數據估算，非投注建議・台灣時間</p>
     <div class="status" id="st-nba-predict-list" data-wait></div><div id="nba-predict-list" class="grid"><div class="skc" aria-hidden="true"></div><div class="skc" aria-hidden="true"></div><div class="skc" aria-hidden="true"></div></div></section>
   <section id="nsec-analysis"><h2>NBA 賽後分析</h2>
     <p class="note">以下文字由程式根據 ESPN 公開比分與球員數據自動整理，不加入任何臆測。</p>
@@ -97,29 +81,25 @@ if(T.indexOf(t)<0)t="predict";lg=lg==="nba"?"nba":"mlb";var e=document.documentE
 
 <main id="about" class="about-page" hidden>
   <section><h2>關於與免責</h2>
-    <p class="about-tag">每場預測都附理由，用 2026 整季比賽驗證過，看懂勝負背後的數字。<a href="validation.html">看 MLB 驗證結果 ›</a>・<a href="validation-nba.html">看 NBA 驗證結果 ›</a></p>
-    <p>AI Sports Lab 是個人經營的 MLB、NBA 數據分析網站。每場勝率由公開比賽數據計算，方法寫在各聯盟的模型說明。</p>
+    <p class="about-tag">每場預測都附理由，用 2026 整季比賽驗證過，看懂勝負背後的數字。</p>
+    <p>AI Sports Lab 是個人經營的 MLB、NBA 數據分析網站。每場勝率由公開比賽數據計算。</p>
     <ul>
       <li><b>非投注建議</b>：本站不提供下注建議，也不連結任何投注網站。</li>
       <li><b>正式紀錄</b>：每場以開賽前最後一次預測為準，賽後公開結算，猜錯也照實記錄。</li>
       <li><b>資料缺漏</b>：抓不到的數據會標示「資料暫缺」，不用推測補上。</li>
       <li><b>資料來源</b>：MLB Stats API、ESPN。</li>
     </ul>
-    <h3>模型說明</h3>
-    <p><b>MLB 怎麼算</b>：先看兩隊本季戰績，算出誰比較有機會贏；為了避免被短期起伏帶著走，會把數字往五成拉回一些。接著加上主場因素，最後看兩位先發投手的防禦率（ERA）和每局被上壘數（WHIP）。投過的局數越少，數據越不可靠，就越往聯盟平均靠攏。兩隊先發都公布後才會加入投手調整。</p>
-    <p><b>NBA 怎麼算</b>：結合上季實力和本季的勝率、得失分差。開季初期比賽還少，主要參考上季；打越多場，就越以本季表現為準。最後加上主場因素。</p>
-    <p><b>正式紀錄</b>：每場以開賽前最後一次預測為準，鎖定後不再修改。模型改版時，新舊版本分開統計。</p>
     <p class="about-back"><a href="#" data-go="predict">‹ 回到勝負預測</a></p>
   </section>
 </main>
 <!-- 手機底部固定導覽列（寬度小於 768px 才顯示） -->
 <nav id="bottomnav" aria-label="主選單"><a href="#sec-predict" data-sec="sec-predict"><span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l5-5 4 4 8-8"/><path d="M14 8h6v6"/></svg></span><span>預測</span></a><a href="#sec-analysis" data-sec="sec-analysis"><span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h10l4 4v12H5z"/><path d="M8 12h8M8 16h6"/></svg></span><span>賽後</span></a><a href="#sec-hit" data-sec="sec-hit"><span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><path d="M8 12l3 3 5-6"/></svg></span><span>命中率</span></a><a href="#sec-standings" data-sec="sec-standings"><span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 4h8v5a4 4 0 01-8 0z"/><path d="M12 13v4M8 20h8"/></svg></span><span>戰績</span></a><a href="#sec-batting" data-sec="sec-batting"><span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 20V12M12 20V5M19 20v-8"/></svg></span><span>排行</span></a></nav>
-<footer class="site-foot" id="foot"><p class="foot-src">AI Sports Lab 為個人數據分析網站，非投注建議。資料來源：MLB Stats API、ESPN。</p><p><a href="#about" data-go="about" class="foot-about">關於與免責</a>・<a href="validation.html">回測說明</a></p></footer>
+<footer class="site-foot" id="foot"><p class="foot-src">AI Sports Lab 為個人數據分析網站，非投注建議。資料來源：MLB Stats API、ESPN。</p><p><a href="#about" data-go="about" class="foot-about">關於與免責</a></p></footer>
 <script src="players.js?v=202610252200"></script>
 <script src="players-nba.js?v=202610252200"></script>
-<script src="why-text.js?v=202610260930"></script>
-<script src="nba.js?v=202610260930"></script>
-<script src="app.js?v=202610260930"></script>
+<script src="why-text.js?v=202610270137"></script>
+<script src="nba.js?v=202610270137"></script>
+<script src="app.js?v=202610270137"></script>
 <script>window.goatcounter={path:function(p){return location.pathname+location.hash}};</script>
 <script data-goatcounter="https://aisportslab.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
 </body>

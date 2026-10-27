@@ -14,7 +14,7 @@ const WHY_TXT = {
   rec: "{t}本季 {w} 勝 {l} 敗，勝率 {p} 高於{o}的 {op}，戰績較好",
   recClose: "兩隊戰績相近（{p} 對 {op}），這項影響不大",
   preseason: "新球季尚未開打，依上一季實力估算",
-  prior: "開季場次還少，參考上季得失分表現（畢氏勝率：<span class=\"nw\">{t} {p}</span>、<span class=\"nw\">{o} {q}</span>）",
+  prior: "開季場次還少，參考上季得失分表現",
   priorLate: "本季樣本已足，上季實力只占小幅比重",
   home: "{t}在主場出賽",
   neutral: "中立場地，不計主場因素",
@@ -136,13 +136,6 @@ document.addEventListener("click", e => {
     try{ if(window.goatcounter && window.goatcounter.count) window.goatcounter.count({path:`expand-${b.dataset.lg}`, title:"看分析展開", event:true}); }catch(_){} }
 });
 
-// 說明列尾端的「看算法 ▾」：開關下方的算法說明
-document.addEventListener("click", e => {
-  const b = e.target.closest && e.target.closest(".algo-tog"); if(!b) return;
-  const d = document.getElementById(b.getAttribute("aria-controls")); d.open = !d.open;
-  b.setAttribute("aria-expanded", d.open); b.textContent = d.open ? "看算法 ▴" : "看算法 ▾";
-});
-
 const twKey = d => new Date(new Date(d).getTime() + 8*3600e3).toISOString().slice(0,10);
 function dayCounts(ds){ const m = {}; for(const d of ds){ const k = twKey(d); m[k] = (m[k]||0) + 1; } return m; }
 // 每張卡都帶日期（單張截圖也看得出哪一天）：「10/20（二）08:08（台灣時間）」；日期一律用開賽時間換成台灣時間（UTC+8），不用美國當地比賽日
@@ -215,24 +208,6 @@ function seriesBar(o){
   const st = o.wH === o.wA ? `${o.wH}:${o.wA} 平手` : o.wH > o.wA ? `${o.H} ${o.wH}:${o.wA} 領先` : `${o.A} ${o.wA}:${o.wH} 領先`;
   const hi = ph >= 0.5;
   return `<div class="sbar"><div class="sb-r1"><span>${o.ab}・${st}</span><span>系列晉級機率</span></div><div class="sb-r2"><span class="sb-t">${o.A} <span class="num">${a}%</span></span><span class="sb-b"><span class="${hi?"o":"g"}" style="width:${aw}%"></span><span class="${hi?"g":"o"}" style="width:${hw}%"></span></span><span class="sb-t r">${o.H} <span class="num">${h}%</span></span></div><p class="sb-note">晉級機率含已贏場次，單場勝率只看下一戰</p></div>`;
-}
-const SER_ALGO = '<p class="desc">晉級機率：用每場單場勝率與目前系列比數計算，先發未公布的場次先用戰績估算，依目前單場模型推算，非投注建議</p>';
-
-// 歷史回測卡（§26）：數字一律讀 data/backtest.json，和正式紀錄分開、不合併
-let BT_P = null;
-function btCard(lg, key, sub, cuts, extra){
-  const id = "bt-" + lg;
-  (BT_P ||= fetch("data/backtest.json?v=202610162610").then(r => r.ok ? r.json() : null).catch(() => null)).then(d => {
-    const el = document.getElementById(id), b = d && d[key]; if(!el || !b){ if(el) el.remove(); return; }
-    const N = v => `<span class="num">${v}</span>`;
-    const R = {低:`未滿 ${N(cuts[0]+"%")}`, 中:`${N(cuts[0])}～未滿 ${N(cuts[1]+"%")}`, 高:`${N(cuts[1]+"%")} 以上`};
-    const rows = ["低","中","高"].filter(t => b.tiers[t]).map(t => { const g = b.tiers[t];
-      return `<div class="cg-row"><span class="cg-l">信心 ${t}<span class="cg-r">${R[t]}</span></span><span class="cg-v"><span class="cg-v1">平均預測 ${N(g.avg_pred_pct+"%")}</span><span class="cg-v2">實際 ${N(g.hit_pct+"%")}（${N(g.k+"/"+g.n)} 場）</span></span></div>`; }).join("");
-    el.innerHTML = `<div class="cg-h bt-t">歷史回測（模型事後驗算）</div><div class="cg-h">${sub}</div><div class="cg-n bt-note">這是把模型套在過去比賽的結果，不是當時的預測，非投注建議</div>${extra ? `<div class="cg-n bt-note">${extra}</div>` : ""}`
-      + (b.n ? `<div class="bt-all">整體命中 ${N(b.hit_pct+"%")}（${N(b.k+"/"+b.n)} 場）</div>` : "") + rows
-      + (b.tie50 ? `<div class="cg-n">勝率剛好 ${N("50%")} 的 ${N(b.tie50)} 場不分組、不計命中率</div>` : "");
-  });
-  return `<div class="cg bt" id="${id}"></div>`;
 }
 
 // 今日數據焦點（§25 修訂、spec-accuracy-display §3）：只看列表第一天；cands: [{i, fh(主隊勝率 0-1), key(季後賽關鍵戰), txt(系列賽句)}]
