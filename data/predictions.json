@@ -1,5 +1,5 @@
 {
- "updated": "2026-10-27 14:52 (UTC+8)",
+ "updated": "2026-10-28 04:38 (UTC+8)",
  "records": [
   {
    "gamePk": 849818,
@@ -717,6 +717,27 @@
       "name": "Griffin Jax"
      },
      "awayStarter": null
+    },
+    {
+     "at": "2026-10-28 04:38 (UTC+8)",
+     "model": "v2：Log5縮回(0.250)、主場+0.082、先發ERA×0.137+WHIP×0.606（拉回40局）",
+     "homeWinProb": 0.5527,
+     "steps": {
+      "standings": -1.4,
+      "home": 2.0,
+      "starter": 4.7
+     },
+     "starterUsed": true,
+     "starterStatus": "both",
+     "hasStarters": true,
+     "homeStarter": {
+      "id": 643377,
+      "name": "Griffin Jax"
+     },
+     "awayStarter": {
+      "id": 669160,
+      "name": "Dustin May"
+     }
     }
    ],
    "official": null,
