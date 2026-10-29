@@ -770,7 +770,7 @@ function setLeague(lg){
   document.getElementById("lg-sub").textContent = lg==="nba" ? "AI 運動實驗室・NBA 美國職籃勝負預測與賽後分析" : "AI 運動實驗室・美國職棒大聯盟勝負預測與賽後分析";
   document.getElementById("foot").innerHTML = '<p class="foot-src">AI Sports Lab 為個人數據分析網站，非投注建議。資料來源：MLB Stats API、ESPN。</p><p><a href="#about" data-go="about" class="foot-about">關於與免責</a></p>';
   footUpd(lg);
-  document.title = `AI Sports Lab｜${lg.toUpperCase()} 勝負預測與賽後分析`;
+  document.title = `${lg.toUpperCase()} 勝負預測與賽後分析｜球數實驗室｜AI Sports Lab`;
   renderNav();
   if(lg==="nba") loadNBA();
 }
