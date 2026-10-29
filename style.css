@@ -413,3 +413,9 @@ html.pre-nba #lg-tag::after{content:"｜NBA";font-size:18px}
 #nba-predict-list>.po-note,#nba-predict-list>.tbd-note{margin-top:0}
 #nba-predict-list .cc-head{row-gap:4px}
 .tent.pend{color:#8b949e;background:none}
+
+/* 頁首中文站名（202610291545） */
+header h1.brand{height:48px;line-height:48px;white-space:nowrap;overflow:hidden}
+.brand .zh{font-size:18px;font-weight:700;color:#e6edf3;flex:none}
+.brand .sport{font-size:18px;color:#d4af37;flex:none}
+.brand .nw{margin-left:auto;font-size:13px;font-weight:500;color:#8b949e;letter-spacing:.3px;flex:none}
