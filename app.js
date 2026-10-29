@@ -238,11 +238,12 @@ async function loadGames(){
     TODAY_DONE = !ACTIVE && tg.length && tg.every(g => REC[g.gamePk] ? REC[g.gamePk].final != null : g.status.abstractGameState === "Final") ? tg.length : 0; }
   const seenLive = new Set(liveGames.map(g => g.gamePk));
   const hasUp = next.length || liveGames.length;
-  const show = hasUp || ACTIVE ? [...liveGames, ...next.filter(g => !seenLive.has(g.gamePk) && !act.includes(g))] : done;
+  const show = hasUp || ACTIVE ? [...liveGames, ...next.filter(g => !seenLive.has(g.gamePk) && !act.includes(g))] : [];   // 沒有下一戰／進行中：不回填已完賽卡，走空狀態（done 只給賽後分析）
+  PEXTRA.seasonEnd = !hasUp && !ACTIVE && !nr && done.some(g => g.gameType === "W");   // 世界大賽打完、後面沒賽程＝季末
   // 先抓先發投手成績與 FIP 常數，再畫預測卡
   await Promise.all([loadFIPC(), loadTeamHit(), ...show.map(g=>loadH2H(g.teams.away.team.id, g.teams.home.team.id)), loadPitchers(show.flatMap(g=>[g.teams.home.probablePitcher, g.teams.away.probablePitcher]).filter(Boolean).map(p=>p.id))]);
-  renderPredict(show, !hasUp && !ACTIVE);
-  daySummary(show, !hasUp && !ACTIVE);
+  renderPredict(show, false);
+  daySummary(show, false);
   await renderAnalysis(done);
 }
 
@@ -473,7 +474,12 @@ function twWD(d, withTime){
   const t = new Date(new Date(d).getTime() + 8*3600e3), wd = "日一二三四五六"[t.getUTCDay()];
   return `${t.getUTCMonth()+1}/${t.getUTCDate()}（${wd}）` + (withTime ? String(t.getUTCHours()).padStart(2,"0") + ":" + String(t.getUTCMinutes()).padStart(2,"0") : "");
 }
-function emptyCard(nextAt){ return `<div class="empty-card">${nextAt ? `今天沒有比賽，下一戰 ${twWD(nextAt, true)}` : "今天沒有比賽，下一戰時間待公布"}</div>`; }
+// 季末文案（內容編輯定稿後替換；sub 留空字串就不顯示小字）
+const emptySeason = (m, sub) => `<div class="empty-season"><div class="es-main">${m}</div>${sub ? `<div class="es-sub">${sub}</div>` : ""}</div>`;
+const NBA_NOGAME_TXT = "今天沒有 NBA 比賽，下一場賽程公布後自動更新";
+const SEASON_END_TXT = {main: "2026 MLB 球季已結束，下季開打前恢復每日預測", sub: "本季賽後分析與命中率紀錄仍可查看"};
+function emptyCard(nextAt, seasonEnd){ if(seasonEnd) return emptySeason(SEASON_END_TXT.main, SEASON_END_TXT.sub);
+   return `<div class="empty-card">${nextAt ? `今天沒有比賽，下一戰 ${twWD(nextAt, true)}` : "今天沒有比賽，下一戰時間待公布"}</div>`; }
 let PEXTRA = {post:false, tbd:[], nextAt:null};
 let ACTIVE = null, TODAY_DONE = 0;   // TODAY_DONE：今天已結算的場數（今天全部結算才 >0）   // §29 已開打、還沒結算的那一天：{day:"YYYY-MM-DD", n, fin:是否都已 Final, post:是否季後賽}
 // 畫出預測卡片
@@ -538,7 +544,7 @@ function renderPredict(games, isPast){
     html += sb + ccCard({lg:"mlb", live: inPlay, pp: isPP(g) ? `延賽至 ${twWD(g.gameDate, true)}（勝率將重算）` : "", focus: FC && g === vg[FC.i] && !isPP(g) ? FC.txt : "", ser, time:cardTime(g.gameDate), tag: inPlay ? "" : (wait ? "等先發" : "先發已公布"), A:ts(A.team), H:ts(H.team), conf:CONF[tc], tc, ap:apD, hp:hpD, aw:Math.round((100-m.F)*10)/10, hw:m.F, favHome, reason, body});
   }
   const X = PEXTRA;
-  if(!html.includes('class="pcard')) html = ACTIVE ? (ACTIVE.post ? '<p class="po-note" style="margin-top:12px">下一戰在本戰結束後顯示</p>' : "") : emptyCard(X.nextAt);   // 比賽進行中：不放「今天沒有比賽」大框
+  if(!html.includes('class="pcard')) html = ACTIVE ? (ACTIVE.post ? '<p class="po-note" style="margin-top:12px">下一戰在本戰結束後顯示</p>' : "") : emptyCard(X.nextAt, X.seasonEnd);   // 比賽進行中：不放「今天沒有比賽」大框
   else if(X.post && !isPast) html += '<p class="po-note">下一戰在本戰結束後顯示</p>';
   html += X.tbd.map(t => `<p class="tbd-note">${t}</p>`).join("");
   document.getElementById("predict").innerHTML = html;

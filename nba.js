@@ -218,7 +218,7 @@ async function nbaGames(){
     if(tg.length && tg.every(e => NREC[e.id] ? NREC[e.id].final != null : e.status.type.state === "post")){
       const nx = upShow[0], k = nx && twKey(nx.date);
       nDone = `<p class="day-sum">今天 ${wn(tg.length)} 場已結算${nx ? `・下一戰 ${twWD(nx.date)}共 ${wn(up.filter(e => twKey(e.date) === k).length)} 場` : ""}</p>`; } }
-  document.getElementById("nba-predict-list").innerHTML = note + nDone + (nCards ? nLiveSum + nCards : (nLive || (nDone ? "" : emptyCard(nNext)))) + (nCards && nPost ? '<p class="po-note">下一戰在本戰結束後顯示</p>' : "") + (tbdE ? `<p class="tbd-note">季後賽下一輪 ${twWD(tbdE.date)}開打<br>對戰組合待前一輪結束後確定</p>` : "");
+  document.getElementById("nba-predict-list").innerHTML = note + nDone + (nCards ? nLiveSum + nCards : (nLive || (nDone ? "" : emptySeason(NBA_NOGAME_TXT)))) + (nCards && nPost ? '<p class="po-note">下一戰在本戰結束後顯示</p>' : "") + (tbdE ? `<p class="tbd-note">季後賽下一輪 ${twWD(tbdE.date)}開打<br>對戰組合待前一輪結束後確定</p>` : "");
   nbaDelay();   // 先畫提示條，不等賽後分析載完
   const done = all.filter(e => e.status.type.completed).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,5);
   await nbaRecaps(done);
