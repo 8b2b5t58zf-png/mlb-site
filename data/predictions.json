@@ -1,5 +1,5 @@
 {
- "updated": "2026-10-29 09:02 (UTC+8)",
+ "updated": "2026-10-29 11:13 (UTC+8)",
  "records": [
   {
    "gamePk": 849818,
@@ -852,9 +852,11 @@
     }
    },
    "predictedWinner": "密爾瓦基釀酒人",
-   "final": null,
-   "actualWinner": null,
-   "correct": null
+   "final": "密爾瓦基釀酒人 4 : 1 坦帕灣光芒",
+   "actualWinner": "密爾瓦基釀酒人",
+   "correct": true,
+   "homeScore": 1,
+   "awayScore": 4
   },
   {
    "gamePk": 849801,
@@ -883,7 +885,8 @@
    "predictedWinner": null,
    "final": null,
    "actualWinner": null,
-   "correct": null
+   "correct": null,
+   "status": "cancelled"
   },
   {
    "gamePk": 849800,
@@ -912,7 +915,8 @@
    "predictedWinner": null,
    "final": null,
    "actualWinner": null,
-   "correct": null
+   "correct": null,
+   "status": "cancelled"
   }
  ]
 }
