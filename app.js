@@ -477,7 +477,7 @@ function twWD(d, withTime){
 // 季末文案（內容編輯定稿後替換；sub 留空字串就不顯示小字）
 const emptySeason = (m, sub) => `<div class="empty-season"><div class="es-main">${m}</div>${sub ? `<div class="es-sub">${sub}</div>` : ""}</div>`;
 const NBA_NOGAME_TXT = "今天沒有 NBA 比賽，下一場賽程公布後自動更新";
-const SEASON_END_TXT = {main: "2026 MLB 球季已結束，下季開打前恢復每日預測", sub: "本季賽後分析與命中率紀錄仍可查看"};
+const SEASON_END_TXT = {main: "<span class=\"es-l\">2026 MLB 球季已結束，</span><span class=\"es-l\">下季開打前恢復每日預測</span>", sub: "本季賽後分析與命中率紀錄仍可查看"};
 function emptyCard(nextAt, seasonEnd){ if(seasonEnd) return emptySeason(SEASON_END_TXT.main, SEASON_END_TXT.sub);
    return `<div class="empty-card">${nextAt ? `今天沒有比賽，下一戰 ${twWD(nextAt, true)}` : "今天沒有比賽，下一戰時間待公布"}</div>`; }
 let PEXTRA = {post:false, tbd:[], nextAt:null};
