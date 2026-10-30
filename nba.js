@@ -316,7 +316,7 @@ async function nbaHit(){
   html += `<div class="hr-cg1"><div class="cg-row"><span class="cg-l">全部場次</span><span class="cg-v">${cv(gv)}</span></div><div class="cg-row"><span class="cg-l">信心 <span class="num">${cut}%</span> 以上</span><span class="cg-v">${cv(hiG)}</span></div></div>`;
   html += `<details class="hr-fold"><summary>看各信心分級</summary>${confGroups(d.records, x => x.official.model === NM.ver, [60, 70], "nba")}</details>`;
   const how = [`樣本少於 <span class="num">${GOAL}</span> 場僅供參考`, "命中率只計算已結算場次・非投注建議"];
-  if(old.length) how.push(`舊版模型 v1 另計：${old.length} 場猜對 ${oOk} 場`);
+  if(old.length) how.push(`舊版模型 v1 另計：${old.length} 場，命中 ${oOk} 場`);
   html += `<details class="hr-fold"><summary>怎麼算的</summary><div class="hr-how">${how.map(t => `<p class="note">${t}</p>`).join("")}</div></details>`;
   html += `<p class="hr-upd">最後更新：${fmtT(d.updated)}（台灣時間）</p>`;
   if(!d.records.length){ el.innerHTML = html + '<p class="note">2026-27 例行賽 10/21（台灣時間）開打，開打前會開始記錄。</p>'; return; }
