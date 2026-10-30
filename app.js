@@ -663,7 +663,7 @@ async function hitHide(recs){
 // 預測命中率：讀取網站上的 data/predictions.json
 async function secHit(){
   const el = document.getElementById("hit");
-  if(location.protocol === "file:"){ el.innerHTML = '<p class="note">直接開啟本機檔案時無法讀取預測紀錄，請到線上網站查看：<a href="https://8b2b5t58zf-png.github.io/mlb-site/#mlb-hitrate">點這裡</a></p>'; return; }
+  if(location.protocol === "file:"){ el.innerHTML = '<p class="note">直接開啟本機檔案時無法讀取預測紀錄，請到線上網站查看：<a href="https://aisports-lab.com/#mlb-hitrate">點這裡</a></p>'; return; }
   const r = await fetch("data/predictions.json?t=" + Date.now());
   if(!r.ok) throw new Error("predictions");
   const d = await r.json();
