@@ -864,4 +864,32 @@ setupNav();
   const _show = showTab; showTab = function(){ _show.apply(this, arguments); upd(); };
   upd();
   if(foot && "IntersectionObserver" in window) new IntersectionObserver(es => es.forEach(e => fab.classList.toggle("is-hidden", e.isIntersecting))).observe(foot);
+  // 讀者可拖動：位移 < 6px 算輕點；放開後貼最近左右邊；localStorage 只記左右與離畫面頂端的比例
+  const KEY = "aisl:fab", S = 48;
+  const gap = () => innerWidth >= 768 ? 24 : 12;
+  const navH = () => { const n = document.getElementById("bottomnav"); return n && getComputedStyle(n).display !== "none" ? n.getBoundingClientRect().height : 0; };
+  const topLim = () => { let t = 0; for(const id of ["lgbar","topnav"]){ const el = document.getElementById(id); if(!el) continue; const cs = getComputedStyle(el); if(cs.display === "none") continue; t = Math.max(t, (parseFloat(cs.top)||0) + el.offsetHeight); } return t + 8; };
+  const botLim = () => innerHeight - (navH() ? navH() + 12 : 24) - S;
+  const clampT = t => Math.max(topLim(), Math.min(t, botLim()));
+  const edgeL = side => side === "l" ? gap() : innerWidth - gap() - S;
+  let pos = null; try{ pos = JSON.parse(localStorage.getItem(KEY)); if(!pos || !/^[lr]$/.test(pos.side) || !(pos.y >= 0 && pos.y <= 1)) pos = null; }catch(e){ pos = null; }
+  const apply = () => { if(!pos){ fab.style.left = fab.style.top = fab.style.right = fab.style.bottom = ""; return; }
+    Object.assign(fab.style, {left: edgeL(pos.side) + "px", top: clampT(pos.y * innerHeight) + "px", right: "auto", bottom: "auto"}); };
+  apply(); addEventListener("resize", apply); addEventListener("orientationchange", apply);
+  let st = null, dragged = false;
+  fab.addEventListener("pointerdown", e => { if(fab.classList.contains("is-hidden") || fab.hidden || e.button > 0) return;
+    const r = fab.getBoundingClientRect(); st = {x:e.clientX, y:e.clientY, l:r.left, t:r.top, id:e.pointerId}; dragged = false; });
+  fab.addEventListener("pointermove", e => { if(!st || e.pointerId !== st.id) return;
+    const dx = e.clientX - st.x, dy = e.clientY - st.y;
+    if(!dragged){ if(Math.hypot(dx, dy) < 6) return; dragged = true; try{ fab.setPointerCapture(e.pointerId); }catch(_){} fab.classList.add("dragging"); }
+    e.preventDefault();
+    Object.assign(fab.style, {left: Math.max(0, Math.min(innerWidth - S, st.l + dx)) + "px", top: clampT(st.t + dy) + "px", right: "auto", bottom: "auto"}); });
+  const end = e => { if(!st || e.pointerId !== st.id) return; st = null; if(!dragged) return;
+    fab.classList.remove("dragging"); const L = parseFloat(fab.style.left), T = parseFloat(fab.style.top);
+    pos = {side: L + S/2 < innerWidth/2 ? "l" : "r", y: clampT(T) / innerHeight};
+    apply(); try{ localStorage.setItem(KEY, JSON.stringify(pos)); }catch(_){} };
+  fab.addEventListener("pointerup", end); fab.addEventListener("pointercancel", end);
+  // 拖動那次的 click 擋掉（capture 階段，先於 a[data-gc] 委派監聽：不開連結、不送事件）
+  fab.addEventListener("click", e => { if(dragged){ dragged = false; e.preventDefault(); e.stopImmediatePropagation(); } }, true);
+  fab.addEventListener("dragstart", e => e.preventDefault());
 })();

@@ -447,9 +447,13 @@ html.pre-nba #lg-tag::after{font-size:18px}
 .hr-dbtn[aria-expanded="true"] .hr-car{transform:rotate(-135deg)}
 .hr-more{display:block;width:100%;min-height:44px;margin:12px 0 0;background:none;border:1px solid #30363d;border-radius:8px;color:var(--link);font-size:14px;cursor:pointer}
 .hr-more:focus-visible{outline:2px solid #d4af37;outline-offset:2px}
-.line-fab{position:fixed;right:12px;bottom:calc(var(--nav-h) + env(safe-area-inset-bottom) + 12px);z-index:18;width:48px;height:48px;border-radius:50%;background:#06C755;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.45);transition:opacity .2s,transform .2s}
+.line-fab{touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;position:fixed;right:12px;bottom:calc(var(--nav-h) + env(safe-area-inset-bottom) + 12px);z-index:18;width:48px;height:48px;border-radius:50%;background:#06C755;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.45);transition:opacity .2s,transform .2s,left .2s ease-out,top .2s ease-out}
 .line-fab[hidden]{display:none}
 .line-fab.is-hidden{opacity:0;pointer-events:none;transform:translateY(8px)}
 .line-fab svg{display:block;width:24px;height:24px}
 @media (min-width:768px){.line-fab{right:24px;bottom:24px}}
 @media (prefers-reduced-motion:reduce){.line-fab{transition:none}}
+/* LINE 浮動按鈕：主內容底部留空，最後一張卡／最後一列能捲到按鈕上方且頁尾尚未進入（按鈕仍顯示） */
+#mlb-main,#nba-main{padding-bottom:calc(120px + env(safe-area-inset-bottom))}
+@media (min-width:768px){#mlb-main,#nba-main{padding-bottom:96px}}
+.line-fab.dragging{transform:scale(1.08);box-shadow:0 4px 14px rgba(0,0,0,.55);transition:none}
