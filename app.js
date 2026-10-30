@@ -856,35 +856,12 @@ setupNav();
   new MutationObserver(ms=>ms.forEach(m=>m.addedNodes.forEach(n=>n.nodeType===1&&mark(n)))).observe(document.body,{childList:true,subtree:true});
 })();
 
-// LINE 回饋列：放在內容中間（預測頁第 3 張卡後、賽後頁第 1 篇後、命中率頁摘要下方逐場表上方）；載入中、骨架或錯誤時隱藏
+// LINE 浮動按鈕：事件名稱跟著分頁換；關於頁不顯示；頁尾進入畫面時隱藏（頁尾本身有 LINE 連結）
 (function(){
-  const BOXES = {"predict":["line-feedback-predict-card3","p"],"analysis":["line-feedback-recap-first","r"],"hit":["line-feedback-hitrate-top","h"],
-    "nba-predict-list":["line-feedback-predict-card3","p"],"nba-analysis":["line-feedback-recap-first","r"],"nba-hit":["line-feedback-hitrate-top","h"]};
-  const svg = '<svg class="line-ic" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" focusable="false"><rect width="24" height="24" rx="5.5" fill="#06C755"/><path fill="#fff" d="M12 4.5c-4.7 0-8.5 3-8.5 6.7 0 3.3 3 6.1 7.1 6.6.6.1.6.5.5 1l-.2 1.2c0 .3.3.6.7.4 2.5-1.3 6.6-4.2 8.1-6.1.5-.9.8-2 .8-3.1 0-3.7-3.8-6.7-8.5-6.7z"/><text x="12" y="13.2" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-weight="700" font-size="5.2" fill="#06C755">LINE</text></svg>';
-  for(const [cid,[gc,kind]] of Object.entries(BOXES)){
-    const box = document.getElementById(cid), st = document.getElementById("st-"+cid);
-    if(!box) continue;
-    const p = document.createElement("p"); p.className = "fb-row"; p.hidden = true;
-    p.innerHTML = `看到數字有誤？歡迎告訴 <a class="fb-line" href="https://lin.ee/n5vh3y9" target="_blank" rel="noopener" aria-label="透過球數實驗室官方 LINE 提供意見回饋（另開新視窗）" data-gc="${gc}">${svg}球數實驗室官方 LINE</a>`;
-    // 回傳 [父節點, 插在誰前面]
-    const spot = () => {
-      if(kind === "p"){ const cs = [...box.querySelectorAll(".pcard")]; if(cs.length){ const c = cs[Math.min(2, cs.length-1)]; return [c.parentNode, c.nextSibling === p ? p.nextSibling : c.nextSibling]; } }
-      if(kind === "r"){ const a = box.querySelector("article"); if(a) return [a.parentNode, a.nextSibling === p ? p.nextSibling : a.nextSibling]; }
-      if(kind === "h"){ const t = box.querySelector(".tblwrap"); if(t) return [t.parentNode, t]; }
-      return [box, null];
-    };
-    let busyFix = false;
-    const fn = () => { if(busyFix) return; busyFix = true;
-      try{
-        box.querySelectorAll(".fb-row").forEach(x => { if(x !== p) x.remove(); });
-        const txt = box.textContent.replace(p.textContent, "").trim();
-        const busy = box.classList.contains("sk-wait") || box.querySelector(".skc,.sk") || (st && st.querySelector(".err")) || !txt;
-        p.hidden = !!busy;
-        const [par, ref] = spot();
-        if(p.parentNode !== par || (ref ? p.nextSibling !== ref : par.lastChild !== p)) { if(ref === p) {} else par.insertBefore(p, ref); }
-      } finally { busyFix = false; }
-    };
-    const mo = new MutationObserver(() => { fn(); mo.takeRecords(); }); mo.observe(box,{childList:true,subtree:true,attributes:true,attributeFilter:["class"]}); if(st) mo.observe(st,{childList:true,subtree:true});
-    fn();
-  }
+  const fab = document.getElementById("line-fab"), foot = document.getElementById("foot");
+  if(!fab) return;
+  const upd = () => { fab.hidden = TAB_NOW === "about"; fab.dataset.gc = "line-feedback-float-" + (TAB_NOW === "about" ? "predict" : TAB_NOW); };
+  const _show = showTab; showTab = function(){ _show.apply(this, arguments); upd(); };
+  upd();
+  if(foot && "IntersectionObserver" in window) new IntersectionObserver(es => es.forEach(e => fab.classList.toggle("is-hidden", e.isIntersecting))).observe(foot);
 })();

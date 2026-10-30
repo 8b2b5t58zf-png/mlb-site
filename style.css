@@ -427,10 +427,6 @@ html.pre-nba #lg-tag::after{font-size:18px}
 .site-foot .foot-links span{color:#8b949e}
 .about-page a.about-line{display:inline-flex;align-items:center;min-height:44px;color:var(--link)}
 .site-foot .foot-links a .line-ic,.about-page a.about-line .line-ic{flex:none;margin-right:6px}
-.fb-row{display:flex;justify-content:center;align-items:center;margin:4px 16px;font-size:13px;color:#8b949e;white-space:nowrap}
-.fb-row[hidden]{display:none}
-.fb-row a{display:inline-flex;align-items:center;gap:6px;min-height:44px;color:var(--link)}
-.fb-row a .line-ic{width:16px;height:16px;flex:none}
 
 /* NBA 命中率頁依日期收合（10/30） */
 .hr-cg1{margin:8px 0 4px}
@@ -451,4 +447,9 @@ html.pre-nba #lg-tag::after{font-size:18px}
 .hr-dbtn[aria-expanded="true"] .hr-car{transform:rotate(-135deg)}
 .hr-more{display:block;width:100%;min-height:44px;margin:12px 0 0;background:none;border:1px solid #30363d;border-radius:8px;color:var(--link);font-size:14px;cursor:pointer}
 .hr-more:focus-visible{outline:2px solid #d4af37;outline-offset:2px}
-#hit .fb-row,#nba-hit .fb-row{margin-left:0;margin-right:0}
+.line-fab{position:fixed;right:12px;bottom:calc(var(--nav-h) + env(safe-area-inset-bottom) + 12px);z-index:18;width:48px;height:48px;border-radius:50%;background:#06C755;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.45);transition:opacity .2s,transform .2s}
+.line-fab[hidden]{display:none}
+.line-fab.is-hidden{opacity:0;pointer-events:none;transform:translateY(8px)}
+.line-fab svg{display:block;width:24px;height:24px}
+@media (min-width:768px){.line-fab{right:24px;bottom:24px}}
+@media (prefers-reduced-motion:reduce){.line-fab{transition:none}}
