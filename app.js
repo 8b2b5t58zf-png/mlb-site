@@ -768,7 +768,7 @@ function setLeague(lg){
   document.getElementById("lg-tag").textContent = "｜" + lg.toUpperCase();
   document.getElementById("tg-scope").textContent = lg==="nba" ? "用 2025-26 季比賽驗證過" : "用 2026 整季比賽驗證過";
   document.getElementById("lg-sub").textContent = lg==="nba" ? "AI 運動實驗室・NBA 美國職籃勝負預測與賽後分析" : "AI 運動實驗室・美國職棒大聯盟勝負預測與賽後分析";
-  document.getElementById("foot").innerHTML = '<p class="foot-src">球數實驗室（AI Sports Lab）為個人數據分析網站，非投注建議。資料來源：MLB Stats API、ESPN。</p><p><a href="#about" data-go="about" class="foot-about">關於與免責</a></p>';
+  document.getElementById("foot").innerHTML = '<p class="foot-src">球數實驗室（AI Sports Lab）為個人數據分析網站，非投注建議。資料來源：MLB Stats API、ESPN。</p><p class="foot-links"><a href="#about" data-go="about" class="foot-about">關於與免責</a><span aria-hidden="true">·</span><a class="foot-line" href="https://lin.ee/n5vh3y9" target="_blank" rel="noopener" aria-label="透過 LINE 官方帳號提供意見回饋（另開新視窗）" data-gc="line-feedback-footer">意見回饋（LINE）</a></p>';
   footUpd(lg);
   document.title = `${lg.toUpperCase()} 勝負預測與賽後分析｜球數實驗室｜AI Sports Lab`;
   renderNav();
@@ -820,6 +820,7 @@ function setupNav(){
   });
   addEventListener("popstate", () => { const p = parseHash(location.hash) || {lg:"mlb", tab:"predict"}; go(p.lg, p.tab, false); });
   addEventListener("hashchange", () => { const p = parseHash(location.hash); if(p && (p.lg!==LG_NOW || p.tab!==TAB_NOW)) go(p.lg, p.tab, false); });
+  document.addEventListener("click", e => { const g = e.target.closest("a[data-gc]"); if(!g) return; try{ if(window.goatcounter && window.goatcounter.count) window.goatcounter.count({path:g.dataset.gc, title:"LINE 意見回饋", event:true}); }catch(err){} });
   document.addEventListener("click", e => { const a = e.target.closest("a[data-go]"); if(!a) return; e.preventDefault(); go(LG_NOW, a.dataset.go, true); });
   // 優先順序：網址 # > ?lg= > 上次記住的 > 預設 MLB 預測
   let p = parseHash(location.hash), lg = "mlb", tab = "predict";

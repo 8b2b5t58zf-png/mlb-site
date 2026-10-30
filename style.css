@@ -420,3 +420,9 @@ header h1.brand{height:48px;line-height:48px;white-space:nowrap;overflow:hidden;
 .brand .sport{font-size:1em;font-weight:600;color:#d4af37;flex:none}
 html.pre-nba #lg-tag::after{font-size:18px}
 @media(max-width:360px){header h1.brand{font-size:17px;gap:6px}html.pre-nba #lg-tag::after{font-size:17px}}
+
+/* LINE 意見回饋（10/30） */
+.site-foot .foot-links{display:flex;justify-content:center;align-items:center;gap:4px;margin:0}
+.site-foot .foot-links a{display:inline-flex;align-items:center;min-height:44px;padding:0 8px;font-size:13px;color:var(--link);white-space:nowrap}
+.site-foot .foot-links span{color:#8b949e}
+.about-page a.about-line{display:inline-flex;align-items:center;min-height:44px;color:var(--link)}
