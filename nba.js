@@ -308,12 +308,19 @@ async function nbaHit(){
   const isNew = x => (x.official||{}).model === NM.ver, old = d.records.filter(x => x.official && x.correct !== null && !isNew(x)), oOk = old.filter(x=>x.correct).length;
   const done = d.records.filter(x => x.official && x.correct !== null && isNew(x)), n = done.length, ok = done.filter(x => x.correct).length;
   let html = n >= GOAL ? `<div class="hr-big">${Math.round(ok/n*100)}%</div><div class="hr-sub">NBA 模型命中率（共 ${n} 場）</div>`
-    : `<div class="hr-big muted">累積中</div><div class="hr-prog"><div class="hr-bar"><div style="width:${n/GOAL*100}%"></div></div><span>NBA：${n} / ${GOAL} 場</span></div><div class="hr-ref">滿 ${GOAL} 場正式預測後顯示命中率</div>`;
-  html += confGroups(d.records, x => x.official.model === NM.ver, [60, 70], "nba");
-  if(old.length) html += `<p class="note">舊版模型 v1 另計：${old.length} 場猜對 ${oOk} 場</p>`;
+    : `<div class="hr-big muted">累積中</div><div class="hr-prog"><div class="hr-bar"><div style="width:${n/GOAL*100}%"></div></div><span>NBA：${n} / ${GOAL} 場</span></div>`;
+  // 信心分級收成一行：全部場次＋信心 70% 以上（與 confGroups 同算法：用四捨五入前、到小數一位的勝率，排除剛好 50%）
+  const cut = 70, gv = done.filter(x => x.status !== "cancelled" && x.official.homeWinProb !== 0.5);
+  const hiG = gv.filter(x => { const hp = x.official.homeWinProb, q = Math.round(Math.max(hp,1-hp)*1000)/10; return q >= cut; });
+  const cv = xs => { const k = xs.length, m = xs.filter(x => x.correct).length; return k >= GOAL ? `<span class="num">${Math.round(m/k*100)}%</span>（<span class="num">${m}/${k}</span> 場）` : `累積中（<span class="num">${k}</span> 場）`; };
+  html += `<div class="hr-cg1"><div class="cg-row"><span class="cg-l">全部場次</span><span class="cg-v">${cv(gv)}</span></div><div class="cg-row"><span class="cg-l">信心 <span class="num">${cut}%</span> 以上</span><span class="cg-v">${cv(hiG)}</span></div></div>`;
+  html += `<details class="hr-fold"><summary>看各信心分級</summary>${confGroups(d.records, x => x.official.model === NM.ver, [60, 70], "nba")}</details>`;
+  const how = [`樣本少於 <span class="num">${GOAL}</span> 場僅供參考`, "命中率只計算已結算場次・非投注建議"];
+  if(old.length) how.push(`舊版模型 v1 另計：${old.length} 場猜對 ${oOk} 場`);
+  html += `<details class="hr-fold"><summary>怎麼算的</summary><div class="hr-how">${how.map(t => `<p class="note">${t}</p>`).join("")}</div></details>`;
   html += `<p class="hr-upd">最後更新：${fmtT(d.updated)}（台灣時間）</p>`;
   if(!d.records.length){ el.innerHTML = html + '<p class="note">2026-27 例行賽 10/21（台灣時間）開打，開打前會開始記錄。</p>'; return; }
-  html += '<p class="note hr-cnt">命中率只計算已結算場次・非投注建議</p><div class="tblwrap" style="overflow-x:auto"><table class="hrt"><tr><th>比賽時間</th><th class="mu-h"><span class="mu-full">對戰（客 @ 主）</span><span class="mu-short">客 @ 主</span></th><th>預測</th><th class="dk">勝率</th><th class="dk">實際比分</th><th class="dk">結果</th></tr>';
+  html += '<div class="tblwrap" style="overflow-x:auto"><table class="hrt hrt-nba"><thead><tr><th>比賽時間</th><th class="mu-h"><span class="mu-full">對戰（客 @ 主）</span><span class="mu-short">客 @ 主</span></th><th>預測</th><th class="dk">勝率</th><th class="dk">實際比分</th><th class="dk">結果</th></tr></thead>';
   // 開季第一天排程漏跑，這兩場依開賽前快照補記（B N 10/21 決定）；只影響顯示
   const BF = {"401909088":"依開賽前快照補記（10/18 18:24）","401909089":"依開賽前快照補記（10/18 18:24）"};
   // 只列：已結算、已開打待結算、下一個比賽日（台灣日期）的場次；後天以後的不列（10/22 UI設計師）
@@ -323,13 +330,37 @@ async function nbaHit(){
   // 已結束：ESPN 狀態 post／final；拿不到狀態時，開打超過 3 小時就當作已結束
   const EST = {}; for(const e of NALL) EST[e.id] = e.status && e.status.type;
   const fin = x => { const t = EST[x.id]; return t && t.state ? (t.state === "post" || !!t.completed) : nowT - gt(x) > 3*3600e3; };
-  for(const x of rows){
+  const rowH = x => {
     const started = gt(x) <= nowT, wait = x.final == null && x.correct == null;
     const sn = x.official || x.snapshots[x.snapshots.length-1], hp = sn.homeWinProb, pw = hp >= .5 ? x.home : x.away;
-    html += `<tr><td class="nw dt">${fmtDH(x.gameTime)}</td><td class="nw mu">${x.away} @ ${x.home}</td><td class="nw">${pw}${x.correct==null?"":" "+resMark(x.correct)}${x.official?"":TENT}</td><td class="num dk">${pDisp(hp*100)[hp>=.5?0:1]}%</td><td class="dk${x.final?"":" pend"}">${x.final||(fin(x)?"比分更新中":started?"進行中":"未開打")}</td><td class="dk${wait?" pend":""}">${wait?(started?"待結算":"未開打"):x.correct?"猜對":"猜錯"}</td></tr>`;
-    if(BF[x.id]) html += `<tr class="bf-row"><td colspan="6"><span class="bf-note">${BF[x.id]}</span></td></tr>`;
-  }
-  el.innerHTML = html + "</table></div>";
+    let h = `<tr><td class="nw dt">${fmtDH(x.gameTime)}</td><td class="nw mu">${x.away} @ ${x.home}</td><td class="nw">${pw}${x.correct==null?"":" "+resMark(x.correct)}${x.official?"":TENT}</td><td class="num dk">${pDisp(hp*100)[hp>=.5?0:1]}%</td><td class="dk${x.final?"":" pend"}">${x.final||(fin(x)?"比分更新中":started?"進行中":"未開打")}</td><td class="dk${wait?" pend":""}">${wait?(started?"待結算":"未開打"):x.correct?"猜對":"猜錯"}</td></tr>`;
+    if(BF[x.id]) h += `<tr class="bf-row"><td colspan="6"><span class="bf-note">${BF[x.id]}</span></td></tr>`;
+    return h; };
+  // 依台灣開打日分組（只改顯示）：最近兩個比賽日、以及還有未結算場次的日子展開；更早的每天一行摘要，點開看逐場
+  const days = []; for(const x of rows){ const k = x.gameTime.slice(0,10); if(!days.length || days[days.length-1].k !== k) days.push({k, xs:[]}); days[days.length-1].xs.push(x); }
+  const STEP = 14;
+  days.forEach((g, i) => {
+    const st = g.xs.filter(x => x.official && isNew(x) && x.correct != null), hit = st.filter(x => x.correct).length, pend = g.xs.length - g.xs.filter(x => x.correct != null).length;
+    const md = `${+g.k.slice(5,7)}/${+g.k.slice(8,10)}`, more = i >= STEP ? " hidden" : "";
+    const open = i < 2 || pend > 0;
+    const sum = pend ? `已結算 <span class="num">${st.length}</span> 場，命中 <span class="num">${hit}</span> 場，待結算 <span class="num">${pend}</span> 場` : `<span class="num">${st.length}</span> 場，命中 <span class="num">${hit}</span> 場`;
+    const body = g.xs.map(rowH).join("");
+    if(open) html += `<tbody class="hr-day open" data-day="${g.k}" data-st="${st.length}" data-hit="${hit}" data-i="${i}"${more}>${body}</tbody>`;
+    else html += `<tbody class="hr-day" data-day="${g.k}" data-st="${st.length}" data-hit="${hit}" data-i="${i}"${more}><tr class="hr-dsum"><td colspan="6"><button type="button" class="hr-dbtn" aria-expanded="false" aria-controls="hrd-${g.k}"><span class="hr-dt num">${md}</span>　<span class="hr-ds">${sum}</span><span class="hr-car" aria-hidden="true"></span></button></td></tr></tbody><tbody class="hr-drows" id="hrd-${g.k}" hidden>${body}</tbody>`;
+  });
+  html += "</table></div>";
+  if(days.length > STEP) html += `<button type="button" class="hr-more" data-shown="${STEP}">看更早的紀錄</button>`;
+  el.innerHTML = html;
+  el.querySelectorAll(".hr-dbtn").forEach(b => b.addEventListener("click", () => {
+    const t = document.getElementById(b.getAttribute("aria-controls")), on = b.getAttribute("aria-expanded") !== "true";
+    b.setAttribute("aria-expanded", on ? "true" : "false"); t.hidden = !on; }));
+  const mb = el.querySelector(".hr-more");
+  if(mb) mb.addEventListener("click", () => {
+    const shown = +mb.dataset.shown + STEP; mb.dataset.shown = shown;
+    el.querySelectorAll("tbody.hr-day[hidden]").forEach(tb => { if(+tb.dataset.i < shown) tb.hidden = false; });
+    try{ if(window.goatcounter && window.goatcounter.count) window.goatcounter.count({path:"hitrate-more-nba", title:"看更早的紀錄", event:true}); }catch(e){}
+    if(shown >= days.length) mb.remove();
+  });
 }
 // 延遲提示還在時，戰績那一行不顯示比預測頁資料時間還新的時刻（與「資料時間」同一刻，24 小時制）
 function nDelayed(){ return !!(NTODAY && NDAT && Date.now() - NDAT > 3600e3); }
