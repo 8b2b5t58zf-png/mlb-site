@@ -855,3 +855,24 @@ setupNav();
   mark(document);
   new MutationObserver(ms=>ms.forEach(m=>m.addedNodes.forEach(n=>n.nodeType===1&&mark(n)))).observe(document.body,{childList:true,subtree:true});
 })();
+
+// LINE 回饋列：預測／賽後／命中率三頁內容最後面；載入中、骨架或錯誤時隱藏
+(function(){
+  const SECS = {"sec-predict":["predict","line-feedback-predict"],"sec-analysis":["analysis","line-feedback-recap"],"sec-hit":["hit","line-feedback-hitrate"],
+    "nsec-predict":["nba-predict-list","line-feedback-predict"],"nsec-analysis":["nba-analysis","line-feedback-recap"],"nsec-hit":["nba-hit","line-feedback-hitrate"]};
+  const svg = '<svg class="line-ic" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" focusable="false"><rect width="24" height="24" rx="5.5" fill="#06C755"/><path fill="#fff" d="M12 4.5c-4.7 0-8.5 3-8.5 6.7 0 3.3 3 6.1 7.1 6.6.6.1.6.5.5 1l-.2 1.2c0 .3.3.6.7.4 2.5-1.3 6.6-4.2 8.1-6.1.5-.9.8-2 .8-3.1 0-3.7-3.8-6.7-8.5-6.7z"/><text x="12" y="13.2" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-weight="700" font-size="5.2" fill="#06C755">LINE</text></svg>';
+  const upd = [];
+  for(const [sid,[cid,gc]] of Object.entries(SECS)){
+    const sec = document.getElementById(sid), box = document.getElementById(cid), st = document.getElementById("st-"+cid);
+    if(!sec || !box) continue;
+    let p = sec.querySelector(":scope > .fb-row");
+    if(!p){ p = document.createElement("p"); p.className = "fb-row"; p.hidden = true;
+      p.innerHTML = `有錯誤或建議？告訴我們：<a class="fb-line" href="https://lin.ee/n5vh3y9" target="_blank" rel="noopener" aria-label="透過球數實驗室官方 LINE 提供意見回饋（另開新視窗）" data-gc="${gc}">${svg}球數實驗室官方 LINE</a>`;
+      sec.appendChild(p); }
+    const fn = () => { const busy = box.classList.contains("sk-wait") || box.querySelector(".skc,.sk") || (st && st.querySelector(".err")) || !box.textContent.trim();
+      p.hidden = !!busy; if(sec.lastElementChild!==p) sec.appendChild(p); };
+    upd.push(fn);
+    const mo = new MutationObserver(fn); mo.observe(box,{childList:true,subtree:true,attributes:true,attributeFilter:["class"]}); if(st) mo.observe(st,{childList:true,subtree:true});
+    fn();
+  }
+})();
