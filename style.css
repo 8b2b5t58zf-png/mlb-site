@@ -426,3 +426,4 @@ html.pre-nba #lg-tag::after{font-size:18px}
 .site-foot .foot-links a{display:inline-flex;align-items:center;min-height:44px;padding:0 8px;font-size:13px;color:var(--link);white-space:nowrap}
 .site-foot .foot-links span{color:#8b949e}
 .about-page a.about-line{display:inline-flex;align-items:center;min-height:44px;color:var(--link)}
+.site-foot .foot-links a .line-ic,.about-page a.about-line .line-ic{flex:none;margin-right:6px}

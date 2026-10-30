@@ -768,7 +768,7 @@ function setLeague(lg){
   document.getElementById("lg-tag").textContent = "｜" + lg.toUpperCase();
   document.getElementById("tg-scope").textContent = lg==="nba" ? "用 2025-26 季比賽驗證過" : "用 2026 整季比賽驗證過";
   document.getElementById("lg-sub").textContent = lg==="nba" ? "AI 運動實驗室・NBA 美國職籃勝負預測與賽後分析" : "AI 運動實驗室・美國職棒大聯盟勝負預測與賽後分析";
-  document.getElementById("foot").innerHTML = '<p class="foot-src">球數實驗室（AI Sports Lab）為個人數據分析網站，非投注建議。資料來源：MLB Stats API、ESPN。</p><p class="foot-links"><a href="#about" data-go="about" class="foot-about">關於與免責</a><span aria-hidden="true">·</span><a class="foot-line" href="https://lin.ee/n5vh3y9" target="_blank" rel="noopener" aria-label="透過 LINE 官方帳號提供意見回饋（另開新視窗）" data-gc="line-feedback-footer">意見回饋（LINE）</a></p>';
+  document.getElementById("foot").innerHTML = '<p class="foot-src">球數實驗室（AI Sports Lab）為個人數據分析網站，非投注建議。資料來源：MLB Stats API、ESPN。</p><p class="foot-links"><a href="#about" data-go="about" class="foot-about">關於與免責</a><span aria-hidden="true">·</span><a class="foot-line" href="https://lin.ee/n5vh3y9" target="_blank" rel="noopener" aria-label="透過 LINE 官方帳號提供意見回饋（另開新視窗）" data-gc="line-feedback-footer"><svg class="line-ic" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><rect width="24" height="24" rx="5.5" fill="#06C755"/><path fill="#fff" d="M12 4.5c-4.7 0-8.5 3-8.5 6.7 0 3.3 3 6.1 7.1 6.6.6.1.6.5.5 1l-.2 1.2c0 .3.3.6.7.4 2.5-1.3 6.6-4.2 8.1-6.1.5-.9.8-2 .8-3.1 0-3.7-3.8-6.7-8.5-6.7z"/><text x="12" y="13.2" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-weight="700" font-size="5.2" fill="#06C755">LINE</text></svg>球數實驗室官方 LINE</a></p>';
   footUpd(lg);
   document.title = `${lg.toUpperCase()} 勝負預測與賽後分析｜球數實驗室｜AI Sports Lab`;
   renderNav();
