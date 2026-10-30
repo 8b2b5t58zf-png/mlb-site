@@ -84,7 +84,7 @@ let NALL = [];   // 近期所有賽程（判斷背靠背：前 36 小時內同�
 // 今日數據焦點（NBA）：列表第一天勝率最接近五成的一場，排第一張
 let NFOCUS = null;
 let NRECG = {};   // data/nba-predictions.json 的紀錄（id → 紀錄）
-let NDAT = null, NTODAY = false;   // 預測頁資料時間、今天（台灣日期）有沒有比賽，給「資料更新延遲」提示條用
+let NDAT = null, NWIN = [];   // 預測頁資料時間、守候時段（每個台灣日期：第一場開打前 30 分鐘到最後一場開打後 4 小時），給「資料更新延遲」提示條用
 function nInPlay(e){
   const t = (e && e.status && e.status.type) || {};
   return t.state === "in" && t.completed !== true && !/postponed|canceled|cancelled/i.test(t.name || "");
@@ -195,7 +195,7 @@ async function nbaGames(){
   // 最多約 8 張卡，但第 8 張那天（台灣日期）的比賽要全部顯示，不能切掉同一天後面的場次（10/22 11 場只出 8 張）
   const upShow = up.length > 8 ? up.filter((e,i) => i < 8 || twKey(e.date) === twKey(up[7].date)) : up;
   const nPost = upShow.some(e => e.season.type===3);
-  NDAT = usedCache || nbaAt; NTODAY = all.some(e => (e.season.type===2 || e.season.type===3) && twKey(e.date) === twKey(new Date()));
+  NDAT = usedCache || nbaAt; NWIN = (g => Object.values(g).map(ts => [Math.min(...ts) - 30*60e3, Math.max(...ts) + 4*3600e3]))(all.filter(e => (e.season.type===2 || e.season.type===3) && !/postponed|cancel/i.test(e.status.type.name||"")).reduce((g,e) => { (g[twKey(e.date)] = g[twKey(e.date)] || []).push(+new Date(e.date)); return g; }, {}));
   const nIn = upShow.filter(nInPlay);
   let nLiveSum = "", nLiveDay = "";
   if(nIn.length){ nLiveDay = nIn.map(e => twKey(e.date)).sort()[0];
@@ -363,7 +363,12 @@ async function nbaHit(){
   });
 }
 // 延遲提示還在時，戰績那一行不顯示比預測頁資料時間還新的時刻（與「資料時間」同一刻，24 小時制）
-function nDelayed(){ return !!(NTODAY && NDAT && Date.now() - NDAT > 3600e3); }
+// 延遲門檻（產品經理 10/31 定案，數據分析師時刻表）：守候時段內超過 75 分鐘沒更新；守候時段外超過 10 小時（正常最長空檔約 7.5 小時＋2）
+function nDelayed(now = Date.now()){
+  if(!NDAT) return false;
+  const inWin = NWIN.some(([a,b]) => now >= a && now <= b);
+  return now - NDAT > (inWin ? 75*60e3 : 10*3600e3);
+}
 function nUpdHTML(){
   const stand = NST_AT || Date.now();
   if(nDelayed() && stand > NDAT) return `<div class="upd">戰績更新：${twMD(NDAT)}（台灣時間）</div>`;
@@ -374,7 +379,7 @@ function nSyncUpd(){
   const html = nUpdHTML();
   document.querySelectorAll("#nba-predict-list .upd").forEach(el => { el.outerHTML = html; });
 }
-// 資料更新延遲提示條：今天有比賽、預測頁資料時間超過 1 小時就顯示在資料時間那行正下方；資料更新後消失（用字：內容編輯 10/22）
+// 資料更新延遲提示條：依 nDelayed 門檻判斷，顯示在資料時間那行正下方；資料更新後消失（用字：內容編輯 10/22）
 // 括號裡的時刻取自與「資料時間」相同的 twMD，避免兩行各寫各的
 function nbaDelay(){
   const st = document.getElementById("st-nba-predict-list"); if(!st) return;
