@@ -627,7 +627,7 @@ async function renderAnalysis(games){
 const fmtD = s => { const m = String(s).match(/(\d+)-(\d+)-(\d+) (\d+:\d+)/); return m ? `${+m[2]}/${+m[3]} ${m[4]}` : s; };
 const fmtDH = s => { const m = String(s).match(/(\d+)-(\d+)-(\d+) (\d+:\d+)/); return m ? `<span class="dd">${+m[2]}/${+m[3]}</span> <span class="tt">${m[4]}</span>` : s; };
 const TENT = '';   // 命中率表：預測欄只放預測的隊名；「未開打」只放在實際比分與結果欄（10/22）
-const resMark = c => c === null || c === undefined ? '<span class="rm wait">待賽</span>' : c ? '<span class="rm ok" aria-label="猜對">✓</span>' : '<span class="rm bad" aria-label="猜錯">✗</span>';
+const resMark = c => c === null || c === undefined ? '<span class="rm wait">待賽</span>' : c ? '<span class="rm ok" aria-label="命中">✓</span>' : '<span class="rm bad" aria-label="未命中">✗</span>';
 const fmtT = s => { const m = String(s).match(/(\d+)-(\d+)-(\d+) (\d+):(\d+)/); return m ? `${+m[2]}/${+m[3]} ${m[4]}:${m[5]}` : s; };
 const FULL2SHORT = Object.fromEntries(Object.values(ZH));
 const short = n => FULL2SHORT[n] || n;
@@ -698,7 +698,7 @@ async function secHit(){
     const gt = Date.parse(x.gameTime.slice(0,16).replace(" ","T") + ":00+08:00"), started = gt <= Date.now(), wait = x.correct === null || x.correct === undefined;
     const fin = () => { const t = MST[x.gamePk]; return t && t.abstractGameState ? t.abstractGameState === "Final" : Date.now() - gt > 3*3600e3; };
     const v = (snap.model||"").slice(0,2);
-    html += `<tr><td class="nw dt">${fmtDH(x.gameTime)}</td><td class="nw mu">${short(x.away)} @ ${short(x.home)}</td><td class="md"><span class="vp ${v}">${v}</span></td><td class="nw">${short(pw)}${x.correct==null?"":" "+resMark(x.correct)}${tag}${noSp(x.official) ? `<div class="nosp">${WHY_TXT.noSp}</div>` : ""}</td><td class="dk">${pDisp(p*100)[0]}%</td><td class="dk${x.final?"":" pend"}">${x.final || (fin(x) ? "比分更新中" : started ? "進行中" : "未開打")}</td><td class="dk${wait?" pend":""}">${wait ? (started ? "待結算" : "未開打") : x.correct ? "猜對" : "猜錯"}</td></tr>`;
+    html += `<tr><td class="nw dt">${fmtDH(x.gameTime)}</td><td class="nw mu">${short(x.away)} @ ${short(x.home)}</td><td class="md"><span class="vp ${v}">${v}</span></td><td class="nw">${short(pw)}${x.correct==null?"":" "+resMark(x.correct)}${tag}${noSp(x.official) ? `<div class="nosp">${WHY_TXT.noSp}</div>` : ""}</td><td class="dk">${pDisp(p*100)[0]}%</td><td class="dk${x.final?"":" pend"}">${x.final || (fin(x) ? "比分更新中" : started ? "進行中" : "未開打")}</td><td class="dk${wait?" pend":""}">${wait ? (started ? "待結算" : "未開打") : x.correct ? "命中" : "未命中"}</td></tr>`;
   }
   el.innerHTML = html + "</table></div>";
 }
