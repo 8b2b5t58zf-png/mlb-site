@@ -84,7 +84,7 @@ let NALL = [];   // 近期所有賽程（判斷背靠背：前 36 小時內同�
 // 今日數據焦點（NBA）：列表第一天勝率最接近五成的一場，排第一張
 let NFOCUS = null;
 let NRECG = {};   // data/nba-predictions.json 的紀錄（id → 紀錄）
-let NDAT = null, NWIN = [];   // 預測頁資料時間、守候時段（每個台灣日期：第一場開打前 30 分鐘到最後一場開打後 4 小時），給「資料更新延遲」提示條用
+let NDAT = null, NWIN = [];   // 預測頁資料時間、守候時段（每個台灣日期：第一場開打前 60 分鐘到最後一場開打後 5.5 小時，與 scripts/nba_watch.py 一致），給「資料更新延遲」提示條用
 function nInPlay(e){
   const t = (e && e.status && e.status.type) || {};
   return t.state === "in" && t.completed !== true && !/postponed|canceled|cancelled/i.test(t.name || "");
@@ -195,7 +195,7 @@ async function nbaGames(){
   // 最多約 8 張卡，但第 8 張那天（台灣日期）的比賽要全部顯示，不能切掉同一天後面的場次（10/22 11 場只出 8 張）
   const upShow = up.length > 8 ? up.filter((e,i) => i < 8 || twKey(e.date) === twKey(up[7].date)) : up;
   const nPost = upShow.some(e => e.season.type===3);
-  NDAT = usedCache || nbaAt; NWIN = (g => Object.values(g).map(ts => [Math.min(...ts) - 30*60e3, Math.max(...ts) + 4*3600e3]))(all.filter(e => (e.season.type===2 || e.season.type===3) && !/postponed|cancel/i.test(e.status.type.name||"")).reduce((g,e) => { (g[twKey(e.date)] = g[twKey(e.date)] || []).push(+new Date(e.date)); return g; }, {}));
+  NDAT = usedCache || nbaAt; NWIN = (g => Object.values(g).map(ts => [Math.min(...ts) - 60*60e3, Math.max(...ts) + 5.5*3600e3]))(all.filter(e => (e.season.type===2 || e.season.type===3) && !/postponed|cancel/i.test(e.status.type.name||"")).reduce((g,e) => { (g[twKey(e.date)] = g[twKey(e.date)] || []).push(+new Date(e.date)); return g; }, {}));
   const nIn = upShow.filter(nInPlay);
   let nLiveSum = "", nLiveDay = "";
   if(nIn.length){ nLiveDay = nIn.map(e => twKey(e.date)).sort()[0];
