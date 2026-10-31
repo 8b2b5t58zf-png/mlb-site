@@ -64,9 +64,9 @@ if __name__ == "__main__":
         if in_window(now, ts): update(); ts = times()
         now = datetime.now(TZ); w = next_wake(now, ts)
         if not in_window(w, ts) and not in_window(w + timedelta(minutes=40), ts):
-            # GitHub 排程常延遲或漏跑（10/22 05:12、05:42 都沒叫醒），所以 3 小時內有比賽時段就自己等到時段開始，不靠下一次排程
+            # GitHub 排程常延遲或漏跑（10/22 05:12、05:42、10/31 06:12、06:42 都沒叫醒），所以 4.5 小時內有比賽時段就自己等到時段開始，不靠下一次排程；固定更新跑完也會接著啟動這支（10/31 小組定案）
             st = [t - PRE for t, _ in ts if t - PRE > now]
-            if st and min(st) - now <= timedelta(hours=3) and time.time() - T0 + (min(st) - now).total_seconds() < MAX - 3600:
+            if st and min(st) - now <= timedelta(hours=4, minutes=30) and time.time() - T0 + (min(st) - now).total_seconds() < MAX - 3600:
                 w = min(st); log("等比賽時段開始：", w.strftime("%m/%d %H:%M")); time.sleep(max(0, (w - now).total_seconds())); continue
             log("接下來沒有在比賽時段內，結束（下次由排程叫醒）"); break
         if time.time() - T0 + (w - now).total_seconds() > MAX:

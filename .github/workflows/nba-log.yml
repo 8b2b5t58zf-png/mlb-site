@@ -9,6 +9,7 @@ on:
   workflow_dispatch:
 permissions:
   contents: write
+  actions: write
 concurrency: { group: data-commit, cancel-in-progress: false }
 jobs:
   log:
@@ -27,3 +28,7 @@ jobs:
           git add data/nba-predictions.json data/nba
           # 同一時間有別的提交時 push 會被拒（10/17 09:28 那次就是這樣漏掉），最多重試 3 次
           git diff --cached --quiet || { git commit -m "更新 NBA 資料與預測紀錄"; for i in 1 2 3; do git pull --rebase && git push && exit 0; sleep 10; done; exit 1; }
+      - name: 接著啟動賽程守候（GitHub 每小時叫醒常被跳過，10/31 06:00 漏掉；守候程式會自己等到第一場開打前 60 分鐘，已有一輪在跑就直接結束）
+        if: always()
+        env: { GH_TOKEN: "${{ github.token }}" }
+        run: gh workflow run nba-watch.yml --ref main || echo "啟動守候失敗，交給每小時叫醒"
