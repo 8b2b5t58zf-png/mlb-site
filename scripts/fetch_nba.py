@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # 每小時把 ESPN NBA 公開資料存成網站內的檔案（data/nba/*.json），網頁先讀這些檔案，抓不到才直接連 ESPN。
 # 每個檔案都有 fetched_at（ISO 8601，UTC）。某一項抓失敗就保留上一次的檔案，不覆蓋。
-import json, os, urllib.request, urllib.error
+import json, os, time, urllib.request, urllib.error
 from datetime import datetime, timedelta, timezone
 
 ESPN = "https://site.api.espn.com/apis/site/v2/sports/basketball/nba"
@@ -16,7 +16,7 @@ def get(u):
     last = None
     for _ in range(3):
         try: return json.load(urllib.request.urlopen(urllib.request.Request(u, headers=UA), timeout=30))
-        except Exception as e: last = e
+        except Exception as e: last = e; time.sleep(5)   # ESPN 偶爾回空白內容（10/30 12:31–15:01、10/31 06:57–07:45），隔幾秒再試
     raise last
 def save(name, payload):
     payload = {"fetched_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"), **payload}
@@ -49,12 +49,21 @@ now = datetime.now(timezone.utc)
 us = lambda off: (now - timedelta(hours=5) + timedelta(days=off)).strftime("%Y%m%d")
 
 def scoreboard():
-    days = {}
-    for off in range(-3, 4):
-        d = us(off); days[d] = {"events": [slim_ev(e) for e in get(f"{ESPN}/scoreboard?dates={d}").get("events", [])]}
+    # 一天抓不到只沿用那一天的舊資料，其他天照樣更新；以前一天失敗就整份不存，賽果停在舊檔、結算延後（10/30 灰熊對拓荒者晚 7 小時 49 分）
+    try: old = json.load(open(os.path.join(OUT, "scoreboard.json"), encoding="utf-8")).get("days", {})
+    except Exception: old = {}
+    days, ok = {}, 0
+    def one(d):
+        nonlocal ok
+        try: days[d] = {"events": [slim_ev(e) for e in get(f"{ESPN}/scoreboard?dates={d}").get("events", [])]}; ok += 1
+        except Exception as e:
+            print("scoreboard", d, e)
+            if d in old: days[d] = old[d]; print("scoreboard", d, "沿用舊檔")
+    for off in range(-3, 4): one(us(off))
     # 例行賽開幕日（2026-27），開打前網頁要顯示開幕賽程
     for d in ["20261020", "20261021", "20261022"]:
-        if d not in days and d >= us(0): days[d] = {"events": [slim_ev(e) for e in get(f"{ESPN}/scoreboard?dates={d}").get("events", [])]}
+        if d not in days and d >= us(0): one(d)
+    if not ok: raise RuntimeError("scoreboard 全部抓不到")
     return {"days": days}
 def summaries():
     sb = json.load(open(os.path.join(OUT, "scoreboard.json"), encoding="utf-8"))
