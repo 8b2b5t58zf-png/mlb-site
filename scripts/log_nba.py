@@ -99,6 +99,7 @@ for e in evs.values():
             r["final"] = f'{r["away"]} {as_} : {hs} {r["home"]}'
             r["actualWinner"] = r["home"] if hs > as_ else r["away"]
             r["correct"] = r["actualWinner"] == r["predictedWinner"]
+            if not r.get("settledAt"): r["settledAt"] = nowtw()  # 第一次寫入比分時填，之後不改；舊紀錄不補
 new = {"records": sorted(recs.values(), key=lambda r: r["gameTime"])}
 if json.dumps(new["records"], sort_keys=True, ensure_ascii=False) != ORIG or "updated" not in data:
     json.dump({"updated": nowtw(), **new}, open(OUT, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
