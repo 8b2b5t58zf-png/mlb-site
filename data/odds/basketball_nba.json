@@ -55,21 +55,21 @@
    "home_team": "Golden State Warriors"
   },
   "0a12a55607db0bd7eeafee050c45988e": {
-   "away_prob": 0.3888,
+   "away_prob": 0.3914,
    "away_team": "Oklahoma City Thunder",
    "bookmakers": 9,
    "commence_time": "2026-11-03T00:10:00Z",
-   "fetched_at": "2026-11-02T11:02:20Z",
-   "home_prob": 0.6112,
+   "fetched_at": "2026-11-02T23:06:39Z",
+   "home_prob": 0.6086,
    "home_team": "Cleveland Cavaliers"
   },
   "0a808d8f7afab3c0e249ca284c470806": {
-   "away_prob": 0.1835,
+   "away_prob": 0.1967,
    "away_team": "Chicago Bulls",
    "bookmakers": 9,
    "commence_time": "2026-11-03T00:40:00Z",
-   "fetched_at": "2026-11-02T11:02:20Z",
-   "home_prob": 0.8165,
+   "fetched_at": "2026-11-02T23:06:39Z",
+   "home_prob": 0.8033,
    "home_team": "Philadelphia 76ers"
   },
   "0abd50d04d02296b33809f9458fd47e4": {
@@ -136,12 +136,12 @@
    "home_team": "Washington Wizards"
   },
   "1dd700c1205f0c7287e5df99c7a17822": {
-   "away_prob": 0.3905,
+   "away_prob": 0.3926,
    "away_team": "Portland Trail Blazers",
    "bookmakers": 9,
    "commence_time": "2026-11-03T02:10:00Z",
-   "fetched_at": "2026-11-02T11:02:20Z",
-   "home_prob": 0.6095,
+   "fetched_at": "2026-11-02T23:06:39Z",
+   "home_prob": 0.6074,
    "home_team": "Denver Nuggets"
   },
   "1e3ca91e27ded6e4b4bb35aabb67b505": {
@@ -190,12 +190,12 @@
    "home_team": "Detroit Pistons"
   },
   "27c333f22603d4eda3b9b6a3888476dc": {
-   "away_prob": 0.3833,
+   "away_prob": 0.4359,
    "away_team": "Phoenix Suns",
-   "bookmakers": 6,
+   "bookmakers": 9,
    "commence_time": "2026-11-03T03:10:00Z",
-   "fetched_at": "2026-11-02T11:02:20Z",
-   "home_prob": 0.6167,
+   "fetched_at": "2026-11-02T23:06:39Z",
+   "home_prob": 0.5641,
    "home_team": "Golden State Warriors"
   },
   "2b042ddad3d3c6c6fe5b7005dc26c775": {
@@ -208,12 +208,12 @@
    "home_team": "New York Knicks"
   },
   "2b7218aa25cf98318a40e6f2469a5c5d": {
-   "away_prob": 0.5823,
+   "away_prob": 0.5848,
    "away_team": "Oklahoma City Thunder",
    "bookmakers": 1,
    "commence_time": "2026-12-26T01:10:00Z",
-   "fetched_at": "2026-11-02T11:02:20Z",
-   "home_prob": 0.4177,
+   "fetched_at": "2026-11-02T23:06:39Z",
+   "home_prob": 0.4152,
    "home_team": "Minnesota Timberwolves"
   },
   "3167a4072c65c9314c71d0fe49be8e28": {
@@ -307,12 +307,12 @@
    "home_team": "New York Knicks"
   },
   "4f6688e4d1818bd8bb3e65352c7a0406": {
-   "away_prob": 0.1374,
+   "away_prob": 0.1294,
    "away_team": "Brooklyn Nets",
    "bookmakers": 9,
    "commence_time": "2026-11-03T00:40:00Z",
-   "fetched_at": "2026-11-02T11:02:20Z",
-   "home_prob": 0.8626,
+   "fetched_at": "2026-11-02T23:06:39Z",
+   "home_prob": 0.8706,
    "home_team": "New York Knicks"
   },
   "4f6d199bb67cf3a517a3880fd2f00b26": {
@@ -325,12 +325,12 @@
    "home_team": "Philadelphia 76ers"
   },
   "53ad3f78c949e79381b5e90a70293ac6": {
-   "away_prob": 0.6429,
+   "away_prob": 0.7558,
    "away_team": "Atlanta Hawks",
-   "bookmakers": 7,
+   "bookmakers": 8,
    "commence_time": "2026-11-03T00:40:00Z",
-   "fetched_at": "2026-11-02T11:02:20Z",
-   "home_prob": 0.3571,
+   "fetched_at": "2026-11-02T23:06:39Z",
+   "home_prob": 0.2442,
    "home_team": "Indiana Pacers"
   },
   "5997ee5c9fbdc53f9c86732b02f58158": {
@@ -361,12 +361,12 @@
    "home_team": "Brooklyn Nets"
   },
   "6579d9162df09172d12f48eecc5220fb": {
-   "away_prob": 0.3403,
+   "away_prob": 0.3419,
    "away_team": "New Orleans Pelicans",
-   "bookmakers": 9,
+   "bookmakers": 8,
    "commence_time": "2026-11-03T01:10:00Z",
-   "fetched_at": "2026-11-02T11:02:20Z",
-   "home_prob": 0.6597,
+   "fetched_at": "2026-11-02T23:06:39Z",
+   "home_prob": 0.6581,
    "home_team": "Memphis Grizzlies"
   },
   "6669b911691463c669a5c10574742e8e": {
@@ -397,12 +397,12 @@
    "home_team": "Toronto Raptors"
   },
   "6907851d65a9d0046d4c6c2f4ffb5e80": {
-   "away_prob": 0.2133,
+   "away_prob": 0.2234,
    "away_team": "Milwaukee Bucks",
    "bookmakers": 9,
    "commence_time": "2026-11-03T01:10:00Z",
-   "fetched_at": "2026-11-02T11:02:20Z",
-   "home_prob": 0.7867,
+   "fetched_at": "2026-11-02T23:06:39Z",
+   "home_prob": 0.7766,
    "home_team": "Minnesota Timberwolves"
   },
   "69aa52b674648238de10389a3d343208": {
@@ -415,12 +415,12 @@
    "home_team": "Miami Heat"
   },
   "6acd74a2d987fa101c79eaf378fd5891": {
-   "away_prob": 0.4574,
+   "away_prob": 0.4217,
    "away_team": "Washington Wizards",
    "bookmakers": 9,
    "commence_time": "2026-11-03T00:40:00Z",
-   "fetched_at": "2026-11-02T11:02:20Z",
-   "home_prob": 0.5426,
+   "fetched_at": "2026-11-02T23:06:39Z",
+   "home_prob": 0.5783,
    "home_team": "Orlando Magic"
   },
   "6bfadbd22ed8a054cf82ec1b12b78243": {
@@ -586,12 +586,12 @@
    "home_team": "Cleveland Cavaliers"
   },
   "85a2379bc49135f2759709e55af0c4c6": {
-   "away_prob": 0.5427,
+   "away_prob": 0.5433,
    "away_team": "Denver Nuggets",
    "bookmakers": 2,
    "commence_time": "2026-12-26T03:40:00Z",
-   "fetched_at": "2026-11-02T11:02:20Z",
-   "home_prob": 0.4573,
+   "fetched_at": "2026-11-02T23:06:39Z",
+   "home_prob": 0.4567,
    "home_team": "Golden State Warriors"
   },
   "85e6e4e2404ef7268659739997758da1": {
@@ -725,7 +725,7 @@
    "away_team": "San Antonio Spurs",
    "bookmakers": 2,
    "commence_time": "2026-12-25T17:10:00Z",
-   "fetched_at": "2026-11-02T11:02:20Z",
+   "fetched_at": "2026-11-02T23:06:39Z",
    "home_prob": 0.4948,
    "home_team": "New York Knicks"
   },
@@ -757,12 +757,12 @@
    "home_team": "Houston Rockets"
   },
   "afde8462706839f30115ea9d5f761066": {
-   "away_prob": 0.6429,
+   "away_prob": 0.6204,
    "away_team": "Toronto Raptors",
    "bookmakers": 9,
    "commence_time": "2026-11-03T03:10:00Z",
-   "fetched_at": "2026-11-02T11:02:20Z",
-   "home_prob": 0.3571,
+   "fetched_at": "2026-11-02T23:06:39Z",
+   "home_prob": 0.3796,
    "home_team": "Los Angeles Clippers"
   },
   "b123d92eb8046e43fabf95a33a676634": {
@@ -901,12 +901,12 @@
    "home_team": "Utah Jazz"
   },
   "d60e7fc0690e4dff121a086395e24de4": {
-   "away_prob": 0.3589,
+   "away_prob": 0.3608,
    "away_team": "Miami Heat",
    "bookmakers": 2,
    "commence_time": "2026-12-25T19:40:00Z",
-   "fetched_at": "2026-11-02T11:02:20Z",
-   "home_prob": 0.6411,
+   "fetched_at": "2026-11-02T23:06:39Z",
+   "home_prob": 0.6392,
    "home_team": "Boston Celtics"
   },
   "d639f79210d0b4b17c8f293c53c8c5aa": {
@@ -919,12 +919,12 @@
    "home_team": "Cleveland Cavaliers"
   },
   "d6cb49b0ae478270e74d0e7ce7082e57": {
-   "away_prob": 0.3639,
+   "away_prob": 0.375,
    "away_team": "Boston Celtics",
    "bookmakers": 9,
    "commence_time": "2026-11-03T01:40:00Z",
-   "fetched_at": "2026-11-02T11:02:20Z",
-   "home_prob": 0.6361,
+   "fetched_at": "2026-11-02T23:06:39Z",
+   "home_prob": 0.625,
    "home_team": "Houston Rockets"
   },
   "d7525d3e92349ef234ca0c1ac699b365": {
@@ -964,21 +964,21 @@
    "home_team": "Sacramento Kings"
   },
   "df7f8fce0b1c11db5140d60e1e126eb3": {
-   "away_prob": 0.2336,
+   "away_prob": 0.2585,
    "away_team": "Sacramento Kings",
    "bookmakers": 9,
    "commence_time": "2026-11-03T01:10:00Z",
-   "fetched_at": "2026-11-02T11:02:20Z",
-   "home_prob": 0.7664,
+   "fetched_at": "2026-11-02T23:06:39Z",
+   "home_prob": 0.7415,
    "home_team": "Dallas Mavericks"
   },
   "dfd908bad3a3bfcae9e08bf128273b18": {
-   "away_prob": 0.4895,
+   "away_prob": 0.4896,
    "away_team": "Philadelphia 76ers",
    "bookmakers": 2,
    "commence_time": "2026-12-25T22:10:00Z",
-   "fetched_at": "2026-11-02T11:02:20Z",
-   "home_prob": 0.5105,
+   "fetched_at": "2026-11-02T23:06:39Z",
+   "home_prob": 0.5104,
    "home_team": "Los Angeles Lakers"
   },
   "e6769c813dd625b622df94c14a562ce2": {
@@ -1045,12 +1045,12 @@
    "home_team": "Cleveland Cavaliers"
   },
   "f4e4165c2b9e53531629f6d0ab982b13": {
-   "away_prob": 0.4492,
+   "away_prob": 0.4473,
    "away_team": "Miami Heat",
-   "bookmakers": 6,
+   "bookmakers": 9,
    "commence_time": "2026-11-03T03:10:00Z",
-   "fetched_at": "2026-11-02T11:02:20Z",
-   "home_prob": 0.5508,
+   "fetched_at": "2026-11-02T23:06:39Z",
+   "home_prob": 0.5527,
    "home_team": "Los Angeles Lakers"
   },
   "f6be3e587d43c3821d8f059c3a1f1967": {
@@ -1099,12 +1099,12 @@
    "home_team": "New Orleans Pelicans"
   },
   "fdf913d713fd5851d418c59872bdf265": {
-   "away_prob": 0.6188,
+   "away_prob": 0.6713,
    "away_team": "Detroit Pistons",
    "bookmakers": 9,
    "commence_time": "2026-11-03T00:40:00Z",
-   "fetched_at": "2026-11-02T11:02:20Z",
-   "home_prob": 0.3812,
+   "fetched_at": "2026-11-02T23:06:39Z",
+   "home_prob": 0.3287,
    "home_team": "Charlotte Hornets"
   },
   "fe453388be0a3bc6a39c847479cac46b": {
@@ -1121,10 +1121,10 @@
    "away_team": "Utah Jazz",
    "bookmakers": 9,
    "commence_time": "2026-11-03T01:40:00Z",
-   "fetched_at": "2026-11-02T11:02:20Z",
+   "fetched_at": "2026-11-02T23:06:39Z",
    "home_prob": 0.8842,
    "home_team": "San Antonio Spurs"
   }
  },
- "updated_at": "2026-11-02T11:02:20Z"
+ "updated_at": "2026-11-02T23:06:39Z"
 }
