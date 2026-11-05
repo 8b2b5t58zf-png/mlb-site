@@ -234,6 +234,15 @@
    "home_prob": 0.1754,
    "home_team": "Sacramento Kings"
   },
+  "2a76b31e02d1416de069a995589515fc": {
+   "away_prob": 0.4895,
+   "away_team": "Orlando Magic",
+   "bookmakers": 6,
+   "commence_time": "2026-11-06T02:10:00Z",
+   "fetched_at": "2026-11-05T10:53:28Z",
+   "home_prob": 0.5105,
+   "home_team": "Phoenix Suns"
+  },
   "2b042ddad3d3c6c6fe5b7005dc26c775": {
    "away_prob": 0.3829,
    "away_team": "Philadelphia 76ers",
@@ -680,7 +689,7 @@
    "away_team": "Denver Nuggets",
    "bookmakers": 1,
    "commence_time": "2026-12-26T03:30:00Z",
-   "fetched_at": "2026-11-04T21:19:50Z",
+   "fetched_at": "2026-11-05T10:53:28Z",
    "home_prob": 0.4661,
    "home_team": "Golden State Warriors"
   },
@@ -833,7 +842,7 @@
    "away_team": "San Antonio Spurs",
    "bookmakers": 1,
    "commence_time": "2026-12-25T17:00:00Z",
-   "fetched_at": "2026-11-04T21:19:50Z",
+   "fetched_at": "2026-11-05T10:53:28Z",
    "home_prob": 0.5,
    "home_team": "New York Knicks"
   },
@@ -854,6 +863,15 @@
    "fetched_at": "2026-10-24T18:08:26Z",
    "home_prob": 0.759,
    "home_team": "Phoenix Suns"
+  },
+  "ac38449dd3dfbe1c9b48164b6a41aa83": {
+   "away_prob": 0.2914,
+   "away_team": "Miami Heat",
+   "bookmakers": 6,
+   "commence_time": "2026-11-06T03:10:00Z",
+   "fetched_at": "2026-11-05T10:53:28Z",
+   "home_prob": 0.7086,
+   "home_team": "Golden State Warriors"
   },
   "af2f084075391e55ba2a596e7846bb40": {
    "away_prob": 0.225,
@@ -1031,7 +1049,7 @@
    "away_team": "Miami Heat",
    "bookmakers": 1,
    "commence_time": "2026-12-25T19:30:00Z",
-   "fetched_at": "2026-11-04T21:19:50Z",
+   "fetched_at": "2026-11-05T10:53:28Z",
    "home_prob": 0.625,
    "home_team": "Boston Celtics"
   },
@@ -1103,7 +1121,7 @@
    "away_team": "Philadelphia 76ers",
    "bookmakers": 1,
    "commence_time": "2026-12-25T22:00:00Z",
-   "fetched_at": "2026-11-04T21:19:50Z",
+   "fetched_at": "2026-11-05T10:53:28Z",
    "home_prob": 0.5105,
    "home_team": "Los Angeles Lakers"
   },
@@ -1252,5 +1270,5 @@
    "home_team": "San Antonio Spurs"
   }
  },
- "updated_at": "2026-11-04T21:19:50Z"
+ "updated_at": "2026-11-05T10:53:28Z"
 }
