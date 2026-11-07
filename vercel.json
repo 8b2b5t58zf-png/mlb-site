@@ -1,0 +1,6 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "cleanUrls": true,
+  "trailingSlash": false,
+  "ignoreCommand": "git diff --quiet HEAD^ HEAD -- . ':(exclude).github' ':(exclude)scripts' ':(exclude)data/odds' ':(exclude)make_excel.py' ':(exclude)validation.html' ':(exclude)validation-nba.html' ':(exclude)qa-live'"
+}
