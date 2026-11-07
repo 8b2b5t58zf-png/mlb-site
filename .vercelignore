@@ -1,0 +1,8 @@
+# Internal / not for public site (BN 2026-11-07 Vercel test project)
+.github
+scripts
+data/odds
+make_excel.py
+validation.html
+validation-nba.html
+qa-live
