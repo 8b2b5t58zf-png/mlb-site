@@ -229,7 +229,7 @@ body.tab-predict header{padding-bottom:10px}
 .pcard th,.pcard td,article th,article td{border-bottom:0}
 .dgrp{grid-column:1/-1;font-size:12px;line-height:18px;color:#8b949e;margin:0 0 -6px;padding:0 2px}
 .dgrp:first-child{margin-top:0}
-/* 信心標籤（10/16）：高＝金底黑字、中＝淡金底金字、低／五五波＝深灰底灰字，皆無框 */
+/* 信心標籤：高＝金底黑字、中＝淡金底金字、低＝深灰底灰字，皆無框 */
 .tier.strong,.tier.lean,.tier.toss{border:0}
 .tier.strong{background:#d4af37;color:#0d1117}
 .tier.lean{background:rgba(212,175,55,.15);color:#d4af37}
@@ -332,7 +332,7 @@ body.view-about #mlb-main,body.view-about #nba-main{display:none}
 .cg-v .num{color:#e6edf3}
 .cg-n{font-size:12px;color:#8b949e;margin-top:4px}
 
-/* 今日數據焦點 */
+/* 預測焦點 */
 .pcard.cc.focus{border-left:3px solid #d4af37}
 /* 進行中：四邊灰框；焦點卡左線仍用金，其餘三邊灰 */
 .pcard.cc.live{border:1px solid #8b949e}
