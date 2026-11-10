@@ -75,13 +75,13 @@ async function nbaStandings(){
 }
 
 
-// 信心用字（內容編輯 10/25）：未滿 60%「接近五五波」、60% 以上「勝率較高」。
+// 信心用字：未滿 60%「兩隊勝率接近」、60% 以上「勝率較高」。
 // 開季到 1/14 中與高同一句；徽章 class 仍分 lean（中）／strong（高）。70% 以上理由句維持開季保守寫法。
 const nEarly = (dt=new Date()) => { const m = dt.getMonth(), d = dt.getDate(); return m >= 8 || (m === 0 && d <= 14); };
-const nTier = p => p >= 70 ? ["strong","勝率較高"] : p >= 60 ? ["lean","勝率較高"] : ["toss","接近五五波"];
-const nWord = p => p >= 60 ? "勝率較高" : "接近五五波";
+const nTier = p => p >= 70 ? ["strong","勝率較高"] : p >= 60 ? ["lean","勝率較高"] : ["toss","兩隊勝率接近"];
+const nWord = p => p >= 60 ? "勝率較高" : "兩隊勝率接近";
 let NALL = [];   // 近期所有賽程（判斷背靠背：前 36 小時內同隊有比賽）
-// 今日數據焦點（NBA）：列表第一天勝率最接近五成的一場，排第一張
+// 預測焦點（NBA）：列表第一個台灣日、樣本足夠且信心達既有「中」的一場；沒有合格場次不硬選
 let NFOCUS = null;
 let NRECG = {};   // data/nba-predictions.json 的紀錄（id → 紀錄）
 let NDAT = null, NWIN = [];   // 預測頁資料時間、守候時段（每個台灣日期：第一場開打前 60 分鐘到最後一場開打後 5.5 小時，與 scripts/nba_watch.py 一致），給「資料更新延遲」提示條用
@@ -102,9 +102,26 @@ function nLockRec(ev){
 function nFocusList(list){
   NFOCUS = null; list = list.slice().sort((a,b) => new Date(a.date) - new Date(b.date)); if(!list.length) return list;
   const d0 = twKey(list[0].date);
-  const fc = pickFocus(list.map((e,i) => ({e,i})).filter(({e}) => twKey(e.date) === d0).map(({e,i}) => { const c = e.competitions[0], H = c.competitors.find(x=>x.homeAway==="home"), A = c.competitors.find(x=>x.homeAway==="away");
-    const lk = nInPlay(e) ? nLockRec(e) : null;
-    return {i, fh: lk ? lk.homeWinProb : nModel(H.team.id, A.team.id, c.neutralSite).F/100, key:false, txt:""}; }), fh => pDisp(fh*100));
+  const fc = pickFocus(list.map((e, i) => {
+    const c = e.competitions && e.competitions[0];
+    const H = c && (c.competitors || []).find(x => x.homeAway === "home");
+    const A = c && (c.competitors || []).find(x => x.homeAway === "away");
+    const st = (e.status && e.status.type) || {};
+    const blob = `${st.name || ""} ${st.description || ""}`;
+    let status = "ok";
+    if(/postponed/i.test(blob)) status = "postponed";
+    else if(/cancel/i.test(blob)) status = "cancelled";
+    const teamsOk = !!(H && A && H.team && A.team && H.team.id && A.team.id);
+    const inPlay = nInPlay(e);
+    const lk = inPlay ? nLockRec(e) : null;
+    const locked = !!(lk && typeof lk.homeWinProb === "number" && isFinite(lk.homeWinProb));
+    let fh = null;
+    if(inPlay) fh = locked ? lk.homeWinProb : null;
+    else if(teamsOk) fh = nModel(H.team.id, A.team.id, c.neutralSite).F / 100;
+    const th = teamsOk ? NT[H.team.id] : null, ta = teamsOk ? NT[A.team.id] : null;
+    const sampleOk = !!(th && ta && th.g >= NM.minG && ta.g >= NM.minG);
+    return {i, fh, day:twKey(e.date), status, sampleOk, inPlay, locked};
+  }), {cuts:[60, 70], today:twKey(new Date()), day:d0, needStarters:false});
   if(!fc) return list;
   NFOCUS = {id:list[fc.i].id, txt:fc.txt};
   return [list[fc.i], ...list.filter((_,j) => j !== fc.i)];
@@ -121,7 +138,7 @@ function nbaCard(ev, DG){
   const [hp, ap] = pDisp(m.F), [fpD, othD] = favHome ? [hp, ap] : [ap, hp];
   const early = nEarly(new Date(ev.date)), [tc, tl] = nTier(raw), k = favHome ? 1 : -1, s1 = k*m.d1, s2 = k*m.d2;
   const small = th.g < NM.minG || ta.g < NM.minG;
-  const big = fp === 50 ? `五五波：雙方各 <span class="num">50%</span>` : `${nWord(raw)}：${nts(fav)} <span class="num">${fpD}%</span>`;
+  const big = fp === 50 ? `兩隊勝率接近：雙方各 <span class="num">50%</span>` : `${nWord(raw)}：${nts(fav)} <span class="num">${fpD}%</span>`;
   // 為什麼這樣預測：本季戰績、上一季實力、主場（只寫計入模型的項目）
   const pc = t => t.g ? t.w/t.g : 0;
   let t1;
@@ -152,7 +169,7 @@ function nbaCard(ev, DG){
   const reason = mainReason(lastSzn ? [
       {k:"上季實力", t:tm(m.d1), v:m.d1, sfx:"上季較強"},
       {k:"主場", t:nts(H.team), v:c.neutralSite?null:m.d2, sfx:"主場出賽"}]
-    : [{k:"戰績", t:tm(m.d1), v:m.d1, sfx:"戰績較佳"},
+    : [{k:"戰績", t:tm(m.d1), v:m.d1, sfx:"戰績較好"},
       {k:"主場", t:nts(H.team), v:c.neutralSite?null:m.d2, sfx:"主場出賽"}], favHome, false, raw);
   const se = c.series, sH = se && se.competitors && se.competitors.find(x => x.id === H.team.id), sA = se && se.competitors && se.competitors.find(x => x.id === A.team.id);
   const sb = ev.season.type === 3 && se && !se.completed && sH && sA ? seriesBar({lg:"nba", ab: se.title || se.description || "季後賽", n: se.totalCompetitions, gameNo: sH.wins + sA.wins + 1, wH: sH.wins, wA: sA.wins,
@@ -304,10 +321,10 @@ async function nbaHit(){
   const el = document.getElementById("nba-hit");
   const r = await fetch("data/nba-predictions.json?t=" + Date.now()); if(!r.ok) throw new Error("nba-predictions");
   const d = await r.json(), GOAL = 50;
-  if(typeof accLine === "function") accLine("nba-acc", d.records, x => x.official.model === NM.ver, "NBA", "#nba-hitrate");
-  const isNew = x => (x.official||{}).model === NM.ver, old = d.records.filter(x => x.official && x.correct !== null && !isNew(x)), oOk = old.filter(x=>x.correct).length;
+  if(typeof accLine === "function") accLine("nba-acc", d.records, x => x.official.model === NM.ver, "NBA 目前版本", "#nba-hitrate");
+  const isNew = x => (x.official||{}).model === NM.ver, old = d.records.filter(x => x.official && x.correct !== null && !isNew(x));
   const done = d.records.filter(x => x.official && x.correct !== null && isNew(x)), n = done.length, ok = done.filter(x => x.correct).length;
-  let html = n >= GOAL ? `<div class="hr-big">${Math.round(ok/n*100)}%</div><div class="hr-sub">NBA 模型命中率（共 ${n} 場）</div>`
+  let html = n >= GOAL ? `<div class="hr-big">${Math.round(ok/n*100)}%</div><div class="hr-sub">NBA 目前版本命中率（共 ${n} 場）</div>`
     : `<div class="hr-big muted">累積中</div><div class="hr-prog"><div class="hr-bar"><div style="width:${n/GOAL*100}%"></div></div><span>NBA：${n} / ${GOAL} 場</span></div>`;
   // 信心分級收成一行：全部場次＋信心 70% 以上（與 confGroups 同算法：用四捨五入前、到小數一位的勝率，排除剛好 50%）
   const cut = 70, gv = done.filter(x => x.status !== "cancelled" && x.official.homeWinProb !== 0.5);
@@ -316,8 +333,15 @@ async function nbaHit(){
   html += `<div class="hr-cg1"><div class="cg-row"><span class="cg-l">全部場次</span><span class="cg-v">${cv(gv)}</span></div><div class="cg-row"><span class="cg-l">信心 <span class="num">${cut}%</span> 以上</span><span class="cg-v">${cv(hiG)}</span></div></div>`;
   html += `<details class="hr-fold"><summary>看各信心分級</summary>${confGroups(d.records, x => x.official.model === NM.ver, [60, 70], "nba")}</details>`;
   const how = [`樣本少於 <span class="num">${GOAL}</span> 場僅供參考`, "命中率只計算已結算場次・非投注建議"];
-  if(old.length) how.push(`舊版模型 v1 另計：${old.length} 場，命中 ${oOk} 場`);
-  html += `<details class="hr-fold"><summary>怎麼算的</summary><div class="hr-how">${how.map(t => `<p class="note">${t}</p>`).join("")}</div></details>`;
+  if(old.length){
+    const groups = new Map();
+    for(const x of old){ const key = String((x.official||{}).model||"").split("：")[0]; const g = groups.get(key)||[]; g.push(x); groups.set(key, g); }
+    for(const [key, xs] of groups){
+      const name = key === "v1" ? "版本1" : key === "v2" ? "版本2" : "另一版本";
+      how.push(`${name}另計：${xs.length} 場，命中 ${xs.filter(x => x.correct).length} 場`);
+    }
+  }
+  html += `<details class="hr-fold"><summary>計算方式</summary><div class="hr-how">${how.map(t => `<p class="note">${t}</p>`).join("")}</div></details>`;
   html += `<p class="hr-upd">最後更新：${fmtT(d.updated)}（台灣時間）</p>`;
   if(!d.records.length){ el.innerHTML = html + '<p class="note">2026-27 例行賽 10/21（台灣時間）開打，開打前會開始記錄。</p>'; return; }
   html += '<div class="tblwrap" style="overflow-x:auto"><table class="hrt hrt-nba"><thead><tr><th>比賽時間</th><th class="mu-h"><span class="mu-full">對戰（客 @ 主）</span><span class="mu-short">客 @ 主</span></th><th>預測</th><th class="dk">勝率</th><th class="dk">實際比分</th><th class="dk">結果</th></tr></thead>';

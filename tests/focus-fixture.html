@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>預測焦點版面檢查</title>
+<link rel="stylesheet" href="../style.css">
+</head>
+<body class="tab-predict">
+<main id="mlb-main">
+  <section id="sec-predict" class="tab-on">
+    <h2>比賽勝負預測</h2>
+    <p class="acc-line">MLB 命中率 <span class="num">58%</span>（<span class="num">29/50</span> 場）・<a href="#mlb-hitrate">看命中率 ›</a></p>
+    <p class="day-sum">11/11 共 <span class="num">3</span> 場・先發全部公布</p>
+    <p class="note pnote">勝率是數據估算，非投注建議・台灣時間</p>
+    <div id="cards" class="grid"></div>
+  </section>
+  <section id="sec-hit" class="tab-on">
+    <h2>預測命中率</h2>
+    <div id="groups"></div>
+    <div class="tblwrap" style="overflow-x:auto"><table class="hrt"><tr><th>比賽時間</th><th class="mu-h"><span class="mu-full">對戰（客 @ 主）</span><span class="mu-short">客 @ 主</span></th><th class="md">版本</th><th>預測</th><th class="dk">預測勝率</th><th class="dk">實際比分</th><th class="dk">結果</th></tr>
+      <tr><td class="nw dt"><span class="dd">11/10</span> <span class="tt">08:08</span></td><td class="nw mu">釀酒人 @ 道奇</td><td class="md"><span class="vp">版本2</span></td><td class="nw">道奇 <span class="rm ok" aria-label="命中">✓</span></td><td class="dk">62%</td><td class="dk">3 : 5</td><td class="dk">命中</td></tr>
+      <tr><td class="nw dt"><span class="dd">11/10</span> <span class="tt">09:10</span></td><td class="nw mu">塞爾提克 @ 尼克</td><td class="md"><span class="vp">版本1</span></td><td class="nw">尼克 <span class="rm bad" aria-label="未命中">✗</span></td><td class="dk">64%</td><td class="dk">101 : 98</td><td class="dk">未命中</td></tr>
+    </table></div>
+  </section>
+</main>
+<pre id="report" hidden></pre>
+<script src="../why-text.js"></script>
+<script>
+const cards = [
+  ccCard({lg:"focus", live:true, focus:"預測信心高", ser:'<span class="ser-tag">ALCS 第 <span class="num">7</span> 戰</span>', time:cardTime("2026-11-10T12:08:00Z"), tag:"", A:"釀酒人", H:"道奇", conf:"高", tc:"strong", ap:"38", hp:"62", aw:38, hw:62, favHome:true, reason:"", body:"<p>各項指標都站在道奇這邊，差距明顯</p>"}),
+  ccCard({lg:"mlb", focus:"", ser:"", time:cardTime("2026-11-10T16:00:00Z"), tag:"先發未公布", A:"響尾蛇", H:"教士", conf:"低", tc:"toss", ap:"51", hp:"49", aw:51, hw:49, favHome:false, reason:"兩隊勝率接近（先發公布後會重算）", body:"<p>先發未公布</p>"}),
+  ccCard({lg:"nba", focus:"預測信心中", ser:"", time:cardTime("2026-11-11T03:00:00Z"), tag:"", A:"塞爾提克", H:"尼克", conf:"中", tc:"lean", ap:"36", hp:"64", aw:36, hw:64, favHome:true, reason:"", body:"<p>勝率較高</p>"}),
+  ccCard({lg:"mlb", pp:"延賽至 11/12（三）08:00（勝率將重算）", ser:'<span class="ser-tag">世界大賽第 <span class="num">3</span> 戰</span>', A:"洋基", H:"道奇", conf:"中", tc:"lean", ap:"45", hp:"55", body:""}),
+];
+document.getElementById("cards").innerHTML = cards.join("");
+document.getElementById("groups").innerHTML = confGroups([
+  {status:"final", official:{homeWinProb:0.62, model:"v2"}, correct:true},
+  {status:"final", official:{homeWinProb:0.47, model:"v2"}, correct:false},
+], () => true, [53, 60], "mlb");
+function measure(){
+  if(typeof ccFit === "function") ccFit();
+  const page = document.documentElement.scrollWidth - document.documentElement.clientWidth;
+  const rows = [...document.querySelectorAll(".cc-r1,.hrt .md")].map(el => ({sw:el.scrollWidth, cw:el.clientWidth, over:el.scrollWidth > el.clientWidth + 1}));
+  const badges = [...document.querySelectorAll(".cc-focus")].map(el => el.textContent);
+  document.getElementById("report").textContent = JSON.stringify({page, rows, badges, w:document.documentElement.clientWidth});
+}
+measure();
+if(document.fonts && document.fonts.ready) document.fonts.ready.then(() => requestAnimationFrame(() => requestAnimationFrame(measure)));
+</script>
+</body>
+</html>

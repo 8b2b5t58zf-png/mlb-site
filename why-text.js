@@ -8,7 +8,7 @@ const WHY_TXT = {
     strongEarly: "各項指標都站在{t}這邊・開季數據少，保守看待",   // NBA 開季（到 1/14）70% 以上，不寫「差距明顯」
     mid: "各項指標都站在{t}這邊",               // NBA 60%～未滿 70%（信心 中），後面不加字
     lean: "{t}靠{item}拉開些微差距，但還不到明顯領先",
-    toss: "兩隊條件接近，這場要看臨場表現",
+    toss: "兩隊條件接近，差距不大",
   },
   item: {rec:"戰績", home:"主場因素", sp:"先發投手", prior:"上一季實力"},
   rec: "{t}本季 {w} 勝 {l} 敗，勝率 {p} 高於{o}的 {op}，戰績較好",
@@ -61,8 +61,8 @@ function whyFit(vals, target){
 }
 const wd = v => Math.abs(v) < 0.05 ? "±0.0%" : (v > 0 ? "▲+" : "▼−") + Math.abs(v).toFixed(1) + "%";
 const wc = v => Math.abs(v) < 0.05 ? "zero" : v > 0 ? "up" : "down";
-// rows＝[[數值, 句子, key]]；fav/fp 為卡片看好方與整數勝率
-// F＝看好方最終勝率（一位小數）
+// rows＝[[數值, 句子, key]]；fav/fp 為勝率較高一方與整數勝率
+// F＝勝率較高一方最終勝率（一位小數）
 // o.tk：指定總結句級別（NBA 依四捨五入前勝率決定）；o.r：合計列「約 {r}%」顯示的數字（預設 fp）
 function whyBlock2(rows, favName, fp, F, o={}){
   const vals = whyFit(rows.map(r=>r[0]), F - 50);
@@ -97,7 +97,7 @@ function dayHdr(d, st){
 const hhmm = d => new Intl.DateTimeFormat("en-GB",{timeZone:"Asia/Taipei",hour12:false,hour:"2-digit",minute:"2-digit"}).format(new Date(d)).replace(/^24/,"00");
 const CONF = {strong:"高", lean:"中", toss:"低"};
 let CC_N = 0;
-// items: [{k:名稱, t:隊名, v:對主隊的百分點, sfx:句型}]，fav: 看好方是否主隊
+// items: [{k:名稱, t:隊名, v:對主隊的百分點, sfx:句型}]，fav: 勝率較高一方是否主隊
 function mainReason(items, favHome, wait, fp){
   if(fp != null && fp < 51) return "兩隊勝率接近" + (wait ? "（先發公布後會重算）" : "");
   const k = favHome ? 1 : -1, xs = items.filter(x => x.v != null).map(x => ({...x, f:k*x.v}));
@@ -108,7 +108,7 @@ function mainReason(items, favHome, wait, fp){
   return s + (wait ? "（先發公布後會重算）" : "");
 }
 function ccCard(o){   // spec-compact v1；進行中：灰框＋左上「進行中」（延賽不套）
-  const id = `cc-${++CC_N}`, ft = o.focus ? `<span class="cc-focus">數據焦點</span>` : "", cf = `<span class="tier ${o.tc} cc-conf">信心 ${o.conf}</span>`;
+  const id = `cc-${++CC_N}`, ft = o.focus ? `<span class="cc-focus">預測焦點</span>` : "", cf = `<span class="tier ${o.tc} cc-conf">信心 ${o.conf}</span>`;
   const live = o.live && !o.pp, lv = live ? `<span class="cc-live">進行中</span>` : "";
   const s2 = !o.pp && o.ser ? `<span class="cc-s2">${o.ser}</span>` : "";
   return `<div class="pcard cc${o.focus?" focus":""}${live?" live":""}">
@@ -144,7 +144,7 @@ function cardTime(d){ const t = new Date(new Date(d).getTime() + 8*3600e3);
   return `<span class="ct-d">${t.getUTCMonth()+1}/${t.getUTCDate()}（${WD[t.getUTCDay()]}）${hhmm(d)}</span><span class="ct-l">（台灣時間）</span><span class="ct-s">（台灣）</span>`; }
 
 // 第一行放不下時：先把信心標籤移到第二行中間，還放不下再把「（台灣時間）」縮成「（台灣）」（日期、星期一定保留）；
-// 仍放不下（例：數據焦點＋進行中＋系列賽標籤＋時間）才把系列賽標籤移到第二行，第一行不換行
+// 仍放不下（例：預測焦點＋進行中＋系列賽標籤＋時間）才把系列賽標籤移到第二行，第一行不換行
 function ccOver(r){ if(r.scrollWidth > r.clientWidth + 1) return true;
   const a = r.querySelector(".cc-ser"), b = r.querySelector(".cc-rt"); if(!a || !b) return false;
   const ra = a.getBoundingClientRect(), rb = b.getBoundingClientRect();
@@ -160,7 +160,7 @@ if(document.fonts && document.fonts.ready) document.fonts.ready.then(() => ccFit
 new MutationObserver(() => requestAnimationFrame(ccFit)).observe(document.documentElement, {childList:true, subtree:true});
 
 // 命中率依信心分組（spec-accuracy-display §2）：只算正式紀錄、同版本、排除取消與剛好 50%
-function confGroups(recs, isVer, cuts, lg){   // cuts: [中下限, 高下限]（看好方勝率 %，不先四捨五入成整數，與卡片信心標籤相同）
+function confGroups(recs, isVer, cuts, lg){   // cuts: [中下限, 高下限]（勝率較高一方的勝率 %，不先四捨五入成整數，與卡片信心標籤相同）
   const done = recs.filter(x => x.status !== "cancelled" && x.official && isVer(x) && x.correct !== null && x.correct !== undefined);
   const half = done.filter(x => x.official.homeWinProb === 0.5).length;
   const G = [["低", `未滿 <span class="num">${cuts[0]}%</span>`], ["中", `<span class="num">${cuts[0]}</span>～未滿 <span class="num">${cuts[1]}%</span>`], ["高", `<span class="num">${cuts[1]}%</span> 以上`]].map(([n, r]) => ({n, r, xs:[]}));
@@ -210,12 +210,39 @@ function seriesBar(o){
   return `<div class="sbar"><div class="sb-r1"><span>${o.ab}・${st}</span><span>系列晉級機率</span></div><div class="sb-r2"><span class="sb-t">${o.A} <span class="num">${a}%</span></span><span class="sb-b"><span class="${hi?"o":"g"}" style="width:${aw}%"></span><span class="${hi?"g":"o"}" style="width:${hw}%"></span></span><span class="sb-t r">${o.H} <span class="num">${h}%</span></span></div><p class="sb-note">晉級機率含已贏場次，單場勝率只看下一戰</p></div>`;
 }
 
-// 今日數據焦點（§25 修訂、spec-accuracy-display §3）：只看列表第一天；cands: [{i, fh(主隊勝率 0-1), key(季後賽關鍵戰), txt(系列賽句)}]
-function pickFocus(cands, disp){   // disp(fh)＝[主隊, 客隊] 顯示字串（NBA 用 pDisp）；沒給就四捨五入
-
-  if(!cands.length) return null;
-  const key = cands.filter(c => c.key);
-  const c = (key.length ? key : cands).slice().sort((a,b) => Math.abs(a.fh-.5) - Math.abs(b.fh-.5))[0];
-  const [hp, ap] = disp ? disp(c.fh) : (x => [x, 100-x])(Math.round(c.fh*100));
-  return {i:c.i, txt: c.txt || `本日勝率最接近（${ap}%：${hp}%）`};
+// 預測焦點：只看列表第一個台灣比賽日，而且該日不是已過的舊日。
+// 候選要有有效勝率、資料完整、不是延賽／取消／保留、進行中必須帶賽前鎖定值。
+// 比較的是「勝率較高一方」的勝率，不是另一套綜合評分。先把主隊勝率四捨五入到一位小數（與卡片相同），
+// 再取較高一方，然後用既有信心門檻。平手（這位小數相同）取索引較小者，也就是開賽較早的一場。
+// cands: [{i, fh(主隊勝率 0–1), day, status:"ok", starters, sampleOk, inPlay, locked}]
+// opts: {cuts:[中下限, 高下限]（與命中率分組相同的百分點）, today, day, needStarters, past}
+function focusFavPct(fh){
+  if(typeof fh !== "number" || !isFinite(fh) || fh <= 0 || fh >= 1) return null;
+  const F = Math.round(fh * 1000) / 10;
+  if(!(F > 0 && F < 100)) return null;
+  return F >= 50 ? F : Math.round((100 - F) * 10) / 10;
+}
+// 與卡片「（樣本少）」同一條件：先發局數是有限數字且滿 40 才算夠。沒有局數就無法沿用這個標籤，不設焦點。
+function focusIpEnough(ip){
+  return typeof ip === "number" && isFinite(ip) && ip >= 40;
+}
+function pickFocus(cands, opts){
+  opts = opts || {};
+  const cuts = opts.cuts, day = opts.day, today = opts.today;
+  if(!Array.isArray(cands) || !cuts || !(cuts[0] > 0) || !(cuts[1] > cuts[0]) || !day || !today || opts.past) return null;
+  if(day < today) return null;
+  const pool = [];
+  for(const c of cands){
+    if(!c || c.day !== day || c.status !== "ok") continue;
+    if(opts.needStarters && c.starters !== "both") continue;
+    if(c.sampleOk !== true) continue;
+    if(c.inPlay && !c.locked) continue;
+    const q = focusFavPct(c.fh);
+    if(q == null || !(q >= cuts[0])) continue;
+    pool.push({c, q});
+  }
+  if(!pool.length) return null;
+  pool.sort((a, b) => (b.q - a.q) || (a.c.i - b.c.i));
+  const top = pool[0], band = top.q >= cuts[1] ? "strong" : "lean";
+  return {i:top.c.i, q:top.q, band, txt: band === "strong" ? "預測信心高" : "預測信心中"};
 }
