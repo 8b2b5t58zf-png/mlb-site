@@ -30,7 +30,7 @@ function loadWhy(){
 }
 
 const W = loadWhy();
-const {pickFocus, focusFavQ, ccCard} = W;
+const {pickFocus, focusFavPct, focusIpEnough, ccCard} = W;
 const twKey = d => vm.runInContext("twKey(" + JSON.stringify(d) + ")", W);
 const MLB = [53, 60], NBA = [60, 70];
 let n = 0, fail = 0;
@@ -55,17 +55,48 @@ test("日界：台灣日期以 UTC+8 切換", () => {
   assert.strictEqual(twKey("2026-11-10T15:59:59Z"), "2026-11-10");
 });
 
-test("MLB 門檻：53 入選為信心中，未滿不選", () => {
-  assert.strictEqual(run([cand({fh:0.53})]).txt, "預測信心中");
-  assert.strictEqual(run([cand({fh:0.5294})]), null);
-  assert.strictEqual(focusFavQ(0.5294), 52.9);
-  assert.strictEqual(focusFavQ(0.53), 53);
+test("先四捨五入到一位小數，再對中門檻，與卡片信心標籤同一側", () => {
+  const band = (fh, cuts) => {
+    const raw = focusFavPct(fh);
+    if(raw == null) return "toss";
+    return raw >= cuts[1] ? "strong" : raw >= cuts[0] ? "lean" : "toss";
+  };
+  const cases = [
+    [0.5294, 52.9, "toss"],
+    [0.5295, 53, "lean"],
+    [0.53, 53, "lean"],
+    [0.4705, 52.9, "toss"],
+    [0.4704, 53, "lean"],
+    [0.5994, 59.9, "lean"],
+    [0.5995, 60, "strong"],
+    [0.4005, 59.9, "lean"],
+    [0.4004, 60, "strong"],
+    [0.5, 50, "toss"],
+  ];
+  for(const [fh, raw, expect] of cases){
+    assert.strictEqual(focusFavPct(fh), raw, String(fh));
+    assert.strictEqual(band(fh, MLB), expect, String(fh));
+    const got = run([cand({fh})]);
+    if(expect === "toss") assert.strictEqual(got, null, String(fh));
+    else assert.strictEqual(got.txt, expect === "strong" ? "預測信心高" : "預測信心中", String(fh));
+  }
 });
 
-test("MLB 高信心門檻 60", () => {
-  assert.strictEqual(run([cand({fh:0.5994})]).txt, "預測信心中");
-  assert.strictEqual(run([cand({fh:0.5996})]).txt, "預測信心高");
-  assert.strictEqual(run([cand({fh:0.60})]).band, "strong");
+test("NBA 中門檻同樣先四捨五入", () => {
+  const nba = [
+    [0.5994, 59.9, null],
+    [0.5995, 60, "預測信心中"],
+    [0.6994, 69.9, "預測信心中"],
+    [0.6995, 70, "預測信心高"],
+    [0.3005, 69.9, "預測信心中"],
+    [0.3004, 70, "預測信心高"],
+  ];
+  for(const [fh, raw, txt] of nba){
+    assert.strictEqual(focusFavPct(fh), raw, String(fh));
+    const got = run([cand({fh})], {cuts:NBA, needStarters:false});
+    if(txt == null) assert.strictEqual(got, null, String(fh));
+    else assert.strictEqual(got.txt, txt, String(fh));
+  }
 });
 
 test("NBA 門檻 60／70，客隊高勝率也可", () => {
@@ -102,10 +133,23 @@ test("低信心整天不選，不挑最接近五成；客隊剛好達標仍可",
 
 test("缺值與異常勝率不選，旁邊合格場仍可", () => {
   for(const fh of [null, undefined, NaN, Infinity, 0, 1, -0.2, 1.01, "0.8", ""]){
-    assert.strictEqual(focusFavQ(fh), null, String(fh));
+    assert.strictEqual(focusFavPct(fh), null, String(fh));
     assert.strictEqual(run([cand({fh})]), null, String(fh));
   }
   assert.strictEqual(run([cand({i:0, fh:null}), cand({i:1, fh:0.66})]).i, 1);
+});
+
+test("先發局數未滿 40 或沒有局數，不算資料完整", () => {
+  assert.strictEqual(focusIpEnough(40), true);
+  assert.strictEqual(focusIpEnough(40.1), true);
+  assert.strictEqual(focusIpEnough(39.2), false);
+  assert.strictEqual(focusIpEnough(0), false);
+  assert.strictEqual(focusIpEnough(null), false);
+  assert.strictEqual(focusIpEnough(undefined), false);
+  assert.strictEqual(focusIpEnough(NaN), false);
+  const app = read("app.js");
+  assert.ok(app.includes("focusIpEnough(hpS && hpS.ip) && focusIpEnough(apS && apS.ip)"));
+  assert.ok(app.includes("S.ip < 40"));
 });
 
 test("先發不全、樣本不足不選", () => {
@@ -222,10 +266,15 @@ test("可見文案不含禁用詞，也不把命中率寫成勝率", () => {
     assert.ok(!banned.test(src), f);
   }
   const app = read("app.js"), nba = read("nba.js");
-  assert.ok(app.includes("MLB 命中率"));
-  assert.ok(nba.includes("NBA 命中率"));
+  assert.ok(app.includes("MLB 版本2 命中率"));
+  assert.ok(app.includes("不列入版本2 命中率"));
+  assert.ok(nba.includes("NBA 目前版本命中率"));
   assert.ok(!app.includes("MLB v2"));
+  assert.ok(!app.includes("驗證過"));
+  assert.ok(!read("index.html").includes("驗證過"));
   assert.ok(!nba.includes("舊版模型"));
+  assert.ok(!app.includes("現行"));
+  assert.ok(!app.includes("較早"));
 });
 
 test("追蹤事件與 LINE 網址未改", () => {
@@ -236,9 +285,11 @@ test("追蹤事件與 LINE 網址未改", () => {
     "line-feedback-footer",
     "line-feedback-float-predict",
     "https://aisportslab.goatcounter.com/count",
-    "why-text.js?v=202611101530",
-    "nba.js?v=202611101530",
-    "app.js?v=202611101530",
+    "why-text.js?v=202611102000",
+    "nba.js?v=202611102000",
+    "app.js?v=202611102000",
+    "style.css?v=202611102000",
+    "賽前預測與賽後紀錄分開列出",
   ]) assert.ok(html.includes(s), s);
   assert.ok(read("why-text.js").includes("ref-open-"));
   assert.ok(read("why-text.js").includes("expand-"));

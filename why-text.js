@@ -212,13 +212,19 @@ function seriesBar(o){
 
 // 預測焦點：只看列表第一個台灣比賽日，而且該日不是已過的舊日。
 // 候選要有有效勝率、資料完整、不是延賽／取消／保留、進行中必須帶賽前鎖定值。
-// 勝率較高的一方（主隊或客隊皆可）達到既有信心「中」才入選；同日取得分最高者。
-// 平手：分數相同時取索引較小者（呼叫端已依開賽時間排，較早的一場）。不看賽果、不看是否接近五成。
+// 比較的是「勝率較高一方」的勝率，不是另一套綜合評分。先把主隊勝率四捨五入到一位小數（與卡片相同），
+// 再取較高一方，然後用既有信心門檻。平手（這位小數相同）取索引較小者，也就是開賽較早的一場。
 // cands: [{i, fh(主隊勝率 0–1), day, status:"ok", starters, sampleOk, inPlay, locked}]
 // opts: {cuts:[中下限, 高下限]（與命中率分組相同的百分點）, today, day, needStarters, past}
-function focusFavQ(fh){
+function focusFavPct(fh){
   if(typeof fh !== "number" || !isFinite(fh) || fh <= 0 || fh >= 1) return null;
-  return Math.round(Math.max(fh, 1 - fh) * 1000) / 10;
+  const F = Math.round(fh * 1000) / 10;
+  if(!(F > 0 && F < 100)) return null;
+  return F >= 50 ? F : Math.round((100 - F) * 10) / 10;
+}
+// 與卡片「（樣本少）」同一條件：先發局數是有限數字且滿 40 才算夠。沒有局數就無法沿用這個標籤，不設焦點。
+function focusIpEnough(ip){
+  return typeof ip === "number" && isFinite(ip) && ip >= 40;
 }
 function pickFocus(cands, opts){
   opts = opts || {};
@@ -231,7 +237,7 @@ function pickFocus(cands, opts){
     if(opts.needStarters && c.starters !== "both") continue;
     if(c.sampleOk !== true) continue;
     if(c.inPlay && !c.locked) continue;
-    const q = focusFavQ(c.fh);
+    const q = focusFavPct(c.fh);
     if(q == null || !(q >= cuts[0])) continue;
     pool.push({c, q});
   }

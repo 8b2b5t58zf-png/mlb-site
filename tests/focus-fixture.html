@@ -18,9 +18,9 @@
   <section id="sec-hit" class="tab-on">
     <h2>預測命中率</h2>
     <div id="groups"></div>
-    <div class="tblwrap" style="overflow-x:auto"><table class="hrt"><tr><th>比賽時間</th><th class="mu-h"><span class="mu-full">對戰（客 @ 主）</span><span class="mu-short">客 @ 主</span></th><th class="md">紀錄</th><th>預測</th><th class="dk">預測勝率</th><th class="dk">實際比分</th><th class="dk">結果</th></tr>
-      <tr><td class="nw dt"><span class="dd">11/10</span> <span class="tt">08:08</span></td><td class="nw mu">釀酒人 @ 道奇</td><td class="md"><span class="vp">現行</span></td><td class="nw">道奇 <span class="rm ok" aria-label="命中">✓</span></td><td class="dk">62%</td><td class="dk">3 : 5</td><td class="dk">命中</td></tr>
-      <tr><td class="nw dt"><span class="dd">11/10</span> <span class="tt">09:10</span></td><td class="nw mu">塞爾提克 @ 尼克</td><td class="md"><span class="vp">較早</span></td><td class="nw">尼克 <span class="rm bad" aria-label="未命中">✗</span></td><td class="dk">64%</td><td class="dk">101 : 98</td><td class="dk">未命中</td></tr>
+    <div class="tblwrap" style="overflow-x:auto"><table class="hrt"><tr><th>比賽時間</th><th class="mu-h"><span class="mu-full">對戰（客 @ 主）</span><span class="mu-short">客 @ 主</span></th><th class="md">版本</th><th>預測</th><th class="dk">預測勝率</th><th class="dk">實際比分</th><th class="dk">結果</th></tr>
+      <tr><td class="nw dt"><span class="dd">11/10</span> <span class="tt">08:08</span></td><td class="nw mu">釀酒人 @ 道奇</td><td class="md"><span class="vp">版本2</span></td><td class="nw">道奇 <span class="rm ok" aria-label="命中">✓</span></td><td class="dk">62%</td><td class="dk">3 : 5</td><td class="dk">命中</td></tr>
+      <tr><td class="nw dt"><span class="dd">11/10</span> <span class="tt">09:10</span></td><td class="nw mu">塞爾提克 @ 尼克</td><td class="md"><span class="vp">版本1</span></td><td class="nw">尼克 <span class="rm bad" aria-label="未命中">✗</span></td><td class="dk">64%</td><td class="dk">101 : 98</td><td class="dk">未命中</td></tr>
     </table></div>
   </section>
 </main>
@@ -41,7 +41,7 @@ document.getElementById("groups").innerHTML = confGroups([
 function measure(){
   if(typeof ccFit === "function") ccFit();
   const page = document.documentElement.scrollWidth - document.documentElement.clientWidth;
-  const rows = [...document.querySelectorAll(".cc-r1")].map(el => ({sw:el.scrollWidth, cw:el.clientWidth, over:el.scrollWidth > el.clientWidth + 1}));
+  const rows = [...document.querySelectorAll(".cc-r1,.hrt .md")].map(el => ({sw:el.scrollWidth, cw:el.clientWidth, over:el.scrollWidth > el.clientWidth + 1}));
   const badges = [...document.querySelectorAll(".cc-focus")].map(el => el.textContent);
   document.getElementById("report").textContent = JSON.stringify({page, rows, badges, w:document.documentElement.clientWidth});
 }

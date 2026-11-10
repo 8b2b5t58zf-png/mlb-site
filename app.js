@@ -131,6 +131,12 @@ function strength(id){ const t = TEAM[id]; return 0.5*parseFloat(t.winningPercen
 // ===== 預測模型 v2（依數據分析師 2026 例行賽回測建議）=====
 // 步驟：① 兩隊戰績 Log5 → 縮回 50% 附近（基礎勝率）② 主場加成 ③ 先發投手 ERA、WHIP 差距
 const MODEL_V = "v2";
+function pubVer(model){
+  const s = String(model || "");
+  if(s.startsWith("v2")) return "版本2";
+  if(s.startsWith("v1")) return "版本1";
+  return "";
+}
 const LG = {era:4.20, whip:1.30, reg:40};   // 聯盟平均 ERA、WHIP；投手數據先加 40 局平均表現（往平均拉回）
 const sig = x => 1/(1+Math.exp(-x)), logit = p => Math.log(p/(1-p));
 function log5(h, a){ return (h - h*a) / (h + a - 2*h*a); }
@@ -409,7 +415,7 @@ function whyBlock(A, H, m, s, ap, hp, aP, hP, fav, fp){
   ], "mlb");
   return html + ref;
 }
-// 先發異動／公布：和排程較早的快照比。同一邊換人＝異動（金字）；原本沒人、現在有人＝公布（白字）；異動優先
+// 先發異動／公布：和排程更早的快照比。同一邊換人＝異動（金字）；原本沒人、現在有人＝公布（白字）；異動優先
 // 延賽改期（rf＝原定開賽時間）：原定時間之前的快照屬於舊賽程，不拿來比（避免把舊先發當成異動）
 function spChange(pk, aP, hP, rf){
   const sn = (SNAPS[pk] || []).filter(x => !rf || snapT(x) >= Date.parse(rf)); if(!sn.length) return null;
@@ -506,14 +512,15 @@ function renderPredict(games, isPast){
     const lk = inPlay ? mlbLocked(g) : null;
     const locked = !!(lk && typeof lk.homeWinProb === "number" && isFinite(lk.homeWinProb));
     let fh = null, starters = both ? "both" : "partial", sampleOk = false;
+    const hpS = hP && PSTAT[hP.id], apS = aP && PSTAT[aP.id];
+    const ipOk = focusIpEnough(hpS && hpS.ip) && focusIpEnough(apS && apS.ip);
     if(inPlay){
       fh = locked ? lk.homeWinProb : null;
       starters = lk && lk.starterStatus === "both" ? "both" : "partial";
-      sampleOk = locked && starters === "both";
+      sampleOk = locked && starters === "both" && ipOk;
     }else if(both){
-      const hp = PSTAT[hP.id], ap = PSTAT[aP.id];
-      const statsOk = !!(hp && ap && [hp.era, ap.era, hp.whip, ap.whip].every(v => v != null && v !== "-" && isFinite(+v)));
-      if(statsOk){ const m0 = modelV2(g.teams.home.team.id, g.teams.away.team.id, hp, ap); fh = m0.final; sampleOk = m0.used === true && isFinite(fh); }
+      const statsOk = !!(hpS && apS && [hpS.era, apS.era, hpS.whip, apS.whip].every(v => v != null && v !== "-" && isFinite(+v)));
+      if(statsOk && ipOk){ const m0 = modelV2(g.teams.home.team.id, g.teams.away.team.id, hpS, apS); fh = m0.final; sampleOk = m0.used === true && isFinite(fh); }
     }
     return {i, fh, day:twKey(g.gameDate), status:mlbFocusStatus(g), starters, sampleOk, inPlay, locked};
   }), {cuts:[53, 60], today:twKey(new Date()), day:day0, needStarters:true, past:!!isPast});
@@ -536,7 +543,8 @@ function renderPredict(games, isPast){
     SS_NOW = g.seriesStatus; GTYPE_NOW = g.gameType; GPK_NOW = g.gamePk;
     SPCHG = spChange(g.gamePk, aP, hP, g.rescheduledFrom);
     const off = OFFICIAL[g.gamePk];
-    const v1note = off && off.model && !off.model.startsWith(MODEL_V) ? `<div class="vnote">此場沿用較早的正式紀錄</div>` : "";
+    const vName = off && pubVer(off.model);
+    const v1note = off && off.model && !off.model.startsWith(MODEL_V) ? `<div class="vnote">此場正式紀錄是${vName || "另一版本"}，未併入版本2 命中率</div>` : "";
     const w = g.weather && g.weather.condition ? `參考資訊：天氣 ${g.weather.condition}${g.weather.temp?`，氣溫 ${Math.round((g.weather.temp-32)*5/9)}°C`:""}（不列入勝率計算）` : "";
     const wait = inPlay ? false : (!aP || !hP);   // 進行中不再寫「先發公布後會重算」
     const ss0 = g.seriesStatus, post = ["F","D","L","W"].includes(g.gameType) && ss0 && !ss0.isOver;
@@ -681,7 +689,7 @@ async function secHit(){
   const r = await fetch("data/predictions.json?t=" + Date.now());
   if(!r.ok) throw new Error("predictions");
   const d = await r.json();
-  accLine("mlb-acc", d.records, x => (x.official.model||"").startsWith(MODEL_V), "MLB", "#mlb-hitrate");
+  accLine("mlb-acc", d.records, x => (x.official.model||"").startsWith(MODEL_V), "MLB 版本2", "#mlb-hitrate");
   d.records = d.records.filter(x => x.status !== "cancelled");   // 取消的比賽（賽程已無此場、從未開打）不列入
   // 只計算「正式預測」（開打前最後一筆快照；舊 v1 紀錄即為正式預測）
   const off = d.records.filter(x => x.official);
@@ -689,19 +697,19 @@ async function secHit(){
   const done = off.filter(x => x.correct !== null), n = done.length, ok = done.filter(x => x.correct).length;
   const GOAL = 50;
   const vers = [...new Set([...off.map(ver), MODEL_V])].sort();
-  const vline = v => { const dv = done.filter(x=>ver(x)===v), k = dv.length;
-    return k >= GOAL ? `${v}：命中率 ${Math.round(dv.filter(x=>x.correct).length/k*100)}%（共 ${k} 場）` : `${v}：累積中（目前 ${k} 場，滿 ${GOAL} 場後顯示）`; };
-  // 正式命中率以目前模型（v2）為準；舊版只留一行小字
+  const vline = v => { const dv = done.filter(x=>ver(x)===v), k = dv.length, name = pubVer(v);
+    return !name ? "" : k >= GOAL ? `${name}：命中率 ${Math.round(dv.filter(x=>x.correct).length/k*100)}%（共 ${k} 場）` : `${name}：累積中（目前 ${k} 場，滿 ${GOAL} 場後顯示）`; };
+  // 正式命中率只算版本2；版本1 另計，不併入
   const dv = done.filter(x=>ver(x)===MODEL_V), nv = dv.length, okv = dv.filter(x=>x.correct).length;
   let html = nv >= GOAL
-    ? `<div class="hr-big">${Math.round(okv/nv*100)}%</div><div class="hr-sub">MLB 命中率（共 ${nv} 場）</div>`
-    : `<div class="hr-big muted">累積中</div><div class="hr-prog"><div class="hr-bar"><div style="width:${nv/GOAL*100}%"></div></div><span>MLB：${nv} / ${GOAL} 場</span></div>`;
+    ? `<div class="hr-big">${Math.round(okv/nv*100)}%</div><div class="hr-sub">MLB 版本2 命中率（共 ${nv} 場）</div>`
+    : `<div class="hr-big muted">累積中</div><div class="hr-prog"><div class="hr-bar"><div style="width:${nv/GOAL*100}%"></div></div><span>版本2：${nv} / ${GOAL} 場</span></div>`;
   html += `<div class="hr-ref">季後賽場數少，正式命中率預計於 2027 例行賽累積後顯示</div>`;
-  const old = vers.filter(v=>v!==MODEL_V).map(v=>`較早紀錄：${off.filter(x=>ver(x)===v).length} 場，不列入目前命中率`);
+  const old = vers.filter(v=>v!==MODEL_V && pubVer(v)).map(v=>`${pubVer(v)}：${off.filter(x=>ver(x)===v).length} 場，不列入版本2 命中率`);
   if(old.length) html += `<div class="hr-vers">${old.join("<br>")}</div>`;
   html += confGroups(d.records, x => (x.official.model||"").startsWith(MODEL_V), [53, 60], "mlb");
   html += `<p class="hr-upd">最後更新：${fmtT(d.updated)}（台灣時間）</p>`;
-  html += '<div class="tblwrap" style="overflow-x:auto"><table class="hrt"><tr><th>比賽時間</th><th class="mu-h"><span class="mu-full">對戰（客 @ 主）</span><span class="mu-short">客 @ 主</span></th><th class="md">紀錄</th><th>預測</th><th class="dk">預測勝率</th><th class="dk">實際比分</th><th class="dk">結果</th></tr>';
+  html += '<div class="tblwrap" style="overflow-x:auto"><table class="hrt"><tr><th>比賽時間</th><th class="mu-h"><span class="mu-full">對戰（客 @ 主）</span><span class="mu-short">客 @ 主</span></th><th class="md">版本</th><th>預測</th><th class="dk">預測勝率</th><th class="dk">實際比分</th><th class="dk">結果</th></tr>';
   // 還沒結算的場次：季後賽同一系列只列下一場（前一戰打完才出現下一戰，與預測頁同規則）；已鎖定正式預測的照列
   const hide = await hitHide(d.records);
   for(const x of d.records.filter(x => !hide.has(x.gamePk)).reverse().slice(0,15)){
@@ -712,7 +720,7 @@ async function secHit(){
     const gt = Date.parse(x.gameTime.slice(0,16).replace(" ","T") + ":00+08:00"), started = gt <= Date.now(), wait = x.correct === null || x.correct === undefined;
     const fin = () => { const t = MST[x.gamePk]; return t && t.abstractGameState ? t.abstractGameState === "Final" : Date.now() - gt > 3*3600e3; };
     const v = (snap.model||"").slice(0,2);
-    const vLab = v === MODEL_V ? "現行" : "較早";
+    const vLab = pubVer(v);
     html += `<tr><td class="nw dt">${fmtDH(x.gameTime)}</td><td class="nw mu">${short(x.away)} @ ${short(x.home)}</td><td class="md"><span class="vp ${v}">${vLab}</span></td><td class="nw">${short(pw)}${x.correct==null?"":" "+resMark(x.correct)}${tag}${noSp(x.official) ? `<div class="nosp">${WHY_TXT.noSp}</div>` : ""}</td><td class="dk">${pDisp(p*100)[0]}%</td><td class="dk${x.final?"":" pend"}">${x.final || (fin(x) ? "比分更新中" : started ? "進行中" : "未開打")}</td><td class="dk${wait?" pend":""}">${wait ? (started ? "待結算" : "未開打") : x.correct ? "命中" : "未命中"}</td></tr>`;
   }
   el.innerHTML = html + "</table></div>";
@@ -781,7 +789,7 @@ function setLeague(lg){
   document.body.classList.toggle("lg-nba", lg==="nba");
   document.querySelectorAll(".lgsw button").forEach(b => b.setAttribute("aria-selected", b.dataset.lg===lg));
   document.getElementById("lg-tag").textContent = "｜" + lg.toUpperCase();
-  document.getElementById("tg-scope").textContent = lg==="nba" ? "用 2025-26 季比賽驗證過" : "用 2026 整季比賽驗證過";
+  document.getElementById("tg-scope").textContent = "賽前預測與賽後紀錄分開列出";
   document.getElementById("lg-sub").textContent = lg==="nba" ? "AI 運動實驗室・NBA 美國職籃勝負預測與賽後分析" : "AI 運動實驗室・美國職棒大聯盟勝負預測與賽後分析";
   document.getElementById("foot").innerHTML = '<p class="foot-src">球數實驗室（AI Sports Lab）為個人數據分析網站，非投注建議。資料來源：MLB Stats API、ESPN。</p><p class="foot-links"><a href="#about" data-go="about" class="foot-about">關於與免責</a><span aria-hidden="true">·</span><a class="foot-line" href="https://lin.ee/n5vh3y9" target="_blank" rel="noopener" aria-label="透過球數實驗室官方 LINE 提供意見回饋（另開新視窗）" data-gc="line-feedback-footer"><svg class="line-ic" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><rect width="24" height="24" rx="5.5" fill="#06C755"/><path fill="#fff" d="M12 4.5c-4.7 0-8.5 3-8.5 6.7 0 3.3 3 6.1 7.1 6.6.6.1.6.5.5 1l-.2 1.2c0 .3.3.6.7.4 2.5-1.3 6.6-4.2 8.1-6.1.5-.9.8-2 .8-3.1 0-3.7-3.8-6.7-8.5-6.7z"/><text x="12" y="13.2" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-weight="700" font-size="5.2" fill="#06C755">LINE</text></svg>球數實驗室官方 LINE</a></p>';
   footUpd(lg);
