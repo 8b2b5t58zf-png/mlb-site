@@ -709,6 +709,7 @@ async function secHit(){
   if(old.length) html += `<div class="hr-vers">${old.join("<br>")}</div>`;
   html += confGroups(d.records, x => (x.official.model||"").startsWith(MODEL_V), [53, 60], "mlb");
   html += `<p class="hr-upd">最後更新：${fmtT(d.updated)}（台灣時間）</p>`;
+  html += await histCard("mlb");
   html += '<div class="tblwrap" style="overflow-x:auto"><table class="hrt"><tr><th>比賽時間</th><th class="mu-h"><span class="mu-full">對戰（客 @ 主）</span><span class="mu-short">客 @ 主</span></th><th class="md">版本</th><th>預測</th><th class="dk">預測勝率</th><th class="dk">實際比分</th><th class="dk">結果</th></tr>';
   // 還沒結算的場次：季後賽同一系列只列下一場（前一戰打完才出現下一戰，與預測頁同規則）；已鎖定正式預測的照列
   const hide = await hitHide(d.records);

@@ -289,10 +289,10 @@ test("追蹤事件與 LINE 網址未改", () => {
     "line-feedback-footer",
     "line-feedback-float-predict",
     "https://aisportslab.goatcounter.com/count",
-    "why-text.js?v=202611102000",
-    "nba.js?v=202611111759",
-    "app.js?v=202611102000",
-    "style.css?v=202611102000",
+    "why-text.js?v=202611111816",
+    "nba.js?v=202611111816",
+    "app.js?v=202611111816",
+    "style.css?v=202611111816",
     "賽前預測與賽後紀錄分開列出",
   ]) assert.ok(html.includes(s), s);
   assert.ok(read("why-text.js").includes("ref-open-"));
@@ -301,13 +301,43 @@ test("追蹤事件與 LINE 網址未改", () => {
   assert.ok(read("app.js").includes('path:key, title:`${LG_NOW.toUpperCase()} ${name}`'));
 });
 
+test("歷史回測公開檔只有結果，頁面沒有計算方式", () => {
+  const raw = read("data/backtest.json");
+  const d = JSON.parse(raw);
+  assert.ok(!/rule|period|brier|blend|mlb_v2|version|看好|優勢|占優|公式/.test(raw));
+  assert.strictEqual(d.mlb.season, "2026");
+  assert.strictEqual(d.nba.season, "2025-26");
+  assert.strictEqual(d.mlb.hit_pct, 58.2);
+  assert.strictEqual(d.nba.hit_pct, 69.9);
+  assert.strictEqual(d.mlb.tiers["高"].hit_pct, 63.7);
+  assert.strictEqual(d.mlb.tiers["高"].n, 201);
+  assert.strictEqual(d.mlb.tiers["中"].hit_pct, 59.2);
+  assert.strictEqual(d.mlb.tiers["低"].hit_pct, 51.4);
+  assert.strictEqual(d.mlb.tie50, 71);
+  assert.strictEqual(d.nba.tiers["高"].hit_pct, 78.3);
+  assert.strictEqual(d.nba.tiers["高"].n, 451);
+  assert.strictEqual(d.nba.tiers["中"].hit_pct, 69.4);
+  assert.strictEqual(d.nba.tiers["低"].hit_pct, 60.5);
+  assert.strictEqual(d.nba.tie50, 19);
+  const why = read("why-text.js");
+  const note = "這是過去比賽的事後驗算，和本季正式紀錄分開列出、不合併。命中是指勝率超過五成的一方贏球；勝率剛好五成的場次不列入命中率。不是投注建議。";
+  assert.ok(why.includes("歷史回測"));
+  assert.ok(why.includes(note));
+  assert.ok(why.includes("信心高的歷史回測命中率"));
+  assert.ok(why.includes("7/1 起"));
+  assert.ok(why.includes("含季中賽"));
+  assert.ok(read("app.js").includes('histCard("mlb")'));
+  assert.ok(read("nba.js").includes('histCard("nba")'));
+  for(const f of ["why-text.js", "app.js", "nba.js", "index.html", "style.css"]) assert.ok(!read(f).includes("計算方式"), f);
+});
+
 test("這次差異不含資料、工作流程、腳本與部署設定", () => {
   const files = execSync("git status --porcelain=v1 -uall", {cwd:root, encoding:"utf8"}).trim().split("\n").filter(Boolean).map(l => {
     const m = l.match(/^[ MADRCU?!]{1,2} +(.*)$/);
     if(!m) throw new Error("無法解析 git status：" + [...l].map(c => c.charCodeAt(0)).join(",") + " " + JSON.stringify(l));
     return m[1].replace(/.* -> /, "");
   });
-  const banned = /^(data\/|\.github\/|scripts\/|vercel\.json|CNAME|sitemap\.xml|robots\.txt)/;
+  const banned = /^(data\/(?!backtest\.json$)|\.github\/|scripts\/|vercel\.json|CNAME|sitemap\.xml|robots\.txt)/;
   const hit = files.filter(f => banned.test(f));
   assert.deepStrictEqual(hit, []);
 });

@@ -438,6 +438,12 @@ html.pre-nba #lg-tag::after{font-size:18px}
 .hr-fold[open]>summary::after{transform:rotate(-135deg);margin-top:3px}
 .hr-fold>summary:focus-visible,.hr-dbtn:focus-visible{outline:2px solid #d4af37;outline-offset:2px}
 .hr-how .note{margin:2px 0 6px}
+.hit-hist{margin:16px 0;padding:12px 12px 8px;border:1px dashed #262e39;border-radius:8px}
+.hit-hist h3{margin:0 0 6px}
+.hit-hist>.note{margin:0 0 10px;line-height:1.65}
+.hit-hist .hr-sub{display:block;margin-top:2px}
+.hit-hist .hr-cg1{margin:10px 0 0}
+.hit-hist .cg{background:transparent;border:0;padding:0;margin:8px 0 4px}
 .hrt .hr-dsum td{padding:0}
 .hr-dbtn{display:flex;align-items:center;width:100%;min-height:44px;padding:0 4px;background:none;border:0;color:#e6edf3;font:inherit;font-size:14px;text-align:left;cursor:pointer;white-space:nowrap}
 .hr-dbtn .num{font-family:var(--num)}

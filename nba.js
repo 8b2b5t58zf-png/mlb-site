@@ -333,6 +333,7 @@ async function nbaHit(){
   html += `<div class="hr-cg1"><div class="cg-row"><span class="cg-l">全部場次</span><span class="cg-v">${cv(gv)}</span></div><div class="cg-row"><span class="cg-l">信心 <span class="num">${cut}%</span> 以上</span><span class="cg-v">${cv(hiG)}</span></div></div>`;
   html += `<details class="hr-fold"><summary>看各信心分級</summary>${confGroups(d.records, x => x.official.model === NM.ver, [60, 70], "nba")}</details>`;
   html += `<p class="hr-upd">最後更新：${fmtT(d.updated)}（台灣時間）</p>`;
+  html += await histCard("nba");
   if(!d.records.length){ el.innerHTML = html + '<p class="note">2026-27 例行賽 10/21（台灣時間）開打，開打前會開始記錄。</p>'; return; }
   html += '<div class="tblwrap" style="overflow-x:auto"><table class="hrt hrt-nba"><thead><tr><th>比賽時間</th><th class="mu-h"><span class="mu-full">對戰（客 @ 主）</span><span class="mu-short">客 @ 主</span></th><th>預測</th><th class="dk">勝率</th><th class="dk">實際比分</th><th class="dk">結果</th></tr></thead>';
   // 開季第一天排程漏跑，這兩場依開賽前快照補記（B N 10/21 決定）；只影響顯示
