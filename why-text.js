@@ -172,6 +172,32 @@ function confGroups(recs, isVer, cuts, lg){   // cuts: [中下限, 高下限]（
     return `<div class="cg-row"><span class="cg-l">信心 ${g.n}<span class="cg-r">${g.r}</span></span><span class="cg-v">${v}</span></div>`; }).join("");
   return `<div class="cg" id="cg-${lg}"><div class="cg-h">依信心分組（每組滿 <span class="num">50</span> 場才顯示命中率）</div>${rows}${half ? `<div class="cg-n">勝率剛好 <span class="num">50%</span> 的 <span class="num">${half}</span> 場不分組、不計命中率</div>` : ""}</div>`;
 }
+// 歷史回測卡：只讀 data/backtest.json 的結果數字。文案是核准稿。
+let BT_P = null;
+function backtestFile(){
+  if(!BT_P) BT_P = fetch("data/backtest.json?v=202611111816").then(r => r.ok ? r.json() : null).catch(() => null);
+  return BT_P;
+}
+const btNum = n => Number(n).toLocaleString("en-US");
+const btPct = n => (Math.round(Number(n) * 10) / 10).toFixed(1);
+async function histCard(lg){
+  let d; try{ d = await backtestFile(); }catch(e){ return ""; }
+  const b = d && d[lg], hi = b && b.tiers && b.tiers["高"];
+  if(!hi) return "";
+  const cuts = lg === "nba" ? [60, 70] : [53, 60];
+  const name = lg === "nba" ? "NBA" : "MLB";
+  const when = lg === "nba" ? "含季中賽" : "7/1 起";
+  const range = k => k === "低" ? `未滿 <span class="num">${cuts[0]}%</span>` : k === "中" ? `<span class="num">${cuts[0]}</span>～未滿 <span class="num">${cuts[1]}%</span>` : `<span class="num">${cuts[1]}%</span> 以上`;
+  const rows = ["低", "中", "高"].map(k => {
+    const t = b.tiers[k]; if(!t) return "";
+    const v = `<span class="cg-v1">平均預測 <span class="num">${btPct(t.avg_pred_pct)}%</span></span><span class="cg-v2">實際 <span class="num">${btPct(t.hit_pct)}%</span>（<span class="num">${btNum(t.k)}/${btNum(t.n)}</span> 場）</span>`;
+    return `<div class="cg-row"><span class="cg-l">信心 ${k}<span class="cg-r">${range(k)}</span></span><span class="cg-v">${v}</span></div>`;
+  }).join("");
+  const tie = b.tie50 ? `<div class="cg-n">勝率剛好 <span class="num">50%</span> 的 <span class="num">${btNum(b.tie50)}</span> 場不分組、不計命中率</div>` : "";
+  const sub = `${name} 信心高的歷史回測命中率（${b.season} 例行賽，${when}，勝率 <span class="num">${cuts[1]}%</span> 以上，共 <span class="num">${btNum(hi.n)}</span> 場）`;
+  const all = `<span class="num">${btPct(b.hit_pct)}%</span>（<span class="num">${btNum(b.k)}/${btNum(b.n)}</span> 場）`;
+  return `<div class="hit-hist"><h3>歷史回測</h3><p class="note">這是過去比賽的事後驗算，和本季正式紀錄分開列出、不合併。命中是指勝率超過五成的一方贏球；勝率剛好五成的場次不列入命中率。不是投注建議。</p><div class="hr-big">${btPct(hi.hit_pct)}%</div><div class="hr-sub">${sub}</div><div class="hr-cg1"><div class="cg-row"><span class="cg-l">全部場次</span><span class="cg-v">${all}</span></div></div><div class="cg">${rows}${tie}</div></div>`;
+}
 
 // 系列賽晉級機率（移植 analysis/series_prob.py，列出所有剩餘勝負組合的準確值，不用模擬）
 // a＝下一場主隊；pNext＝卡片顯示的下一場 a 勝率；paH/paA＝a 在主場／客場的單場勝率（先發未公布，用戰績估算）；homePat[i]＝第 i+1 戰是否在 a 主場
