@@ -322,7 +322,7 @@ async function nbaHit(){
   const r = await fetch("data/nba-predictions.json?t=" + Date.now()); if(!r.ok) throw new Error("nba-predictions");
   const d = await r.json(), GOAL = 50;
   if(typeof accLine === "function") accLine("nba-acc", d.records, x => x.official.model === NM.ver, "NBA 目前版本", "#nba-hitrate");
-  const isNew = x => (x.official||{}).model === NM.ver, old = d.records.filter(x => x.official && x.correct !== null && !isNew(x));
+  const isNew = x => (x.official||{}).model === NM.ver;
   const done = d.records.filter(x => x.official && x.correct !== null && isNew(x)), n = done.length, ok = done.filter(x => x.correct).length;
   let html = n >= GOAL ? `<div class="hr-big">${Math.round(ok/n*100)}%</div><div class="hr-sub">NBA 目前版本命中率（共 ${n} 場）</div>`
     : `<div class="hr-big muted">累積中</div><div class="hr-prog"><div class="hr-bar"><div style="width:${n/GOAL*100}%"></div></div><span>NBA：${n} / ${GOAL} 場</span></div>`;
@@ -332,16 +332,6 @@ async function nbaHit(){
   const cv = xs => { const k = xs.length, m = xs.filter(x => x.correct).length; return k >= GOAL ? `<span class="num">${Math.round(m/k*100)}%</span>（<span class="num">${m}/${k}</span> 場）` : `累積中（<span class="num">${k}</span> 場）`; };
   html += `<div class="hr-cg1"><div class="cg-row"><span class="cg-l">全部場次</span><span class="cg-v">${cv(gv)}</span></div><div class="cg-row"><span class="cg-l">信心 <span class="num">${cut}%</span> 以上</span><span class="cg-v">${cv(hiG)}</span></div></div>`;
   html += `<details class="hr-fold"><summary>看各信心分級</summary>${confGroups(d.records, x => x.official.model === NM.ver, [60, 70], "nba")}</details>`;
-  const how = [`樣本少於 <span class="num">${GOAL}</span> 場僅供參考`, "命中率只計算已結算場次・非投注建議"];
-  if(old.length){
-    const groups = new Map();
-    for(const x of old){ const key = String((x.official||{}).model||"").split("：")[0]; const g = groups.get(key)||[]; g.push(x); groups.set(key, g); }
-    for(const [key, xs] of groups){
-      const name = key === "v1" ? "版本1" : key === "v2" ? "版本2" : "另一版本";
-      how.push(`${name}另計：${xs.length} 場，命中 ${xs.filter(x => x.correct).length} 場`);
-    }
-  }
-  html += `<details class="hr-fold"><summary>計算方式</summary><div class="hr-how">${how.map(t => `<p class="note">${t}</p>`).join("")}</div></details>`;
   html += `<p class="hr-upd">最後更新：${fmtT(d.updated)}（台灣時間）</p>`;
   if(!d.records.length){ el.innerHTML = html + '<p class="note">2026-27 例行賽 10/21（台灣時間）開打，開打前會開始記錄。</p>'; return; }
   html += '<div class="tblwrap" style="overflow-x:auto"><table class="hrt hrt-nba"><thead><tr><th>比賽時間</th><th class="mu-h"><span class="mu-full">對戰（客 @ 主）</span><span class="mu-short">客 @ 主</span></th><th>預測</th><th class="dk">勝率</th><th class="dk">實際比分</th><th class="dk">結果</th></tr></thead>';

@@ -269,6 +269,10 @@ test("可見文案不含禁用詞，也不把命中率寫成勝率", () => {
   assert.ok(app.includes("MLB 版本2 命中率"));
   assert.ok(app.includes("不列入版本2 命中率"));
   assert.ok(nba.includes("NBA 目前版本命中率"));
+  assert.ok(nba.includes("全部場次"));
+  assert.ok(nba.includes("看各信心分級"));
+  assert.ok(!nba.includes("計算方式"));
+  assert.ok(!nba.includes("樣本少於"));
   assert.ok(!app.includes("MLB v2"));
   assert.ok(!app.includes("驗證過"));
   assert.ok(!read("index.html").includes("驗證過"));
@@ -286,7 +290,7 @@ test("追蹤事件與 LINE 網址未改", () => {
     "line-feedback-float-predict",
     "https://aisportslab.goatcounter.com/count",
     "why-text.js?v=202611102000",
-    "nba.js?v=202611102000",
+    "nba.js?v=202611111759",
     "app.js?v=202611102000",
     "style.css?v=202611102000",
     "賽前預測與賽後紀錄分開列出",
@@ -306,9 +310,6 @@ test("這次差異不含資料、工作流程、腳本與部署設定", () => {
   const banned = /^(data\/|\.github\/|scripts\/|vercel\.json|CNAME|sitemap\.xml|robots\.txt)/;
   const hit = files.filter(f => banned.test(f));
   assert.deepStrictEqual(hit, []);
-  assert.ok(files.includes("why-text.js"));
-  assert.ok(files.includes("app.js"));
-  assert.ok(files.includes("nba.js"));
 });
 
 if(fail){ console.error(fail + "/" + n + " failed"); process.exit(1); }
