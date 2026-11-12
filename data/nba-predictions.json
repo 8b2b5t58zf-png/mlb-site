@@ -1,5 +1,5 @@
 {
- "updated": "2026-11-12 11:31 (UTC+8)",
+ "updated": "2026-11-12 12:01 (UTC+8)",
  "records": [
   {
    "id": "401909088",
@@ -7043,10 +7043,11 @@
     "snapshotAt": "2026-11-11 10:56 (UTC+8)"
    },
    "predictedWinner": "湖人",
-   "final": null,
-   "actualWinner": null,
-   "correct": null,
-   "latestStandingsAt": "2026-11-12T00:00:19Z"
+   "final": "湖人 123 : 112 公鹿",
+   "actualWinner": "湖人",
+   "correct": true,
+   "latestStandingsAt": "2026-11-12T00:00:19Z",
+   "settledAt": "2026-11-12 12:01 (UTC+8)"
   },
   {
    "id": "401909972",
@@ -7081,10 +7082,11 @@
     "snapshotAt": "2026-11-10 13:31 (UTC+8)"
    },
    "predictedWinner": "鵜鶘",
-   "final": null,
-   "actualWinner": null,
-   "correct": null,
-   "latestStandingsAt": "2026-11-12T00:00:19Z"
+   "final": "籃網 145 : 111 鵜鶘",
+   "actualWinner": "籃網",
+   "correct": false,
+   "latestStandingsAt": "2026-11-12T00:00:19Z",
+   "settledAt": "2026-11-12 12:01 (UTC+8)"
   },
   {
    "id": "401909973",
@@ -7252,7 +7254,7 @@
    "final": null,
    "actualWinner": null,
    "correct": null,
-   "latestStandingsAt": "2026-11-12T03:31:00Z"
+   "latestStandingsAt": "2026-11-12T04:01:05Z"
   },
   {
    "id": "401909977",
@@ -7282,7 +7284,7 @@
    "final": null,
    "actualWinner": null,
    "correct": null,
-   "latestStandingsAt": "2026-11-12T03:31:00Z"
+   "latestStandingsAt": "2026-11-12T04:01:05Z"
   },
   {
    "id": "401909978",
@@ -7304,7 +7306,7 @@
    "final": null,
    "actualWinner": null,
    "correct": null,
-   "latestStandingsAt": "2026-11-12T03:31:00Z"
+   "latestStandingsAt": "2026-11-12T04:01:05Z"
   },
   {
    "id": "401909979",
@@ -7334,7 +7336,7 @@
    "final": null,
    "actualWinner": null,
    "correct": null,
-   "latestStandingsAt": "2026-11-12T03:31:00Z"
+   "latestStandingsAt": "2026-11-12T04:01:05Z"
   },
   {
    "id": "401909296",
@@ -7372,7 +7374,7 @@
    "final": null,
    "actualWinner": null,
    "correct": null,
-   "latestStandingsAt": "2026-11-12T03:31:00Z"
+   "latestStandingsAt": "2026-11-12T04:01:05Z"
   },
   {
    "id": "401909297",
@@ -7395,6 +7397,14 @@
      "standingsFetchedAt": "2026-11-11T05:31:53Z",
      "homeGames": 10,
      "awayGames": 11
+    },
+    {
+     "at": "2026-11-12 12:01 (UTC+8)",
+     "model": "blend_v1",
+     "homeWinProb": 0.7256,
+     "standingsFetchedAt": "2026-11-12T04:01:05Z",
+     "homeGames": 10,
+     "awayGames": 12
     }
    ],
    "official": null,
@@ -7402,7 +7412,7 @@
    "final": null,
    "actualWinner": null,
    "correct": null,
-   "latestStandingsAt": "2026-11-12T03:31:00Z"
+   "latestStandingsAt": "2026-11-12T04:01:05Z"
   },
   {
    "id": "401909298",
@@ -7432,7 +7442,7 @@
    "final": null,
    "actualWinner": null,
    "correct": null,
-   "latestStandingsAt": "2026-11-12T03:31:00Z"
+   "latestStandingsAt": "2026-11-12T04:01:05Z"
   },
   {
    "id": "401909299",
@@ -7462,7 +7472,7 @@
    "final": null,
    "actualWinner": null,
    "correct": null,
-   "latestStandingsAt": "2026-11-12T03:31:00Z"
+   "latestStandingsAt": "2026-11-12T04:01:05Z"
   },
   {
    "id": "401909300",
@@ -7477,6 +7487,14 @@
      "standingsFetchedAt": "2026-11-11T05:01:47Z",
      "homeGames": 11,
      "awayGames": 10
+    },
+    {
+     "at": "2026-11-12 12:01 (UTC+8)",
+     "model": "blend_v1",
+     "homeWinProb": 0.3854,
+     "standingsFetchedAt": "2026-11-12T04:01:05Z",
+     "homeGames": 12,
+     "awayGames": 11
     }
    ],
    "official": null,
@@ -7484,7 +7502,7 @@
    "final": null,
    "actualWinner": null,
    "correct": null,
-   "latestStandingsAt": "2026-11-12T03:31:00Z"
+   "latestStandingsAt": "2026-11-12T04:01:05Z"
   },
   {
    "id": "401909301",
@@ -7506,7 +7524,7 @@
    "final": null,
    "actualWinner": null,
    "correct": null,
-   "latestStandingsAt": "2026-11-12T03:31:00Z"
+   "latestStandingsAt": "2026-11-12T04:01:05Z"
   },
   {
    "id": "401909302",
@@ -7536,7 +7554,7 @@
    "final": null,
    "actualWinner": null,
    "correct": null,
-   "latestStandingsAt": "2026-11-12T03:31:00Z"
+   "latestStandingsAt": "2026-11-12T04:01:05Z"
   },
   {
    "id": "401909303",
@@ -7574,7 +7592,7 @@
    "final": null,
    "actualWinner": null,
    "correct": null,
-   "latestStandingsAt": "2026-11-12T03:31:00Z"
+   "latestStandingsAt": "2026-11-12T04:01:05Z"
   },
   {
    "id": "401909304",
@@ -7604,7 +7622,7 @@
    "final": null,
    "actualWinner": null,
    "correct": null,
-   "latestStandingsAt": "2026-11-12T03:31:00Z"
+   "latestStandingsAt": "2026-11-12T04:01:05Z"
   }
  ]
 }
