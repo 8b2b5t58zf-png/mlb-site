@@ -28,22 +28,38 @@
 <script src="../why-text.js"></script>
 <script>
 const cards = [
-  ccCard({lg:"focus", live:true, focus:"預測信心高", ser:'<span class="ser-tag">ALCS 第 <span class="num">7</span> 戰</span>', time:cardTime("2026-11-10T12:08:00Z"), tag:"", A:"釀酒人", H:"道奇", conf:"高", tc:"strong", ap:"38", hp:"62", aw:38, hw:62, favHome:true, reason:"", body:"<p>各項指標都站在道奇這邊，差距明顯</p>"}),
+  ccCard({lg:"focus", live:true, focus:"預測信心高", ser:'<span class="ser-tag">ALCS 第 <span class="num">7</span> 戰</span>', time:cardTime("2026-11-10T12:08:00Z"), tag:"", A:"釀酒人", H:"道奇", conf:"高", tc:"strong", ap:"38", hp:"62", aw:38, hw:62, favHome:true, reason:"", body:'<div class="pitch"><div class="pc-lab">先發</div><div class="pc-row"><div class="pc-col"><div class="pc-hd"><span class="cc-ha">主</span><span class="pc-n">山本由伸</span></div><div class="pc-s"><span class="nw">ERA 2.10</span>・<span class="nw">WHIP 0.95</span>・<span class="nw">20.0 局</span></div></div><div class="pc-div"></div><div class="pc-col"><div class="pc-hd"><span class="pc-n">大谷翔平</span><span class="cc-ha">客</span></div><div class="pc-s"><span class="nw">ERA 3.20</span>・<span class="nw">WHIP 1.15</span>・<span class="nw">18.1 局</span></div></div></div></div><details class="cmp"><summary>兩隊數據對比</summary><table class="cmpt"><thead><tr><th>客 釀酒人</th><th class="mid">指標</th><th>主 道奇</th></tr></thead><tbody><tr><td>80勝70敗</td><td class="mid">戰績<div class="desc">本季例行賽勝敗場數</div></td><td>90勝60敗</td></tr></tbody></table></details>'}),
   ccCard({lg:"mlb", focus:"", ser:"", time:cardTime("2026-11-10T16:00:00Z"), tag:"先發未公布", A:"響尾蛇", H:"教士", conf:"低", tc:"toss", ap:"51", hp:"49", aw:51, hw:49, favHome:false, reason:"兩隊勝率接近（先發公布後會重算）", body:"<p>先發未公布</p>"}),
   ccCard({lg:"nba", focus:"預測信心中", ser:"", time:cardTime("2026-11-11T03:00:00Z"), tag:"", A:"塞爾提克", H:"尼克", conf:"中", tc:"lean", ap:"36", hp:"64", aw:36, hw:64, favHome:true, reason:"", body:"<p>勝率較高</p>"}),
-  ccCard({lg:"mlb", pp:"延賽至 11/12（三）08:00（勝率將重算）", ser:'<span class="ser-tag">世界大賽第 <span class="num">3</span> 戰</span>', A:"洋基", H:"道奇", conf:"中", tc:"lean", ap:"45", hp:"55", body:""}),
+  ccCard({lg:"mlb", pp:"延賽至 11/12（三）08:00（勝率將重算）", ser:'<span class="ser-tag">世界大賽第 <span class="num">3</span> 戰</span>', A:"洋基", H:"道奇", conf:"中", tc:"lean", ap:"45", hp:"55", aw:45, hw:55, favHome:true, body:""}),
+  ccCard({lg:"mlb", focus:"", ser:"", time:cardTime("2026-11-12T02:00:00Z"), tag:"", A:"光芒", H:"金鶯", conf:"低", tc:"toss", ap:"50", hp:"50", aw:50, hw:50, favHome:true, reason:"兩隊勝率接近", body:""}),
+  ccCard({lg:"nba", focus:"", ser:"", time:cardTime("2026-10-20T00:08:00Z"), tag:"", A:"塞爾提克", H:"拓荒者", conf:"高", tc:"strong", ap:"38", hp:"62", aw:37.6, hw:62.4, favHome:true, reason:"", body:""}),
 ];
 document.getElementById("cards").innerHTML = cards.join("");
 document.getElementById("groups").innerHTML = confGroups([
   {status:"final", official:{homeWinProb:0.62, model:"v2"}, correct:true},
   {status:"final", official:{homeWinProb:0.47, model:"v2"}, correct:false},
 ], () => true, [53, 60], "mlb");
+const openBody = document.querySelector(".cc-body");
+if(openBody){ openBody.classList.add("open"); openBody.style.maxHeight = "none"; openBody.inert = false; }
+const openCmp = document.querySelector("details.cmp");
+if(openCmp) openCmp.open = true;
 function measure(){
   if(typeof ccFit === "function") ccFit();
   const page = document.documentElement.scrollWidth - document.documentElement.clientWidth;
-  const rows = [...document.querySelectorAll(".cc-r1,.hrt .md")].map(el => ({sw:el.scrollWidth, cw:el.clientWidth, over:el.scrollWidth > el.clientWidth + 1}));
+  const rows = [...document.querySelectorAll(".cc-r1,.cc-r2,.pc-row,.hrt .md")].map(el => ({sw:el.scrollWidth, cw:el.clientWidth, over:el.scrollWidth > el.clientWidth + 1}));
   const badges = [...document.querySelectorAll(".cc-focus")].map(el => el.textContent);
-  document.getElementById("report").textContent = JSON.stringify({page, rows, badges, w:document.documentElement.clientWidth});
+  const cards = [...document.querySelectorAll(".pcard.cc")].map(card => {
+    const tms = [...card.querySelectorAll(".cc-r2 .cc-tm")].map(el => ({ha:(el.querySelector(".cc-ha")||{}).textContent || "", nm:(el.querySelector(".cc-nm")||{}).textContent || ""}));
+    const pct = [...card.querySelectorAll(".cc-r3 .cc-p")].map(el => el.textContent);
+    const bar = [...card.querySelectorAll(".cc-bar span")].map(el => el.className + ":" + el.style.width);
+    const time = ((card.querySelector(".cc-time") || {}).innerText || "").replace(/\s+/g, "");
+    const pitch = [...card.querySelectorAll(".pc-row .pc-col")].map(el => ((el.querySelector(".cc-ha")||{}).textContent || "") + " " + ((el.querySelector(".pc-n")||{}).textContent || ""));
+    const cmp = ((card.querySelector(".cmpt thead") || {}).textContent || "").replace(/\s+/g, " ");
+    return {tms, pct, bar, time, pitch, cmp};
+  });
+  const hit = ((document.querySelector(".mu-h") || {}).innerText || "").replace(/\s+/g, "");
+  document.getElementById("report").textContent = JSON.stringify({page, rows, badges, cards, hit, w:document.documentElement.clientWidth});
 }
 measure();
 if(document.fonts && document.fonts.ready) document.fonts.ready.then(() => requestAnimationFrame(() => requestAnimationFrame(measure)));

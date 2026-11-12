@@ -245,6 +245,95 @@ test("卡片徽章是預測焦點", () => {
   assert.ok(plain.includes("兩隊勝率接近"));
 });
 
+function cardSlice(html, from, to){
+  const a = html.indexOf(from), b = html.indexOf(to);
+  assert.ok(a >= 0 && b > a, from);
+  return html.slice(a, b);
+}
+test("勝率較高的一方在左，剛好五成維持客左主右，卡上有主客", () => {
+  const base = {lg:"mlb", time:"10/20（二）08:08", conf:"低", tc:"toss", reason:"", body:""};
+  const home = ccCard({...base, focus:"預測信心高", live:true, A:"釀酒人", H:"道奇", conf:"高", tc:"strong", ap:"38", hp:"62", aw:37.6, hw:62.4, favHome:true});
+  const away = ccCard({...base, lg:"nba", A:"塞爾提克", H:"尼克", ap:"51", hp:"49", aw:51, hw:49, favHome:false, reason:"兩隊勝率接近"});
+  const tie = ccCard({...base, A:"光芒", H:"金鶯", ap:"50", hp:"50", aw:50, hw:50, favHome:true, reason:"兩隊勝率接近"});
+  const tieDec = ccCard({...base, A:"洋基", H:"紅襪", ap:"50.0", hp:"50.0", aw:49.9, hw:50.1, favHome:true});
+  const lean = ccCard({...base, A:"教士", H:"響尾蛇", ap:"49.6", hp:"50.4", aw:49.6, hw:50.4, favHome:true});
+  const pp = ccCard({...base, pp:"延賽至 11/12（三）08:00（勝率將重算）", A:"洋基", H:"道奇", conf:"中", tc:"lean", ap:"45", hp:"55", favHome:true});
+  const barOnly = ccCard({...base, A:"客隊", H:"主隊", ap:"", hp:"", aw:40, hw:60, favHome:true});
+  for(const html of [home, away, tie, tieDec, lean, pp, barOnly]){
+    const r2 = cardSlice(html, "cc-r2", "cc-r3");
+    assert.ok(r2.includes(">主<") && r2.includes(">客<"), r2);
+  }
+  const homeR2 = cardSlice(home, "cc-r2", "cc-r3"), homeR3 = cardSlice(home, "cc-r3", "cc-r4");
+  assert.ok(homeR2.indexOf(">主<") < homeR2.indexOf("道奇") && homeR2.indexOf("道奇") < homeR2.indexOf("釀酒人") && homeR2.indexOf("釀酒人") < homeR2.indexOf(">客<"));
+  assert.ok(homeR3.indexOf(">62%") < homeR3.indexOf("width:62.4%") && homeR3.indexOf("width:62.4%") < homeR3.indexOf("width:37.6%") && homeR3.indexOf("width:37.6%") < homeR3.indexOf(">38%"));
+  assert.ok(homeR3.includes('class="fav" style="width:62.4%"') && homeR3.includes('class="oth" style="width:37.6%"'));
+  assert.ok(home.includes("進行中") && home.includes("預測焦點"));
+  const awayR2 = cardSlice(away, "cc-r2", "cc-r3"), awayR3 = cardSlice(away, "cc-r3", "cc-r4");
+  assert.ok(awayR2.indexOf(">客<") < awayR2.indexOf("塞爾提克") && awayR2.indexOf("塞爾提克") < awayR2.indexOf("尼克") && awayR2.indexOf("尼克") < awayR2.indexOf(">主<"));
+  assert.ok(awayR3.indexOf(">51%") < awayR3.indexOf("width:51%") && awayR3.indexOf("width:51%") < awayR3.indexOf("width:49%") && awayR3.indexOf("width:49%") < awayR3.indexOf(">49%"));
+  const tieR2 = cardSlice(tie, "cc-r2", "cc-r3"), tieR3 = cardSlice(tie, "cc-r3", "cc-r4");
+  assert.ok(tieR2.indexOf("光芒") < tieR2.indexOf("金鶯"));
+  assert.ok(tieR2.indexOf(">客<") < tieR2.indexOf(">主<"));
+  assert.ok(tieR3.indexOf('class="oth" style="width:50%"') < tieR3.indexOf('class="fav" style="width:50%"'));
+  const decR2 = cardSlice(tieDec, "cc-r2", "cc-r3");
+  assert.ok(decR2.indexOf("洋基") < decR2.indexOf("紅襪"), "顯示 50.0 對 50.0 不因主隊勝率略高或 favHome 把主隊放左");
+  const leanR2 = cardSlice(lean, "cc-r2", "cc-r3"), leanR3 = cardSlice(lean, "cc-r3", "cc-r4");
+  assert.ok(leanR2.indexOf("響尾蛇") < leanR2.indexOf("教士"));
+  assert.ok(leanR3.indexOf(">50.4%") < leanR3.indexOf(">49.6%"));
+  const ppR2 = cardSlice(pp, "cc-r2", "cc-r3");
+  assert.ok(pp.includes("延賽") && ppR2.indexOf("道奇") < ppR2.indexOf("洋基"));
+  const barR2 = cardSlice(barOnly, "cc-r2", "cc-r3");
+  assert.ok(barR2.indexOf("主隊") < barR2.indexOf("客隊"));
+  assert.strictEqual(W.ccHomeLeft({ap:"50", hp:"50", aw:49.9, hw:50.1, favHome:true}), false);
+  assert.strictEqual(W.ccHomeLeft({ap:"50.0", hp:"50.0", favHome:true}), false);
+  assert.strictEqual(W.ccHomeLeft({ap:"49.6", hp:"50.4"}), true);
+  assert.strictEqual(W.ccHomeLeft({ap:"51", hp:"49", favHome:false}), false);
+  assert.strictEqual(W.ccHomeLeft({ap:"", hp:"", aw:40, hw:60}), true);
+  assert.strictEqual(W.ccHomeLeft({}), false);
+});
+
+test("先發對比列跟著卡片左右，並標主客；對比表表頭仍是客與主", () => {
+  const context = {
+    console, Intl, URL,
+    requestAnimationFrame(){},
+    addEventListener(){},
+    MutationObserver: class { observe(){} },
+    document: {
+      addEventListener(){},
+      documentElement: {},
+      fonts: {ready: Promise.resolve()},
+      querySelectorAll(){ return []; },
+    },
+    pn: p => p.fullName,
+  };
+  context.window = context;
+  vm.createContext(context);
+  vm.runInContext(read("why-text.js") + "\n" + sliceFn(read("app.js"), "pitchRow"), context, {filename:"pitch.js"});
+  const aP = {id:1, fullName:"AwayPitch"}, hP = {id:2, fullName:"HomePitch"};
+  const aS = {era:"4.50", whip:"1.40", ip:50}, hS = {era:"2.10", whip:"0.90", ip:80};
+  const hi = context.pitchRow(aP, hP, aS, hS, {chg:{away:"OldAway"}}, true);
+  const lo = context.pitchRow(aP, hP, aS, hS, null, false);
+  const tie = context.pitchRow(null, null, null, null, null, false);
+  const names = html => [...html.matchAll(/<span class="pc-n">([^<]*)<\/span>/g)].map(m => m[1]);
+  const marks = html => [...html.matchAll(/<span class="cc-ha">([^<]*)<\/span>/g)].map(m => m[1]);
+  assert.deepStrictEqual(names(hi), ["HomePitch", "AwayPitch"]);
+  assert.deepStrictEqual(marks(hi), ["主", "客"]);
+  assert.ok(hi.indexOf("2.10") < hi.indexOf("4.50"));
+  assert.ok(hi.indexOf("AwayPitch") < hi.indexOf("OldAway"));
+  assert.deepStrictEqual(names(lo), ["AwayPitch", "HomePitch"]);
+  assert.deepStrictEqual(marks(lo), ["客", "主"]);
+  assert.ok(lo.indexOf("4.50") < lo.indexOf("2.10"));
+  assert.deepStrictEqual(names(tie), []);
+  assert.deepStrictEqual(marks(tie), ["客", "主"]);
+  assert.strictEqual(tie.split("尚未公布").length - 1, 2);
+  const app = read("app.js"), nba = read("nba.js");
+  assert.ok(app.includes('<th>客 ${ts(A)}</th><th class="mid">指標</th><th>主 ${ts(H)}</th>'));
+  assert.ok(app.includes("客 @ 主"));
+  assert.ok(nba.includes("客 @ 主"));
+  assert.ok(app.includes("const favHome = m.F >= 50"));
+  assert.ok(nba.includes("const favHome = m.F >= 50"));
+});
+
 test("頁面接線沿用既有門檻，不再以距離 0.5 選場", () => {
   const app = read("app.js"), nba = read("nba.js"), why = read("why-text.js");
   assert.ok(app.includes("cuts:[53, 60]"));
@@ -289,10 +378,10 @@ test("追蹤事件與 LINE 網址未改", () => {
     "line-feedback-footer",
     "line-feedback-float-predict",
     "https://aisportslab.goatcounter.com/count",
-    "why-text.js?v=202611111816",
+    "why-text.js?v=202611121838",
     "nba.js?v=202611111816",
-    "app.js?v=202611120831",
-    "style.css?v=202611111816",
+    "app.js?v=202611121838",
+    "style.css?v=202611121838",
     "賽前預測與賽後紀錄分開列出",
   ]) assert.ok(html.includes(s), s);
   assert.ok(read("why-text.js").includes("ref-open-"));

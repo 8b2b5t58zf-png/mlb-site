@@ -244,7 +244,11 @@ body.tab-predict header{padding-bottom:10px}
 .pc-row{display:flex;align-items:stretch}
 .pc-col{flex:1 1 50%;min-width:0;padding:0 8px} .pc-col:first-child{padding-left:0} .pc-col:last-child{padding-right:0;text-align:right}
 .pc-div{flex:0 0 1px;background:#262e39}
+.pc-hd{display:flex;align-items:center;gap:4px;min-width:0}
+.pc-col:last-child .pc-hd{justify-content:flex-end}
 .pc-n{font-size:15px;font-weight:700;color:#e6edf3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pc-hd .pc-n{flex:1 1 auto;min-width:0}
+.pc-col:last-child .pc-hd .pc-n{flex:0 1 auto;text-align:right}
 .pc-s{font-size:12px;color:#8b949e;margin-top:2px;line-height:1.5}
 .pc-s .num{color:#8b949e}
 .pc-small{color:#8b949e}
@@ -302,8 +306,10 @@ body.view-about #mlb-main,body.view-about #nba-main{display:none}
 .cc-c2{align-items:center;gap:4px;flex:none} .cc-head>.cc-t2{display:none;text-align:left} .cc-head.tag2 .cc-r1 .cc-tag{display:none} .cc-head.tag2>.cc-t2{display:flex;justify-content:flex-start}   /* 第一行放不下時「先發已公布／等先發」移到第二行、靠左對齊隊名 */
 .cc-head>.cc-s2{display:none} .cc-head.ser2 .cc-ser .ser-tag{display:none} .cc-head.ser2>.cc-s2{display:flex} .cc-head.ser2>.cc-s2 .ser-tag{display:inline-block}   /* 進行中＋焦點＋系列賽仍放不下時，系列賽標籤改到第二行，開打時間留在第一行 */
 .cc-r2{justify-content:space-between}
-.cc-tm{font-size:15px;font-weight:700;color:#e6edf3;white-space:nowrap;flex:1;min-width:0}
-.cc-tm.r{text-align:right}
+.cc-tm{display:flex;align-items:center;gap:4px;font-size:15px;font-weight:700;color:#e6edf3;flex:1;min-width:0;overflow:hidden}
+.cc-tm.r{justify-content:flex-end;text-align:right}
+.cc-nm{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cc-ha{flex:none;font-size:11px;font-weight:700;line-height:16px;min-width:16px;padding:0 3px;border-radius:4px;text-align:center;color:#e6edf3;background:#262e39}
 .cc-r3{gap:6px!important}
 .cc-p{font-size:13px;color:#c9d1d9;min-width:36px;flex:none;white-space:nowrap;font-variant-numeric:tabular-nums}
 .cc-p.r{text-align:right}
