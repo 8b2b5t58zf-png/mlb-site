@@ -480,16 +480,20 @@ function spChange(pk, aP, hP, rf){
   const any = o => o.away || o.home;
   return any(out.chg) || any(out.ann) ? out : null;
 }
-// 先發投手對比列（勝率條下方；左客右主，不分好壞色）
-function pitchRow(aP, hP, ap, hp, chg){
+// 先發投手對比列（勝率條下方；左右與卡片隊名相同：勝率較高在左，顯示勝率相等維持客左主右）
+function pitchRow(aP, hP, ap, hp, chg, homeLeft){
   const ipTxt = v => { const w = Math.floor(v + 1e-9), o = Math.round((v - w)*3); return `${w}.${o}`; };
-  const col = (P, S, side) => {
-    if(!P) return `<div class="pc-col"><div class="pc-tbd">${WHY_TXT.pTbd}</div></div>`;
+  const col = (P, S, side, ha, right) => {
+    const mark = `<span class="cc-ha">${ha}</span>`;
+    const labeled = txt => right ? `${txt}${mark}` : `${mark}${txt}`;
+    if(!P) return `<div class="pc-col"><div class="pc-tbd pc-hd">${labeled(WHY_TXT.pTbd)}</div></div>`;
     const line = S && S.era && S.era !== "-" ? wf("pLine", {era:S.era, whip:S.whip, ip:ipTxt(S.ip)}, ["era","whip","ip"]).split("・").map(x=>`<span class="nw">${x}</span>`).join("・") + (S.ip < 40 ? `<span class="pc-small">${WHY_TXT.pSmall}</span>` : "") : "";
     const ch = chg && chg.chg[side] ? `<div class="pc-chg">${wf("pChange", {p:chg.chg[side]})}</div>` : "";   // 「先發已公布」只寫在卡片第一行，投手名下不重複
-    return `<div class="pc-col"><div class="pc-n">${pn(P)}</div>${line ? `<div class="pc-s">${line}</div>` : ""}${ch}</div>`;
+    return `<div class="pc-col"><div class="pc-hd">${labeled(`<span class="pc-n">${pn(P)}</span>`)}</div>${line ? `<div class="pc-s">${line}</div>` : ""}${ch}</div>`;
   };
-  return `<div class="pitch"><div class="pc-lab">${WHY_TXT.pLabel}</div><div class="pc-row">${col(aP, ap, "away")}<div class="pc-div"></div>${col(hP, hp, "home")}</div></div>`;
+  const away = col(aP, ap, "away", "客", !!homeLeft), home = col(hP, hp, "home", "主", !homeLeft);
+  const [L, R] = homeLeft ? [home, away] : [away, home];
+  return `<div class="pitch"><div class="pc-lab">${WHY_TXT.pLabel}</div><div class="pc-row">${L}<div class="pc-div"></div>${R}</div></div>`;
 }
 // 勝率較低一方的補充（標籤旁小字；只用該方勝率與先發 ERA／WHIP）
 function upset(A, H, ap, hp, aP, hP, fav, fp){
@@ -500,7 +504,7 @@ function upset(A, H, ap, hp, aP, hP, fav, fp){
   return `${ts(U)}仍有 ${100-fp}% 勝率`;
 }
 
-// 兩隊對比表：較佳一方加粗並標 ◀ ▶
+// 兩隊對比表：較佳一方加粗並標 ◀ ▶。表頭固定寫「客」「主」，不跟著卡片左右對調。
 function compare(A, H, ap, hp){
   const ta = TEAM[A.id], th = TEAM[H.id];
   const r = (name, desc, av, hv, better) => {   // better: "a" / "h" / ""
@@ -587,6 +591,7 @@ function renderPredict(games, isPast){
     // 只改顯示：信心／級別用四捨五入前的勝率；顯示數字用 pDisp（高的一方捨去、另一方 100 減，捨去後 50 則顯示小數一位）；條長照四捨五入前畫
     const favHome = m.F >= 50, raw = favHome ? m.F : Math.round((100-m.F)*10)/10, fp = Math.floor(raw + 1e-9), fav = favHome ? H.team : A.team;
     const [hpD, apD] = pDisp(m.F);
+    const awN = Math.round((100-m.F)*10)/10, hwN = m.F, homeLeft = ccHomeLeft({ap:apD, hp:hpD, aw:awN, hw:hwN});
     const [tc, tl] = tier(raw/100);
     const st = favSteps(m, favHome);
     SS_NOW = g.seriesStatus; GTYPE_NOW = g.gameType; GPK_NOW = g.gamePk;
@@ -605,14 +610,14 @@ function renderPredict(games, isPast){
       {k:"戰績", t:ts(m.d1>=0?H.team:A.team), v:m.d1, sfx:"戰績較好"},
       {k:"主場", t:ts(H.team), v:m.d2, sfx:"主場出賽"},
       m.used ? {k:"先發投手", t:ts(m.d3>=0?H.team:A.team), v:m.d3, sfx:"先發數據較好"} : {v:null}], favHome, wait, fp);
-    const body = `${pitchRow(aP, hP, ap, hp, SPCHG)}
+    const body = `${pitchRow(aP, hP, ap, hp, SPCHG, homeLeft)}
       ${v1note}${whyBlock(A.team, H.team, m, st, ap, hp, aP, hP, fav, fp)}
       <div class="tier-row"><span class="tier ${tc}">${tl}</span><span class="upset">${upset(A.team, H.team, ap, hp, aP, hP, fav, fp)}</span></div>
       ${serShort(g.seriesStatus) ? `<div class="meta">${serShort(g.seriesStatus)}</div>` : ""}
       <details class="cmp"><summary>兩隊數據對比</summary>${compare(A.team, H.team, ap, hp)}</details>
       ${w ? `<div class="ref">${w}</div>` : ""}
       <div class="upd">最後更新：${twMD(usedCache || Date.now())}（台灣時間）</div>`;
-    html += sb + ccCard({lg:"mlb", live: inPlay, pp: isPP(g) ? `延賽至 ${twWD(g.gameDate, true)}（勝率將重算）` : "", focus: FC && g === vg[FC.i] && !isPP(g) ? FC.txt : "", ser, time:cardTime(g.gameDate), tag: inPlay ? "" : (wait ? "先發未公布" : "先發已公布"), A:ts(A.team), H:ts(H.team), conf:CONF[tc], tc, ap:apD, hp:hpD, aw:Math.round((100-m.F)*10)/10, hw:m.F, favHome, reason, body});
+    html += sb + ccCard({lg:"mlb", live: inPlay, pp: isPP(g) ? `延賽至 ${twWD(g.gameDate, true)}（勝率將重算）` : "", focus: FC && g === vg[FC.i] && !isPP(g) ? FC.txt : "", ser, time:cardTime(g.gameDate), tag: inPlay ? "" : (wait ? "先發未公布" : "先發已公布"), A:ts(A.team), H:ts(H.team), conf:CONF[tc], tc, ap:apD, hp:hpD, aw:awN, hw:hwN, favHome, reason, body});
   }
   const X = PEXTRA;
   if(!html.includes('class="pcard')) html = ACTIVE ? (ACTIVE.post ? '<p class="po-note" style="margin-top:12px">下一戰在本戰結束後顯示</p>' : "") : emptyCard(X.nextAt, X.seasonEnd);   // 比賽進行中：不放「今天沒有比賽」大框

@@ -107,15 +107,37 @@ function mainReason(items, favHome, wait, fp){
   let s = c.length > 1 && Math.abs(Math.abs(c[0].f) - Math.abs(c[1].f)) < 0.5 ? `${c[0].k}與${c[1].k}影響相近` : `主因：${c[0].t}${c[0].sfx}`;
   return s + (wait ? "（先發公布後會重算）" : "");
 }
+// 只改卡片左右（不改勝率）。顯示勝率較高的一方在左，色條與百分比跟著那一隊。
+// 兩邊顯示數字相等（剛好 50 或 50.0）維持客左、主右。不看 favHome：那個旗標是主隊勝率 >= 50，平手時會把主隊放左。
+function ccNum(v){
+  if(typeof v === "number") return Number.isFinite(v) ? v : NaN;
+  if(v == null || v === "") return NaN;
+  const n = parseFloat(v);
+  return Number.isFinite(n) ? n : NaN;
+}
+function ccHomeLeft(o){
+  const ap = ccNum(o.ap), hp = ccNum(o.hp);
+  if(Number.isFinite(ap) && Number.isFinite(hp)) return hp > ap;
+  const aw = ccNum(o.aw), hw = ccNum(o.hw);
+  return Number.isFinite(aw) && Number.isFinite(hw) && hw > aw;
+}
+function ccTeam(s, right){
+  const mark = `<span class="cc-ha">${s.ha}</span>`, name = `<span class="cc-nm">${s.nm}</span>`;
+  return `<span class="cc-tm${right?" r":""}">${right ? name + mark : mark + name}</span>`;
+}
 function ccCard(o){   // spec-compact v1；進行中：灰框＋左上「進行中」（延賽不套）
   const id = `cc-${++CC_N}`, ft = o.focus ? `<span class="cc-focus">預測焦點</span>` : "", cf = `<span class="tier ${o.tc} cc-conf">信心 ${o.conf}</span>`;
   const live = o.live && !o.pp, lv = live ? `<span class="cc-live">進行中</span>` : "";
   const s2 = !o.pp && o.ser ? `<span class="cc-s2">${o.ser}</span>` : "";
+  const favHome = !!o.favHome;
+  const away = {nm:o.A, ha:"客", pct:o.ap, w:o.aw ?? o.ap, fav:!favHome};
+  const home = {nm:o.H, ha:"主", pct:o.hp, w:o.hw ?? o.hp, fav:favHome};
+  const [L, R] = ccHomeLeft(o) ? [home, away] : [away, home];
   return `<div class="pcard cc${o.focus?" focus":""}${live?" live":""}">
   <button type="button" class="cc-head" aria-expanded="false" aria-controls="${id}" data-lg="${o.focus?"focus":o.lg}">
     ${o.pp ? `<span class="cc-r1"><span class="cc-ser">${o.ser||""}<span class="cc-pp">延賽</span></span></span><span class="cc-ppt num">${o.pp}</span>` : `<span class="cc-r1"><span class="cc-ser">${lv}${ft}${o.ser||""}</span><span class="cc-rt"><span class="cc-time num">${o.time}</span>${o.tag?`<span class="cc-tag">${o.tag}</span>`:""}<span class="cc-c1">${cf}</span></span></span>${s2}${o.tag?`<span class="cc-t2"><span class="cc-tag">${o.tag}</span></span>`:""}`}
-    <span class="cc-r2"><span class="cc-tm">${o.A}</span><span class="cc-c2">${cf}${o.tag && !o.pp ? `` : ""}</span><span class="cc-tm r">${o.H}</span></span>
-    <span class="cc-r3"><span class="cc-lab">本場</span><span class="num cc-p">${o.ap}%</span><span class="cc-bar"><span class="${o.favHome?"oth":"fav"}" style="width:${o.aw ?? o.ap}%"></span><span class="${o.favHome?"fav":"oth"}" style="width:${o.hw ?? o.hp}%"></span></span><span class="num cc-p r">${o.hp}%</span></span>
+    <span class="cc-r2">${ccTeam(L, false)}<span class="cc-c2">${cf}${o.tag && !o.pp ? `` : ""}</span>${ccTeam(R, true)}</span>
+    <span class="cc-r3"><span class="cc-lab">本場</span><span class="num cc-p">${L.pct}%</span><span class="cc-bar"><span class="${L.fav?"fav":"oth"}" style="width:${L.w}%"></span><span class="${R.fav?"fav":"oth"}" style="width:${R.w}%"></span></span><span class="num cc-p r">${R.pct}%</span></span>
     <span class="cc-r4"><span class="cc-why">${o.focus || o.reason || ""}</span><span class="cc-more">看分析 ›</span></span>
   </button>
   <div class="cc-body" id="${id}" inert><div class="cc-in">${o.body}</div></div></div>`;

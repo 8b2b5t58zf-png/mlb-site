@@ -64,9 +64,26 @@ async function session(wsUrl){
     const ev = await send("Runtime.evaluate", {expression:"document.getElementById('report').textContent", returnByValue:true});
     const report = JSON.parse(ev.result.value);
     const rowOver = (report.rows || []).filter(x => x.over);
+    const cards = report.cards || [];
+    const orderOk = cards.length === 6
+      && cards[0].tms[0].ha === "主" && cards[0].tms[0].nm === "道奇" && cards[0].tms[1].ha === "客" && cards[0].tms[1].nm === "釀酒人"
+      && cards[0].pct[0] === "62%" && cards[0].pct[1] === "38%"
+      && cards[0].bar[0] === "fav:62%" && cards[0].bar[1] === "oth:38%"
+      && cards[0].pitch[0] === "主 山本由伸" && cards[0].pitch[1] === "客 大谷翔平"
+      && cards[0].cmp.includes("客 釀酒人") && cards[0].cmp.includes("主 道奇")
+      && cards[1].tms[0].ha === "客" && cards[1].tms[0].nm === "響尾蛇" && cards[1].tms[1].nm === "教士"
+      && cards[2].tms[0].nm === "尼克" && cards[2].tms[1].nm === "塞爾提克"
+      && cards[3].tms[0].ha === "主" && cards[3].tms[0].nm === "道奇" && cards[3].tms[1].ha === "客"
+      && cards[4].tms[0].ha === "客" && cards[4].tms[0].nm === "光芒" && cards[4].tms[1].ha === "主" && cards[4].tms[1].nm === "金鶯"
+      && cards[4].pct[0] === "50%" && cards[4].pct[1] === "50%"
+      && cards[5].tms[0].nm === "拓荒者" && cards[5].tms[1].nm === "塞爾提克"
+      && cards[5].time.includes("10/20（二）08:08") && cards[5].time.includes("（台灣時間）")
+      && cards.every(c => c.tms.length === 2 && c.tms[0].ha && c.tms[1].ha && /（[日一二三四五六]）\d{2}:\d{2}/.test(c.time || "（日）00:00"));
+    const dateOk = cards.filter(c => c.time).every(c => /（[日一二三四五六]）\d{2}:\d{2}/.test(c.time));
     console.log(w, JSON.stringify(report));
-    if(report.page > 1 || rowOver.length || !(report.badges || []).includes("預測焦點") || report.w !== w){
-      console.error("layout fail", w);
+    const hitOk = report.hit === "客@主" || report.hit === "對戰（客@主）";
+    if(report.page > 1 || rowOver.length || !(report.badges || []).includes("預測焦點") || report.w !== w || !orderOk || !dateOk || !hitOk){
+      console.error("layout fail", w, {orderOk, dateOk, hit:report.hit, hitOk, rowOver});
       fail++;
     }
     const shot = await send("Page.captureScreenshot", {format:"png", captureBeyondViewport:true, fromSurface:true});
