@@ -291,7 +291,7 @@ test("追蹤事件與 LINE 網址未改", () => {
     "https://aisportslab.goatcounter.com/count",
     "why-text.js?v=202611111816",
     "nba.js?v=202611111816",
-    "app.js?v=202611111816",
+    "app.js?v=202611120831",
     "style.css?v=202611111816",
     "賽前預測與賽後紀錄分開列出",
   ]) assert.ok(html.includes(s), s);
@@ -329,6 +329,111 @@ test("歷史回測公開檔只有結果，頁面沒有計算方式", () => {
   assert.ok(read("app.js").includes('histCard("mlb")'));
   assert.ok(read("nba.js").includes('histCard("nba")'));
   for(const f of ["why-text.js", "app.js", "nba.js", "index.html", "style.css"]) assert.ok(!read(f).includes("計算方式"), f);
+});
+
+function sliceFn(src, name){
+  const start = src.indexOf("function " + name + "(");
+  if(start < 0) throw new Error("找不到函式 " + name);
+  const open = src.indexOf("{", start);
+  let depth = 0;
+  for(let i = open; i < src.length; i++){
+    if(src[i] === "{") depth++;
+    else if(src[i] === "}"){ depth--; if(depth === 0) return src.slice(start, i + 1); }
+  }
+  throw new Error("函式沒有結束 " + name);
+}
+function loadSeasonFns(){
+  const src = read("app.js");
+  const names = ["mlbFinals", "mlbWsComplete", "mlbSeasonEnd", "mlbNeedsPrevWs", "mlbPickWs", "mlbRecapGames"];
+  const context = {Date, console};
+  vm.createContext(context);
+  vm.runInContext(names.map(n => sliceFn(src, n)).join("\n"), context, {filename:"app.js"});
+  return context;
+}
+const SE = loadSeasonFns();
+function wsGame(date, over, state){
+  return {
+    gameType:"W", gameDate:date,
+    status:{abstractGameState:state || "Final", detailedState:state || "Final"},
+    seriesStatus:{isOver:!!over, description:"World Series"},
+    linescore:{innings:[{num:1}]},
+    teams:{home:{team:{id:139}, score:1}, away:{team:{id:158}, score:4}},
+  };
+}
+// 2026 世界大賽 5 戰，最後一場 10/28，系列結束。11/12 起這場已離開「今天往前 14 天」視窗。
+const WS2026 = [
+  wsGame("2026-10-23T23:08:00Z", false),
+  wsGame("2026-10-24T23:08:00Z", false),
+  wsGame("2026-10-26T23:08:00Z", false),
+  wsGame("2026-10-27T23:08:00Z", false),
+  wsGame("2026-10-28T23:08:00Z", true),
+];
+
+test("世界大賽離開 14 天視窗後，季末與賽後仍用整季清單", () => {
+  const idle = {hasUp:false, active:false, nextReal:false};
+  assert.strictEqual(SE.mlbWsComplete(WS2026), true);
+  assert.strictEqual(SE.mlbSeasonEnd(idle, WS2026), true);
+  assert.strictEqual(SE.mlbNeedsPrevWs(WS2026, true), false);
+  const recap = SE.mlbRecapGames([], WS2026, true);
+  assert.strictEqual(recap.length, 5);
+  assert.ok(recap.every(g => g.gameType === "W"));
+  assert.strictEqual(recap[0].gameDate.slice(0, 10), "2026-10-28");
+  const windowStart = "2026-10-29";
+  assert.ok(recap.every(g => g.gameDate.slice(0, 10) < windowStart));
+  assert.strictEqual(SE.mlbRecapGames([{gameType:"R", gameDate:"2026-10-28T00:00:00Z"}], WS2026, true)[0].gameType, "W");
+});
+
+test("新球季比賽一進視窗就離開季末；跨年休季改看上一年世界大賽", () => {
+  const idle = {hasUp:false, active:false, nextReal:false};
+  const spring = {hasUp:true, active:false, nextReal:true};
+  assert.strictEqual(SE.mlbSeasonEnd(spring, WS2026), false);
+  assert.strictEqual(SE.mlbSeasonEnd({hasUp:false, active:true, nextReal:false}, WS2026), false);
+  assert.strictEqual(SE.mlbSeasonEnd({hasUp:false, active:false, nextReal:true}, WS2026), false);
+  assert.strictEqual(SE.mlbNeedsPrevWs([], true), true);
+  assert.strictEqual(SE.mlbNeedsPrevWs([], false), false);
+  assert.strictEqual(SE.mlbPickWs([], WS2026, true), WS2026);
+  assert.deepStrictEqual(SE.mlbPickWs([], WS2026, false), []);
+  assert.strictEqual(SE.mlbSeasonEnd(idle, SE.mlbPickWs([], WS2026, true)), true);
+  assert.strictEqual(SE.mlbRecapGames([], SE.mlbPickWs([], WS2026, true), true).length, 5);
+  assert.strictEqual(SE.mlbSeasonEnd(spring, SE.mlbPickWs([], WS2026, false)), false);
+});
+
+test("系列賽還沒打完不算季末，賽季中的賽後不改拿世界大賽", () => {
+  const openWs = [wsGame("2027-10-23T23:00:00Z", false), wsGame("2027-10-24T23:00:00Z", false, "Preview")];
+  assert.strictEqual(SE.mlbWsComplete(openWs), false);
+  assert.strictEqual(SE.mlbNeedsPrevWs(openWs, true), false);
+  assert.strictEqual(SE.mlbSeasonEnd({hasUp:false, active:false, nextReal:false}, openWs), false);
+  assert.deepStrictEqual(SE.mlbRecapGames([], openWs, false), []);
+  const clinched = [wsGame("2026-10-28T23:00:00Z", true), wsGame("2026-10-30T00:00:00Z", false, "Preview")];
+  assert.strictEqual(SE.mlbWsComplete(clinched), true);
+  const allFinal = [wsGame("2026-10-28T23:00:00Z", false)];
+  assert.strictEqual(SE.mlbWsComplete(allFinal), true);
+  assert.strictEqual(SE.mlbWsComplete([]), false);
+  assert.strictEqual(SE.mlbWsComplete(null), false);
+  const reg = [{gameType:"R", gameDate:"2027-06-01T23:00:00Z", status:{abstractGameState:"Final", detailedState:"Final"}, linescore:{innings:[1]}}];
+  const mid = SE.mlbRecapGames(reg, WS2026, false);
+  assert.strictEqual(mid.length, 1);
+  assert.strictEqual(mid[0].gameType, "R");
+});
+
+test("季末文案與樣式仍是定稿，判斷不讀 14 天視窗裡的 W", () => {
+  const app = read("app.js"), css = read("style.css");
+  assert.ok(app.includes('const SEASON_END_TXT = {main: "<span class=\\"es-l\\">2026 MLB 球季已結束，</span><span class=\\"es-l\\">下季開打前恢復每日預測</span>", sub: "本季賽後分析與命中率紀錄仍可查看"}'));
+  assert.ok(app.includes("if(seasonEnd) return emptySeason(SEASON_END_TXT.main, SEASON_END_TXT.sub);"));
+  assert.ok(!app.includes('done.some(g => g.gameType === "W")'));
+  const load = sliceFn(app, "loadGames");
+  assert.ok(load.includes("mlbSeasonEnd({hasUp: !!hasUp, active: !!ACTIVE, nextReal: !!nr}, wsGames)"));
+  assert.ok(load.includes("mlbRecapGames(windowFinals, wsGames, PEXTRA.seasonEnd)"));
+  assert.ok(load.includes("loadWsYear(season)"));
+  assert.ok(load.includes("14*864e5"));
+  const ws = sliceFn(app, "loadWsYear");
+  assert.ok(ws.includes("season=${yr}"));
+  assert.ok(ws.includes("gameType=W"));
+  assert.ok(!ws.includes("startDate"));
+  assert.ok(css.includes(".empty-season{padding:32px 0;text-align:center}"));
+  assert.ok(css.includes(".empty-season .es-main{font-size:16px;font-weight:600;color:#e6edf3"));
+  assert.ok(css.includes(".empty-season .es-l{display:block}"));
+  assert.ok(css.includes(".empty-season .es-sub{margin-top:8px;font-size:13px;color:#8b949e}"));
 });
 
 test("這次差異不含資料、工作流程、腳本與部署設定", () => {
