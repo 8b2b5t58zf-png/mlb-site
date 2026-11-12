@@ -207,14 +207,62 @@ const SERIES = {"World Series":"世界大賽","AL Championship Series":"美聯�
 const sz = s => SERIES[s] || s;
 const tw = s => twMD(s);   // 24 小時制（賽後標題、最後更新）
 
-// 抓最近 14 天到未來 7 天的賽程（含比分、先發投手）
+// 已完賽且有逐局比分（延賽、取消不算）
+function mlbFinals(games){
+  const bad = ["Postponed", "Cancelled"];
+  return (games || []).filter(g => g && g.status && g.status.abstractGameState === "Final" && g.linescore && g.linescore.innings && !bad.includes(g.status.detailedState));
+}
+// 世界大賽是否已分出勝負。只看整季清單，不看近 14 天視窗裡還有沒有 W。
+function mlbWsComplete(wsGames){
+  const list = (wsGames || []).filter(g => g && g.gameType === "W" && g.status);
+  if(!list.some(g => g.status.abstractGameState === "Final")) return false;
+  if(list.some(g => g.seriesStatus && g.seriesStatus.isOver)) return true;
+  const skip = ["Postponed", "Cancelled"];
+  return list.every(g => g.status.abstractGameState === "Final" || skip.includes(g.status.detailedState));
+}
+// 季末：視窗裡沒有即將開打、進行中、已開打未結算，而且世界大賽已結束。
+// 春訓或新球季一進視窗（hasUp / nextReal / active）就離開季末。
+function mlbSeasonEnd(flags, wsGames){
+  if(!flags || flags.hasUp || flags.active || flags.nextReal) return false;
+  return mlbWsComplete(wsGames);
+}
+// 今年世界大賽還沒有完賽紀錄、而且近窗一場都沒有（跨年休季）才回看上一年。季中不回看。
+function mlbNeedsPrevWs(cur, windowEmpty){
+  if(!windowEmpty || mlbWsComplete(cur)) return false;
+  return !(cur || []).some(g => g && g.status && g.status.abstractGameState === "Final");
+}
+function mlbPickWs(cur, prev, windowEmpty){
+  const list = cur || [];
+  if(mlbWsComplete(list) || list.some(g => g && g.status && g.status.abstractGameState === "Final")) return list;
+  if(windowEmpty && mlbWsComplete(prev)) return prev || [];
+  return list;
+}
+// 球季已結束時，賽後固定用該季世界大賽最近 5 場，不跟著 14 天視窗被清空。進行中仍用視窗裡的已完賽。
+function mlbRecapGames(windowFinals, wsGames, seasonEnded){
+  if(seasonEnded){
+    const ws = mlbFinals(wsGames).slice().sort((a, b) => new Date(b.gameDate) - new Date(a.gameDate));
+    if(ws.length) return ws.slice(0, 5);
+  }
+  return (windowFinals || []).slice(0, 5);
+}
+// 整季世界大賽（沒有 startDate／endDate，不會因為比賽離開 14 天視窗就消失）
+async function loadWsYear(yr){
+  const d = await getJSON(`${API}/schedule?sportId=1&season=${yr}&gameType=W&hydrate=linescore,probablePitcher,decisions,team,seriesStatus,weather`);
+  return (d.dates || []).flatMap(x => x.games || []);
+}
+// 預測卡仍只抓最近 14 天到未來 7 天。季末判斷與休季賽後另外用整季世界大賽。
 async function loadGames(){
   const fmt = d => d.toISOString().slice(0,10);
   const now = new Date();
   const s = fmt(new Date(now - 14*864e5)), e = fmt(new Date(+now + 7*864e5));
-  const d = await getJSON(`${API}/schedule?sportId=1&startDate=${s}&endDate=${e}&hydrate=linescore,probablePitcher,decisions,team,seriesStatus,weather`);
+  const [d, wsCur] = await Promise.all([
+    getJSON(`${API}/schedule?sportId=1&startDate=${s}&endDate=${e}&hydrate=linescore,probablePitcher,decisions,team,seriesStatus,weather`),
+    loadWsYear(season),
+  ]);
   const games = (d.dates||[]).flatMap(x=>x.games);
-  const done = games.filter(g=>g.status.abstractGameState==="Final" && g.linescore && g.linescore.innings && !["Postponed","Cancelled"].includes(g.status.detailedState)).reverse().slice(0,5); // 最近 5 場已完賽
+  let wsGames = wsCur;
+  if(mlbNeedsPrevWs(wsCur, games.length === 0) && season > 1900) wsGames = mlbPickWs(wsCur, await loadWsYear(season - 1), true);
+  const windowFinals = mlbFinals(games).reverse().slice(0, 5); // 賽季中的最近 5 場已完賽
   // 季後賽：同一系列只顯示下一場還沒打完的比賽（前一戰打完才出現下一戰；預測紀錄不受影響）
   const POST = ["F","D","L","W"], skey = g => g.gameType + ":" + [g.teams.home.team.id, g.teams.away.team.id].sort().join("-");
   const firstOpen = {};   // 依第幾戰排序（延賽時官方日期可能前後顛倒）
@@ -245,7 +293,8 @@ async function loadGames(){
   const seenLive = new Set(liveGames.map(g => g.gamePk));
   const hasUp = next.length || liveGames.length;
   const show = hasUp || ACTIVE ? [...liveGames, ...next.filter(g => !seenLive.has(g.gamePk) && !act.includes(g))] : [];   // 沒有下一戰／進行中：不回填已完賽卡，走空狀態（done 只給賽後分析）
-  PEXTRA.seasonEnd = !hasUp && !ACTIVE && !nr && done.some(g => g.gameType === "W");   // 世界大賽打完、後面沒賽程＝季末
+  PEXTRA.seasonEnd = mlbSeasonEnd({hasUp: !!hasUp, active: !!ACTIVE, nextReal: !!nr}, wsGames);   // 世界大賽打完、後面沒賽程＝季末（不靠 W 還在 14 天視窗裡）
+  const done = mlbRecapGames(windowFinals, wsGames, PEXTRA.seasonEnd);
   // 先抓先發投手成績與 FIP 常數，再畫預測卡
   await Promise.all([loadFIPC(), loadTeamHit(), ...show.map(g=>loadH2H(g.teams.away.team.id, g.teams.home.team.id)), loadPitchers(show.flatMap(g=>[g.teams.home.probablePitcher, g.teams.away.probablePitcher]).filter(Boolean).map(p=>p.id))]);
   renderPredict(show, false);
