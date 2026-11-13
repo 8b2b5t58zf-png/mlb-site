@@ -380,8 +380,11 @@ test("追蹤事件與 LINE 網址未改", () => {
     "https://aisportslab.goatcounter.com/count",
     "why-text.js?v=202611121838",
     "nba.js?v=202611131005",
-    "app.js?v=202611121838",
-    "style.css?v=202611121838",
+    "app.js?v=202611131633",
+    "style.css?v=202611131633",
+    "line-fab-sep\">｜",
+    ">功能建議<",
+    "透過球數實驗室官方 LINE 提供意見回饋或功能建議（另開新視窗）",
     "賽前預測與賽後紀錄分開列出",
   ]) assert.ok(html.includes(s), s);
   assert.ok(read("why-text.js").includes("ref-open-"));
