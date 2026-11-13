@@ -942,14 +942,21 @@ setupNav();
   const _show = showTab; showTab = function(){ _show.apply(this, arguments); upd(); };
   upd();
   if(foot && "IntersectionObserver" in window) new IntersectionObserver(es => es.forEach(e => fab.classList.toggle("is-hidden", e.isIntersecting))).observe(foot);
-  // 讀者可拖動：位移 < 6px 算輕點；放開後貼最近左右邊；localStorage 只記左右與離畫面頂端的比例
-  const KEY = "aisl:fab", S = 48;
+  // 讀者可拖動整顆膠囊：位移 < 6px 算輕點；放開後貼最近左右邊；localStorage 只記左右與離畫面頂端的比例
+  const KEY = "aisl:fab";
   const gap = () => innerWidth >= 768 ? 24 : 12;
   const navH = () => { const n = document.getElementById("bottomnav"); return n && getComputedStyle(n).display !== "none" ? n.getBoundingClientRect().height : 0; };
   const topLim = () => { let t = 0; for(const id of ["lgbar","topnav"]){ const el = document.getElementById(id); if(!el) continue; const cs = getComputedStyle(el); if(cs.display === "none") continue; t = Math.max(t, (parseFloat(cs.top)||0) + el.offsetHeight); } return t + 8; };
-  const botLim = () => innerHeight - (navH() ? navH() + 12 : 24) - S;
+  const box = () => {
+    if(fab.offsetWidth && fab.offsetHeight) return {w: fab.offsetWidth, h: fab.offsetHeight};
+    const was = fab.hidden; if(was) fab.hidden = false;
+    const d = {w: fab.offsetWidth || 48, h: fab.offsetHeight || 52};
+    if(was) fab.hidden = true;
+    return d;
+  };
+  const botLim = () => innerHeight - (navH() ? navH() + 12 : 24) - box().h;
   const clampT = t => Math.max(topLim(), Math.min(t, botLim()));
-  const edgeL = side => side === "l" ? gap() : innerWidth - gap() - S;
+  const edgeL = side => side === "l" ? gap() : innerWidth - gap() - box().w;
   let pos = null; try{ pos = JSON.parse(localStorage.getItem(KEY)); if(!pos || !/^[lr]$/.test(pos.side) || !(pos.y >= 0 && pos.y <= 1)) pos = null; }catch(e){ pos = null; }
   const apply = () => { if(!pos){ fab.style.left = fab.style.top = fab.style.right = fab.style.bottom = ""; return; }
     Object.assign(fab.style, {left: edgeL(pos.side) + "px", top: clampT(pos.y * innerHeight) + "px", right: "auto", bottom: "auto"}); };
@@ -961,10 +968,11 @@ setupNav();
     const dx = e.clientX - st.x, dy = e.clientY - st.y;
     if(!dragged){ if(Math.hypot(dx, dy) < 6) return; dragged = true; try{ fab.setPointerCapture(e.pointerId); }catch(_){} fab.classList.add("dragging"); }
     e.preventDefault();
-    Object.assign(fab.style, {left: Math.max(0, Math.min(innerWidth - S, st.l + dx)) + "px", top: clampT(st.t + dy) + "px", right: "auto", bottom: "auto"}); });
+    const w = box().w;
+    Object.assign(fab.style, {left: Math.max(0, Math.min(innerWidth - w, st.l + dx)) + "px", top: clampT(st.t + dy) + "px", right: "auto", bottom: "auto"}); });
   const end = e => { if(!st || e.pointerId !== st.id) return; st = null; if(!dragged) return;
     fab.classList.remove("dragging"); const L = parseFloat(fab.style.left), T = parseFloat(fab.style.top);
-    pos = {side: L + S/2 < innerWidth/2 ? "l" : "r", y: clampT(T) / innerHeight};
+    pos = {side: L + box().w/2 < innerWidth/2 ? "l" : "r", y: clampT(T) / innerHeight};
     apply(); try{ localStorage.setItem(KEY, JSON.stringify(pos)); }catch(_){} };
   fab.addEventListener("pointerup", end); fab.addEventListener("pointercancel", end);
   // 拖動那次的 click 擋掉（capture 階段，先於 a[data-gc] 委派監聽：不開連結、不送事件）
