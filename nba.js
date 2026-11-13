@@ -378,11 +378,11 @@ async function nbaHit(){
   });
 }
 // 延遲提示還在時，戰績那一行不顯示比預測頁資料時間還新的時刻（與「資料時間」同一刻，24 小時制）
-// 延遲門檻（產品經理 10/31 定案，數據分析師時刻表）：守候時段內超過 75 分鐘沒更新；守候時段外超過 10 小時（正常最長空檔約 7.5 小時＋2）
+// 延遲門檻（產品經理 10/31 定案，數據分析師時刻表）：守候時段內超過 75 分鐘沒更新；守候時段外超過 12 小時
 function nDelayed(now = Date.now()){
   if(!NDAT) return false;
   const inWin = NWIN.some(([a,b]) => now >= a && now <= b);
-  return now - NDAT > (inWin ? 75*60e3 : 10*3600e3);
+  return now - NDAT > (inWin ? 75*60e3 : 12*3600e3);
 }
 function nUpdHTML(){
   const stand = NST_AT || Date.now();
