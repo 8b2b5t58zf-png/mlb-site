@@ -379,7 +379,7 @@ test("追蹤事件與 LINE 網址未改", () => {
     "line-feedback-float-predict",
     "https://aisportslab.goatcounter.com/count",
     "why-text.js?v=202611121838",
-    "nba.js?v=202611111816",
+    "nba.js?v=202611131005",
     "app.js?v=202611121838",
     "style.css?v=202611121838",
     "賽前預測與賽後紀錄分開列出",
